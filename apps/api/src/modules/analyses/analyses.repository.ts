@@ -4,6 +4,7 @@ import type { AnalysisContextFile, AnalysisWithContexts } from './analyses.types
 
 interface CreateAnalysisData {
   branchId: string;
+  mergeRequestIid?: number;
   files: AnalysisContextFile[];
 }
 
@@ -11,10 +12,11 @@ interface CreateAnalysisData {
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, files }: CreateAnalysisData): Promise<AnalysisWithContexts> {
+  create({ branchId, mergeRequestIid, files }: CreateAnalysisData): Promise<AnalysisWithContexts> {
     return this.prismaService.analysis.create({
       data: {
         branchId,
+        mergeRequestIid,
         contexts: { create: files },
       },
       include: { contexts: true },

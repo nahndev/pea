@@ -31,6 +31,7 @@ export class AnalysesController {
       required: ["branch"],
       properties: {
         branch: { type: "string", minLength: 1, maxLength: 255 },
+        mergeRequestIid: { type: "integer", minimum: 1 },
         ...Object.fromEntries(
           LOG_FILE_FIELDS.map(({ name }) => [
             name,

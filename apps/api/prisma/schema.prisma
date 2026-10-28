@@ -17,12 +17,13 @@ model Branch {
 }
 
 model Analysis {
-  id        String            @id @default(uuid(7)) @db.Uuid
-  branchId  String            @map("branch_id") @db.Uuid
-  createdAt DateTime          @default(now()) @map("created_at")
-  branch    Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  contexts  AnalysisContext[]
-  results   AnalysisResult[]
+  id              String            @id @default(uuid(7)) @db.Uuid
+  branchId        String            @map("branch_id") @db.Uuid
+  mergeRequestIid Int?              @map("merge_request_iid")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  branch          Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  contexts        AnalysisContext[]
+  results         AnalysisResult[]
 
   @@index([branchId, createdAt(sort: Desc)])
   @@map("analyses")

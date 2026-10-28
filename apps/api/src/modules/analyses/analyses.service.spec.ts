@@ -50,7 +50,7 @@ describe('AnalysesService', () => {
     const analysis = { id: 'an-1', branchId: 'br-1', contexts: [] };
     analysesRepository.create.mockResolvedValue(analysis as never);
 
-    const result = await analysesService.create({ branch: 'feat/x' }, FILES_BY_FIELD);
+    const result = await analysesService.create({ branch: 'feat/x', mergeRequestIid: 7 }, FILES_BY_FIELD);
 
     expect(storageService.saveMany).toHaveBeenCalledWith([
       FILES_BY_FIELD.api_metric[0],
@@ -59,6 +59,7 @@ describe('AnalysesService', () => {
     expect(branchesService.findOrCreateByName).toHaveBeenCalledWith('feat/x');
     expect(analysesRepository.create).toHaveBeenCalledWith({
       branchId: 'br-1',
+      mergeRequestIid: 7,
       files: [
         { file: 'a.jsonl', path: 'p-1', type: AnalysisContextType.API_METRIC },
         { file: 'b.jsonl', path: 'p-2', type: AnalysisContextType.QUERY },

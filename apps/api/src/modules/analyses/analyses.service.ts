@@ -22,7 +22,7 @@ export class AnalysesService {
 
   @EmitEvent(AnalysisEvent.CREATED)
   async create(
-    { branch }: CreateAnalysisDto,
+    { branch, mergeRequestIid }: CreateAnalysisDto,
     filesByField: Record<string, Express.Multer.File[]> = {},
   ): Promise<AnalysisWithContexts> {
     const contextUploads = this.toContextUploads(filesByField);
@@ -33,6 +33,7 @@ export class AnalysesService {
     try {
       return await this.analysesRepository.create({
         branchId,
+        mergeRequestIid,
         files: storedFiles.map((storedFile, index) => ({
           ...storedFile,
           type: contextUploads[index].type,
