@@ -6,33 +6,33 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AnalysisRunnerService } from './analysis-runner.service';
+import { AnalysisResultService } from './analysis-result.service';
 import { ListAnalysisResultsQueryDto } from './dto/list-analysis-results-query.dto';
 import { RunAnalysisDto } from './dto/run-analysis.dto';
 
 @ApiTags('analysis-results')
 @Controller('analysis-results')
-export class AnalysisRunnerController {
-  constructor(private readonly analysisRunnerService: AnalysisRunnerService) {}
+export class AnalysisResultController {
+  constructor(private readonly analysisResultService: AnalysisResultService) {}
 
   @Post()
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   run(@Body() dto: RunAnalysisDto) {
-    return this.analysisRunnerService.run(dto);
+    return this.analysisResultService.run(dto);
   }
 
   @Get()
   @ApiOkResponse()
   findAll(@Query() query: ListAnalysisResultsQueryDto) {
-    return this.analysisRunnerService.findAll(query);
+    return this.analysisResultService.findAll(query);
   }
 
   @Get(':id')
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.analysisRunnerService.findOne(id);
+    return this.analysisResultService.findOne(id);
   }
 }

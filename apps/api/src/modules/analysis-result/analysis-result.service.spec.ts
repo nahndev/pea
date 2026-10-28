@@ -5,17 +5,17 @@ import { IssuesService } from '../issues/issues.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import type { RuleHandler } from '../rules/handlers/rule-handler.types';
 import { RulesService } from '../rules/rules.service';
-import { AnalysisRunnerRepository } from './analysis-runner.repository';
-import { AnalysisRunnerService } from './analysis-runner.service';
+import { AnalysisResultRepository } from './analysis-result.repository';
+import { AnalysisResultService } from './analysis-result.service';
 
-describe('AnalysisRunnerService', () => {
-  let analysisRunnerRepository: jest.Mocked<Pick<AnalysisRunnerRepository, 'create' | 'finish' | 'findById' | 'findLatest'>>;
+describe('AnalysisResultService', () => {
+  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish' | 'findById' | 'findLatest'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
   let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
   let ruleHandlerFactory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
   let handler: jest.Mocked<RuleHandler>;
-  let analysisRunnerService: AnalysisRunnerService;
+  let analysisResultService: AnalysisResultService;
 
   const contexts = [{ id: 'c-1' }, { id: 'c-2' }];
   const ruleList = [
@@ -24,7 +24,7 @@ describe('AnalysisRunnerService', () => {
   ];
 
   beforeEach(() => {
-    analysisRunnerRepository = {
+    analysisResultRepository = {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       findById: jest.fn(),
@@ -38,8 +38,8 @@ describe('AnalysisRunnerService', () => {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90_FAILURE'),
       create: jest.fn().mockReturnValue(handler),
     };
-    analysisRunnerService = new AnalysisRunnerService(
-      analysisRunnerRepository as unknown as AnalysisRunnerRepository,
+    analysisResultService = new AnalysisResultService(
+      analysisResultRepository as unknown as AnalysisResultRepository,
       analysesService as unknown as AnalysesService,
       rulesService as unknown as RulesService,
       issuesService as unknown as IssuesService,
@@ -52,7 +52,7 @@ describe('AnalysisRunnerService', () => {
       Promise.resolve([{ ruleId: rule.id, analysisContextId: context.id }]),
     );
 
-    const result = await analysisRunnerService.run({ analysisId: 'an-1' });
+    const result = await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(handler.handle).toHaveBeenCalledTimes(2);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
@@ -65,14 +65,14 @@ describe('AnalysisRunnerService', () => {
   });
 
   it('completes with zero issues when nothing is found', async () => {
-    await expect(analysisRunnerService.run({ analysisId: 'an-1' })).resolves.toMatchObject({
+    await expect(analysisResultService.run({ analysisId: 'an-1' })).resolves.toMatchObject({
       status: AnalysisResultStatus.COMPLETED,
       issueCount: 0,
     });
   });
 
   it('skips rules whose type has no handler', async () => {
-    await analysisRunnerService.run({ analysisId: 'an-1' });
+    await analysisResultService.run({ analysisId: 'an-1' });
     expect(ruleHandlerFactory.create).not.toHaveBeenCalledWith('P95_FAILURE');
   });
 
@@ -81,8 +81,8 @@ describe('AnalysisRunnerService', () => {
       .mockResolvedValueOnce([{ ruleId: 'r-1', analysisContextId: 'c-1' }])
       .mockRejectedValueOnce(new Error('duckdb'));
 
-    await expect(analysisRunnerService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
-    expect(analysisRunnerRepository.finish).toHaveBeenCalledWith('res-1', {
+    await expect(analysisResultService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
+    expect(analysisResultRepository.finish).toHaveBeenCalledWith('res-1', {
       status: AnalysisResultStatus.FAILED,
       issueCount: 1,
     });
@@ -92,27 +92,27 @@ describe('AnalysisRunnerService', () => {
     analysesService.findOne.mockRejectedValue(
       new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND }),
     );
-    await expect(analysisRunnerService.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
-    expect(analysisRunnerRepository.create).not.toHaveBeenCalled();
+    await expect(analysisResultService.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
+    expect(analysisResultRepository.create).not.toHaveBeenCalled();
   });
 
   it('throws ANALYSIS_RESULT_NOT_FOUND when the result is missing', async () => {
-    analysisRunnerRepository.findById.mockResolvedValue(null);
-    const error = await analysisRunnerService.findOne('missing').catch((e: NotFoundException) => e);
+    analysisResultRepository.findById.mockResolvedValue(null);
+    const error = await analysisResultService.findOne('missing').catch((e: NotFoundException) => e);
     expect((error as NotFoundException).getResponse()).toEqual({
       code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
     });
   });
 
   it('returns the latest result of an analysis', async () => {
-    analysisRunnerRepository.findLatest.mockResolvedValue({ id: 'res-2' } as never);
-    await expect(analysisRunnerService.findLatest('an-1')).resolves.toEqual({ id: 'res-2' });
-    expect(analysisRunnerRepository.findLatest).toHaveBeenCalledWith('an-1');
+    analysisResultRepository.findLatest.mockResolvedValue({ id: 'res-2' } as never);
+    await expect(analysisResultService.findLatest('an-1')).resolves.toEqual({ id: 'res-2' });
+    expect(analysisResultRepository.findLatest).toHaveBeenCalledWith('an-1');
   });
 
   it('throws ANALYSIS_RESULT_NOT_FOUND when the analysis has no result yet', async () => {
-    analysisRunnerRepository.findLatest.mockResolvedValue(null);
-    const error = await analysisRunnerService.findLatest('an-1').catch((e: NotFoundException) => e);
+    analysisResultRepository.findLatest.mockResolvedValue(null);
+    const error = await analysisResultService.findLatest('an-1').catch((e: NotFoundException) => e);
     expect((error as NotFoundException).getResponse()).toEqual({
       code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
     });

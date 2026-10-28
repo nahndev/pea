@@ -4,7 +4,7 @@ import type { AnalysisResult } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
-export class AnalysisRunnerRepository {
+export class AnalysisResultRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   create(analysisId: string): Promise<AnalysisResult> {

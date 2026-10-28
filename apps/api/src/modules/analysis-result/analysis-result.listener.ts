@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AnalysisEvent } from '@tomato/constants';
 import type { Analysis } from '../../generated/client';
-import { AnalysisRunnerService } from './analysis-runner.service';
+import { AnalysisResultService } from './analysis-result.service';
 
 @Injectable()
-export class AnalysisRunnerListener {
-  constructor(private readonly analysisRunnerService: AnalysisRunnerService) {}
+export class AnalysisResultListener {
+  constructor(private readonly analysisResultService: AnalysisResultService) {}
 
   @OnEvent(AnalysisEvent.CREATED)
   async handleAnalysisCreated({ id }: Analysis): Promise<void> {
-    await this.analysisRunnerService.run({ analysisId: id });
+    await this.analysisResultService.run({ analysisId: id });
   }
 }
