@@ -275,6 +275,9 @@ importers:
       ts-jest:
         specifier: 29.4.15
         version: 29.4.15(@babel/core@7.29.7(supports-color@8.1.1))(@jest/transform@30.5.2(supports-color@8.1.1))(@jest/types@30.5.1)(babel-jest@30.5.2(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.5.2(@types/node@20.19.43)(supports-color@8.1.1))(typescript@6.0.3)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -305,7 +308,7 @@ importers:
         version: 7.8.2
       tsup:
         specifier: 9.0.0
-        version: 9.0.0(jiti@2.7.0)(typescript@6.0.3)
+        version: 9.0.0(jiti@2.7.0)(tsx@4.23.15)(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -320,7 +323,7 @@ importers:
         version: 20.19.43
       tsup:
         specifier: 9.0.0
-        version: 9.0.0(jiti@2.7.0)(typescript@6.0.3)
+        version: 9.0.0(jiti@2.7.0)(tsx@4.23.15)(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -356,7 +359,7 @@ importers:
         version: 20.19.43
       tsup:
         specifier: 9.0.0
-        version: 9.0.0(jiti@2.7.0)(typescript@6.0.3)
+        version: 9.0.0(jiti@2.7.0)(tsx@4.23.15)(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -4147,6 +4150,11 @@ packages:
       typescript:
         optional: true
 
+  tsx@4.23.15:
+    resolution: {integrity: sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   turbo@2.11.10:
     resolution: {integrity: sha512-3GJYwig8ygEI89oaOZdduJX8/aw6O9eRPYHoIt6T3FZl9hkKjiyIspufJoVgqXihPoJu8M5CSV0DlZvzfohBCw==}
     hasBin: true
@@ -7867,11 +7875,12 @@ snapshots:
 
   pluralize@8.0.0: {}
 
-  postcss-load-config@6.0.1(jiti@2.7.0):
+  postcss-load-config@6.0.1(jiti@2.7.0)(tsx@4.23.15):
     dependencies:
       lilconfig: 3.1.4
     optionalDependencies:
       jiti: 2.7.0
+      tsx: 4.23.15
 
   postgres-array@2.0.0: {}
 
@@ -8359,7 +8368,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsup@9.0.0(jiti@2.7.0)(typescript@6.0.3):
+  tsup@9.0.0(jiti@2.7.0)(tsx@4.23.15)(typescript@6.0.3):
     dependencies:
       bundle-require: 5.1.0(esbuild@0.28.2)
       cac: 7.1.0
@@ -8370,7 +8379,7 @@ snapshots:
       joycon: 3.1.1
       obug: 3.0.0
       picocolors: 1.1.1
-      postcss-load-config: 6.0.1(jiti@2.7.0)
+      postcss-load-config: 6.0.1(jiti@2.7.0)(tsx@4.23.15)
       resolve-from: 5.0.0
       rollup: 4.65.1
       source-map-js: 1.2.2
@@ -8384,6 +8393,12 @@ snapshots:
       - jiti
       - tsx
       - yaml
+
+  tsx@4.23.15:
+    dependencies:
+      esbuild: 0.28.2
+    optionalDependencies:
+      fsevents: 2.3.3
 
   turbo@2.11.10:
     optionalDependencies:
