@@ -49,17 +49,17 @@ describe('AnalysisResultService', () => {
 
   it('runs every supported rule on every context and links issues to the result', async () => {
     handler.handle.mockImplementation((rule, context) =>
-      Promise.resolve([{ ruleId: rule.id, analysisContextId: context.id }]),
+      Promise.resolve([{ ruleId: rule.id, analysisContextId: context.id, description: 'failed' }]),
     );
 
     const result = await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(handler.handle).toHaveBeenCalledTimes(2);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-1' },
+      { ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed' },
     ]);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-2' },
+      { ruleId: 'r-1', analysisContextId: 'c-2', description: 'failed' },
     ]);
     expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 2 });
   });
@@ -78,7 +78,7 @@ describe('AnalysisResultService', () => {
 
   it('marks the result FAILED with the issues so far and rethrows', async () => {
     handler.handle
-      .mockResolvedValueOnce([{ ruleId: 'r-1', analysisContextId: 'c-1' }])
+      .mockResolvedValueOnce([{ ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed' }])
       .mockRejectedValueOnce(new Error('duckdb'));
 
     await expect(analysisResultService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');

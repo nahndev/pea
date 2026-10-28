@@ -14,6 +14,7 @@ interface IssueFilter {
 export interface IssueSource {
   ruleId: string;
   analysisContextId: string;
+  description?: string;
 }
 
 @Injectable()

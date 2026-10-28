@@ -32,7 +32,11 @@ describe('P90Handler', () => {
   it('returns an issue linked to the rule when p90 exceeds the threshold', async () => {
     await writeLog([10, 20, 30, 40, 50, 60, 70, 80, 900, 1000]);
     await expect(p90Handler.handle(rule(), context())).resolves.toEqual([
-      { ruleId: 'r-1', analysisContextId: 'c-1' },
+      {
+        ruleId: 'r-1',
+        analysisContextId: 'c-1',
+        description: 'P90 910.0ms exceeds threshold 100ms',
+      },
     ]);
   });
 

@@ -62,6 +62,7 @@ model Issue {
   ruleId            String          @map("rule_id") @db.Uuid
   analysisContextId String          @map("analysis_context_id") @db.Uuid
   analysisResultId  String?         @map("analysis_result_id") @db.Uuid
+  description       String?
   status            String          @default("OPEN") @db.VarChar(20)
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")

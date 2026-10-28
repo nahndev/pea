@@ -1,5 +1,5 @@
 import { IssueStatus } from '@tomato/constants';
-import { IsIn, IsOptional, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateIssueDto {
   @IsUUID()
@@ -7,6 +7,10 @@ export class CreateIssueDto {
 
   @IsUUID()
   analysisContextId: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsOptional()
   @IsIn(Object.values(IssueStatus))
