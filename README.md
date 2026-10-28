@@ -39,7 +39,6 @@ This project aims to build a tool similar to SonarQube, but focused on system pe
 │           │       ├── <module>.service.ts
 │           │       ├── <module>.repository.ts
 │           │       ├── dto/
-│           │       ├── entities/
 │           │       └── <module>.constants.ts
 │           ├── common/         # guard, filter, interceptor, pipe (HttpExceptionFilter, ZodValidationPipe)
 │           └── main.ts

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { MergeRequest } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MergeRequest } from './entities/merge-request.entity';
 
 @Injectable()
 export class MergeRequestsRepository {

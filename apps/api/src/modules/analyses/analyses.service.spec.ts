@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { ErrorCode } from '@tomato/constants';
+import { AnalysisContextType, ErrorCode } from '@tomato/constants';
 import { AnalysesRepository } from './analyses.repository';
 import { AnalysesService } from './analyses.service';
 import { LogStorageService } from '../analysis-contexts/log-storage.service';
@@ -45,6 +45,12 @@ describe('AnalysesService', () => {
     });
   });
 
+  it('rejects a log file with an unknown type', async () => {
+    await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, [upload('foo.log')]))).resolves.toEqual({
+      code: ErrorCode.LOG_FILE_INVALID,
+    });
+  });
+
   it('rejects duplicated file names', async () => {
     const files = [upload('sql.log'), upload('sql.log')];
     await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, files))).resolves.toEqual({
@@ -65,7 +71,10 @@ describe('AnalysesService', () => {
     expect(repository.create).toHaveBeenCalledWith({
       mergeRequestId: 'mr-1',
       commitSha: SHA,
-      files: ['api_metric.log', 'sql.log'],
+      files: [
+        { file: 'api_metric.log', type: AnalysisContextType.API_METRIC },
+        { file: 'sql.log', type: AnalysisContextType.SQL },
+      ],
     });
     expect(storage.save).toHaveBeenCalledWith('an-1', [
       { file: 'api_metric.log', buffer: expect.any(Buffer) },

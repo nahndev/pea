@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import type { AnalysisContextType } from '@tomato/constants';
+import type { AnalysisContext } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AnalysisContext } from './entities/analysis-context.entity';
 
 @Injectable()
 export class AnalysisContextsRepository {
@@ -11,11 +12,10 @@ export class AnalysisContextsRepository {
   }
 
   async findMany(
-    analysisId: string | undefined,
+    where: { analysisId?: string; type?: AnalysisContextType },
     limit: number,
     offset: number,
   ): Promise<{ items: AnalysisContext[]; total: number }> {
-    const where = { analysisId };
     const [items, total] = await this.prisma.$transaction([
       this.prisma.analysisContext.findMany({
         where,

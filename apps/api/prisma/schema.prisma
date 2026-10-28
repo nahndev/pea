@@ -32,9 +32,40 @@ model AnalysisContext {
   id         String   @id @default(uuid(7)) @db.Uuid
   analysisId String   @map("analysis_id") @db.Uuid
   file       String   @db.VarChar(255)
+  type       String   @db.VarChar(50)
   createdAt  DateTime @default(now()) @map("created_at")
   analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  issues     Issue[]
 
   @@unique([analysisId, file])
+  @@index([type])
   @@map("analysis_contexts")
+}
+
+model Rule {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  type        String   @db.VarChar(50)
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  issues      Issue[]
+
+  @@index([type])
+  @@map("rules")
+}
+
+model Issue {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  ruleId            String          @map("rule_id") @db.Uuid
+  analysisContextId String          @map("analysis_context_id") @db.Uuid
+  status            String          @default("OPEN") @db.VarChar(20)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  rule              Rule            @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  analysisContext   AnalysisContext @relation(fields: [analysisContextId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([analysisContextId])
+  @@index([status])
+  @@map("issues")
 }

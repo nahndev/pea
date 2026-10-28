@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ErrorCode } from '@tomato/constants';
+import { AnalysisContextType, ErrorCode } from '@tomato/constants';
 import type { Paginated } from '@tomato/types';
-import { LOG_FILE_NAME_PATTERN } from '../analysis-contexts/analysis-contexts.constants';
+import type { Analysis } from '../../generated/client';
+import { LOG_FILE_EXTENSION, LOG_FILE_NAME_PATTERN } from '../analysis-contexts/analysis-contexts.constants';
 import { LogStorageService } from '../analysis-contexts/log-storage.service';
 import { MergeRequestsService } from '../merge-requests/merge-requests.service';
 import { AnalysesRepository } from './analyses.repository';
+import type { AnalysisWithContexts } from './analyses.types';
 import { CreateAnalysisDto } from './dto/create-analysis.dto';
 import { ListAnalysesQueryDto } from './dto/list-analyses-query.dto';
-import { Analysis, AnalysisWithContexts } from './entities/analysis.entity';
 
 @Injectable()
 export class AnalysesService {
@@ -27,11 +28,14 @@ export class AnalysesService {
     const analysis = await this.repository.create({
       mergeRequestId: mergeRequest.id,
       commitSha,
-      files: files.map(({ file }) => file),
+      files: files.map(({ file, type }) => ({ file, type })),
     });
 
     try {
-      await this.logStorage.save(analysis.id, files);
+      await this.logStorage.save(
+        analysis.id,
+        files.map(({ file, buffer }) => ({ file, buffer })),
+      );
     } catch (error) {
       await Promise.allSettled([this.repository.delete(analysis.id), this.logStorage.remove(analysis.id)]);
       throw error;
@@ -60,8 +64,12 @@ export class AnalysesService {
       if (names.has(originalname)) {
         throw new BadRequestException({ code: ErrorCode.LOG_FILE_DUPLICATED });
       }
+      const type = Object.values(AnalysisContextType).find(
+        (value) => value === originalname.replace(LOG_FILE_EXTENSION, '').toUpperCase(),
+      );
+      if (!type) throw new BadRequestException({ code: ErrorCode.LOG_FILE_INVALID });
       names.add(originalname);
-      return { file: originalname, buffer };
+      return { file: originalname, type, buffer };
     });
   }
 }

@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
 import type { Paginated } from '@tomato/types';
+import type { AnalysisContext } from '../../generated/client';
 import { AnalysisContextsRepository } from './analysis-contexts.repository';
 import { ListAnalysisContextsQueryDto } from './dto/list-analysis-contexts-query.dto';
-import { AnalysisContext } from './entities/analysis-context.entity';
 
 @Injectable()
 export class AnalysisContextsService {
   constructor(private readonly repository: AnalysisContextsRepository) {}
 
-  findAll({ analysisId, limit, offset }: ListAnalysisContextsQueryDto): Promise<
+  findAll({ limit, offset, ...filter }: ListAnalysisContextsQueryDto): Promise<
     Paginated<AnalysisContext>
   > {
-    return this.repository.findMany(analysisId, limit, offset);
+    return this.repository.findMany(filter, limit, offset);
   }
 
   async findOne(id: string): Promise<AnalysisContext> {

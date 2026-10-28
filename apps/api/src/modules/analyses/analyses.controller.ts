@@ -20,12 +20,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
-import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
 import { AnalysesService } from './analyses.service';
 import { LOG_FILE_FIELD, MAX_LOG_FILE_COUNT, MAX_LOG_FILE_SIZE } from './analyses.constants';
 import { CreateAnalysisDto } from './dto/create-analysis.dto';
 import { ListAnalysesQueryDto } from './dto/list-analyses-query.dto';
-import { Analysis, AnalysisWithContexts } from './entities/analysis.entity';
 
 @ApiTags('analyses')
 @Controller('analyses')
@@ -49,7 +47,7 @@ export class AnalysesController {
       },
     },
   })
-  @ApiCreatedResponse({ type: AnalysisWithContexts })
+  @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @UseInterceptors(
     FilesInterceptor(LOG_FILE_FIELD, MAX_LOG_FILE_COUNT, {
@@ -62,13 +60,13 @@ export class AnalysesController {
   }
 
   @Get()
-  @ApiPaginatedResponse(Analysis)
+  @ApiOkResponse()
   findAll(@Query() query: ListAnalysesQueryDto) {
     return this.service.findAll(query);
   }
 
   @Get(':id')
-  @ApiOkResponse({ type: AnalysisWithContexts })
+  @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOne(id);

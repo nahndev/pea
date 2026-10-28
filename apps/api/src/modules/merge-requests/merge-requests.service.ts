@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
 import type { Paginated } from '@tomato/types';
+import type { MergeRequest } from '../../generated/client';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { MergeRequest } from './entities/merge-request.entity';
 import { MergeRequestsRepository } from './merge-requests.repository';
 
 @Injectable()

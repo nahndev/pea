@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import type { AnalysisContextType } from '@tomato/constants';
+import type { Analysis } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Analysis, AnalysisWithContexts } from './entities/analysis.entity';
+import type { AnalysisWithContexts } from './analyses.types';
 
 interface CreateAnalysisData {
   mergeRequestId: string;
   commitSha: string;
-  files: string[];
+  files: { file: string; type: AnalysisContextType }[];
 }
 
 @Injectable()
@@ -17,7 +19,7 @@ export class AnalysesRepository {
       data: {
         mergeRequestId,
         commitSha,
-        contexts: { create: files.map((file) => ({ file })) },
+        contexts: { create: files },
       },
       include: { contexts: true },
     });

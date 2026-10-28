@@ -5,6 +5,6 @@ import { LogStorageService } from './log-storage.service';
 
 @Module({
   providers: [AnalysisContextsService, AnalysisContextsRepository, LogStorageService],
-  exports: [LogStorageService],
+  exports: [AnalysisContextsService, LogStorageService],
 })
 export class AnalysisContextsModule {}

@@ -18,7 +18,6 @@ Argument: `<module>` — module name in `kebab-case` (see `CONTRIBUTING.md` at t
    ├── <module>.service.ts
    ├── <module>.repository.ts
    ├── dto/
-   ├── entities/
    └── <module>.constants.ts
    ```
 
