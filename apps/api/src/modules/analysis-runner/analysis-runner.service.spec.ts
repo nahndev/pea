@@ -9,7 +9,7 @@ import { AnalysisRunnerRepository } from './analysis-runner.repository';
 import { AnalysisRunnerService } from './analysis-runner.service';
 
 describe('AnalysisRunnerService', () => {
-  let analysisRunnerRepository: jest.Mocked<Pick<AnalysisRunnerRepository, 'create' | 'finish' | 'findById'>>;
+  let analysisRunnerRepository: jest.Mocked<Pick<AnalysisRunnerRepository, 'create' | 'finish' | 'findById' | 'findLatest'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
   let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
@@ -28,6 +28,7 @@ describe('AnalysisRunnerService', () => {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       findById: jest.fn(),
+      findLatest: jest.fn(),
     };
     analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
     rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
@@ -98,6 +99,20 @@ describe('AnalysisRunnerService', () => {
   it('throws ANALYSIS_RESULT_NOT_FOUND when the result is missing', async () => {
     analysisRunnerRepository.findById.mockResolvedValue(null);
     const error = await analysisRunnerService.findOne('missing').catch((e: NotFoundException) => e);
+    expect((error as NotFoundException).getResponse()).toEqual({
+      code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
+    });
+  });
+
+  it('returns the latest result of an analysis', async () => {
+    analysisRunnerRepository.findLatest.mockResolvedValue({ id: 'res-2' } as never);
+    await expect(analysisRunnerService.findLatest('an-1')).resolves.toEqual({ id: 'res-2' });
+    expect(analysisRunnerRepository.findLatest).toHaveBeenCalledWith('an-1');
+  });
+
+  it('throws ANALYSIS_RESULT_NOT_FOUND when the analysis has no result yet', async () => {
+    analysisRunnerRepository.findLatest.mockResolvedValue(null);
+    const error = await analysisRunnerService.findLatest('an-1').catch((e: NotFoundException) => e);
     expect((error as NotFoundException).getResponse()).toEqual({
       code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
     });

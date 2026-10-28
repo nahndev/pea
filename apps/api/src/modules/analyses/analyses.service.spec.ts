@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { AnalysisContextType, ErrorCode } from '@tomato/constants';
+import type { EventEmitter2 } from '@nestjs/event-emitter';
+import { AnalysisContextType, AnalysisEvent, ErrorCode } from '@tomato/constants';
 import { StorageService } from '../files/storage.service';
 import type { StoredFile } from '../files/storage.service';
 import { MergeRequestsService } from '../merge-requests/merge-requests.service';
@@ -22,6 +23,7 @@ describe('AnalysesService', () => {
   let analysesRepository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
   let mergeRequestsService: jest.Mocked<Pick<MergeRequestsService, 'findOrCreateByIid'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'saveMany' | 'remove'>>;
+  let eventEmitter2: jest.Mocked<Pick<EventEmitter2, 'emit'>>;
   let analysesService: AnalysesService;
 
   beforeEach(() => {
@@ -31,11 +33,13 @@ describe('AnalysesService', () => {
       saveMany: jest.fn().mockResolvedValue(STORED_FILES),
       remove: jest.fn().mockResolvedValue(undefined),
     };
+    eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
       mergeRequestsService as unknown as MergeRequestsService,
       storageService as unknown as StorageService,
     );
+    Object.assign(analysesService, { eventEmitter2 });
   });
 
   const codeOf = async (promise: Promise<unknown>) => {
@@ -61,6 +65,7 @@ describe('AnalysesService', () => {
       ],
     });
     expect(storageService.remove).not.toHaveBeenCalled();
+    expect(eventEmitter2.emit).toHaveBeenCalledWith(AnalysisEvent.CREATED, analysis);
     expect(result).toBe(analysis);
   });
 
@@ -72,6 +77,7 @@ describe('AnalysesService', () => {
     });
     expect(mergeRequestsService.findOrCreateByIid).not.toHaveBeenCalled();
     expect(storageService.saveMany).not.toHaveBeenCalled();
+    expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
 
   it('removes the stored files when creating the analysis fails', async () => {
@@ -79,6 +85,7 @@ describe('AnalysesService', () => {
 
     await expect(analysesService.create({ iid: 7, commitSha: SHA }, FILES_BY_FIELD)).rejects.toThrow('db down');
     expect(storageService.remove).toHaveBeenCalledWith(STORED_FILES);
+    expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
 
   it('throws when the analysis does not exist', async () => {

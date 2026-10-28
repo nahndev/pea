@@ -22,6 +22,13 @@ export class AnalysisRunnerRepository {
     return this.prismaService.analysisResult.findUnique({ where: { id } });
   }
 
+  findLatest(analysisId: string): Promise<AnalysisResult | null> {
+    return this.prismaService.analysisResult.findFirst({
+      where: { analysisId },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+  }
+
   async findMany(
     analysisId: string | undefined,
     limit: number,

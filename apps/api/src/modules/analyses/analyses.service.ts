@@ -3,8 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { ErrorCode } from "@tomato/constants";
+import { AnalysisEvent, ErrorCode } from "@tomato/constants";
 import type { Paginated } from "@tomato/types";
+import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import type { Analysis } from "../../generated/client";
 import { StorageService } from "../files/storage.service";
 import { MergeRequestsService } from "../merge-requests/merge-requests.service";
@@ -22,14 +23,15 @@ export class AnalysesService {
     private readonly storageService: StorageService,
   ) {}
 
+  @EmitEvent(AnalysisEvent.CREATED)
   async create(
     { iid, commitSha }: CreateAnalysisDto,
     filesByField: Record<string, Express.Multer.File[]> = {},
   ): Promise<AnalysisWithContexts> {
-    const entries = this.toContextEntries(filesByField);
+    const contextUploads = this.toContextUploads(filesByField);
     const mergeRequest = await this.mergeRequestsService.findOrCreateByIid(iid);
     const storedFiles = await this.storageService.saveMany(
-      entries.map(({ file }) => file),
+      contextUploads.map(({ file }) => file),
     );
     try {
       return await this.analysesRepository.create({
@@ -37,7 +39,7 @@ export class AnalysesService {
         commitSha,
         files: storedFiles.map((storedFile, index) => ({
           ...storedFile,
-          type: entries[index].type,
+          type: contextUploads[index].type,
         })),
       });
     } catch (error) {
@@ -61,7 +63,7 @@ export class AnalysesService {
     return analysis;
   }
 
-  private toContextEntries(filesByField: Record<string, Express.Multer.File[]>) {
+  private toContextUploads(filesByField: Record<string, Express.Multer.File[]>) {
     return Object.entries(filesByField).flatMap(([field, files]) => {
       const type = CONTEXT_TYPE_BY_FIELD.get(field);
       if (!type)

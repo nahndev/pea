@@ -50,4 +50,10 @@ export class AnalysisRunnerService {
     if (!result) throw new NotFoundException({ code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND });
     return result;
   }
+
+  async findLatest(analysisId: string): Promise<AnalysisResult> {
+    const result = await this.analysisRunnerRepository.findLatest(analysisId);
+    if (!result) throw new NotFoundException({ code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND });
+    return result;
+  }
 }

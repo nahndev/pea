@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppConfigModule } from '@tomato/config';
 import { HealthController } from './health/health.controller';
 import { AnalysisRunnerModule } from './modules/analysis-runner/analysis-runner.module';
@@ -12,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 @Module({
   imports: [
     AppConfigModule,
+    EventEmitterModule.forRoot(),
     PrismaModule,
     MergeRequestsModule,
     AnalysesModule,
