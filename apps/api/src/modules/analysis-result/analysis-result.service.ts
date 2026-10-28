@@ -4,6 +4,8 @@ import type { Paginated } from '@tomato/types';
 import type { AnalysisResult } from '../../generated/client';
 import { AnalysesService } from '../analyses/analyses.service';
 import { IssuesService } from '../issues/issues.service';
+import { MetricsService } from '../metrics/metrics.service';
+import { QualityGatesService } from '../quality-gates/quality-gates.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import { RulesService } from '../rules/rules.service';
 import { AnalysisResultRepository } from './analysis-result.repository';
@@ -18,6 +20,8 @@ export class AnalysisResultService {
     private readonly rulesService: RulesService,
     private readonly issuesService: IssuesService,
     private readonly ruleHandlerFactory: RuleHandlerFactory,
+    private readonly metricsService: MetricsService,
+    private readonly qualityGatesService: QualityGatesService,
   ) {}
 
   async run({ analysisId }: RunAnalysisDto): Promise<AnalysisResult> {
@@ -34,6 +38,8 @@ export class AnalysisResultService {
           issueCount += await this.issuesService.createMany(result.id, issues);
         }
       }
+      await this.metricsService.measure(result.id, analysis.contexts);
+      await this.qualityGatesService.evaluate(result.id);
     } catch (error) {
       await this.analysisResultRepository.finish(result.id, { status: AnalysisResultStatus.FAILED, issueCount });
       throw error;

@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common';
+import type { Metric } from '../../generated/client';
+import { PrismaService } from '../../prisma/prisma.service';
+
+@Injectable()
+export class MetricsRepository {
+  constructor(private readonly prismaService: PrismaService) {}
+
+  findAll(): Promise<Metric[]> {
+    return this.prismaService.metric.findMany({ orderBy: { id: 'asc' } });
+  }
+}

@@ -2,6 +2,8 @@ import { NotFoundException } from '@nestjs/common';
 import { AnalysisResultStatus, ErrorCode } from '@tomato/constants';
 import { AnalysesService } from '../analyses/analyses.service';
 import { IssuesService } from '../issues/issues.service';
+import { MetricsService } from '../metrics/metrics.service';
+import { QualityGatesService } from '../quality-gates/quality-gates.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import type { RuleHandler } from '../rules/handlers/rule-handler.types';
 import { RulesService } from '../rules/rules.service';
@@ -14,6 +16,8 @@ describe('AnalysisResultService', () => {
   let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
   let ruleHandlerFactory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
+  let metricsService: jest.Mocked<Pick<MetricsService, 'measure'>>;
+  let qualityGatesService: jest.Mocked<Pick<QualityGatesService, 'evaluate'>>;
   let handler: jest.Mocked<RuleHandler>;
   let analysisResultService: AnalysisResultService;
 
@@ -33,6 +37,8 @@ describe('AnalysisResultService', () => {
     analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
     rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
     issuesService = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
+    metricsService = { measure: jest.fn().mockResolvedValue(0) };
+    qualityGatesService = { evaluate: jest.fn().mockResolvedValue(0) };
     handler = { handle: jest.fn().mockResolvedValue([]) };
     ruleHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90_FAILURE'),
@@ -44,6 +50,8 @@ describe('AnalysisResultService', () => {
       rulesService as unknown as RulesService,
       issuesService as unknown as IssuesService,
       ruleHandlerFactory as unknown as RuleHandlerFactory,
+      metricsService as unknown as MetricsService,
+      qualityGatesService as unknown as QualityGatesService,
     );
   });
 
@@ -62,6 +70,27 @@ describe('AnalysisResultService', () => {
       { ruleId: 'r-1', analysisContextId: 'c-2', description: 'failed' },
     ]);
     expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 2 });
+  });
+
+  it('measures metrics then evaluates quality gates for the result', async () => {
+    await analysisResultService.run({ analysisId: 'an-1' });
+
+    expect(metricsService.measure).toHaveBeenCalledWith('res-1', contexts);
+    expect(qualityGatesService.evaluate).toHaveBeenCalledWith('res-1');
+    expect(metricsService.measure.mock.invocationCallOrder[0]).toBeLessThan(
+      qualityGatesService.evaluate.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('marks the result FAILED when measuring metrics throws', async () => {
+    metricsService.measure.mockRejectedValue(new Error('duckdb'));
+
+    await expect(analysisResultService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
+    expect(qualityGatesService.evaluate).not.toHaveBeenCalled();
+    expect(analysisResultRepository.finish).toHaveBeenCalledWith('res-1', {
+      status: AnalysisResultStatus.FAILED,
+      issueCount: 0,
+    });
   });
 
   it('completes with zero issues when nothing is found', async () => {

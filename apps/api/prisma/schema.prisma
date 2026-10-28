@@ -30,14 +30,15 @@ model Analysis {
 }
 
 model AnalysisContext {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  analysisId String   @map("analysis_id") @db.Uuid
-  file       String   @db.VarChar(255)
-  path       String   @db.VarChar(300)
-  type       String   @db.VarChar(50)
-  createdAt  DateTime @default(now()) @map("created_at")
-  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  issues     Issue[]
+  id            String         @id @default(uuid(7)) @db.Uuid
+  analysisId    String         @map("analysis_id") @db.Uuid
+  file          String         @db.VarChar(255)
+  path          String         @db.VarChar(300)
+  type          String         @db.VarChar(50)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  analysis      Analysis       @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  issues        Issue[]
+  metricResults MetricResult[]
 
   @@unique([analysisId, file])
   @@index([type])
@@ -78,15 +79,90 @@ model Issue {
 }
 
 model AnalysisResult {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  analysisId String   @map("analysis_id") @db.Uuid
-  status     String   @default("RUNNING") @db.VarChar(20)
-  issueCount Int      @default(0) @map("issue_count")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  issues     Issue[]
+  id            String         @id @default(uuid(7)) @db.Uuid
+  analysisId    String         @map("analysis_id") @db.Uuid
+  status        String         @default("RUNNING") @db.VarChar(20)
+  issueCount    Int            @default(0) @map("issue_count")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  analysis      Analysis       @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  issues        Issue[]
+  metricResults MetricResult[]
 
   @@index([analysisId, createdAt(sort: Desc)])
   @@map("analysis_results")
+}
+
+model Metric {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  type        String            @db.VarChar(50)
+  description String
+  config      Json              @default("{}") @db.JsonB
+  results     MetricResult[]
+  conditions  MetricCondition[]
+
+  @@index([type])
+  @@map("metrics")
+}
+
+model MetricResult {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  metricId          String             @map("metric_id") @db.Uuid
+  analysisResultId  String             @map("analysis_result_id") @db.Uuid
+  analysisContextId String             @map("analysis_context_id") @db.Uuid
+  value             Float
+  createdAt         DateTime           @default(now()) @map("created_at")
+  metric            Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  analysisResult    AnalysisResult     @relation(fields: [analysisResultId], references: [id], onDelete: Cascade)
+  analysisContext   AnalysisContext    @relation(fields: [analysisContextId], references: [id], onDelete: Cascade)
+  evaluations       MetricEvaluation[]
+
+  @@unique([analysisResultId, analysisContextId, metricId])
+  @@index([metricId, createdAt(sort: Desc)])
+  @@index([analysisContextId])
+  @@map("metric_results")
+}
+
+model QualityGate {
+  id          String            @id @default(uuid(7)) @db.Uuid
+  name        String            @unique @db.VarChar(100)
+  description String?
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  conditions  MetricCondition[]
+
+  @@map("quality_gates")
+}
+
+model MetricCondition {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  qualityGateId String             @map("quality_gate_id") @db.Uuid
+  metricId      String             @map("metric_id") @db.Uuid
+  operator      String             @db.VarChar(10)
+  threshold     Float
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  qualityGate   QualityGate        @relation(fields: [qualityGateId], references: [id], onDelete: Cascade)
+  metric        Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  evaluations   MetricEvaluation[]
+
+  @@index([qualityGateId])
+  @@index([metricId])
+  @@map("metric_conditions")
+}
+
+model MetricEvaluation {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  metricResultId    String          @map("metric_result_id") @db.Uuid
+  metricConditionId String          @map("metric_condition_id") @db.Uuid
+  status            String          @db.VarChar(20)
+  operator          String          @db.VarChar(10)
+  threshold         Float
+  createdAt         DateTime        @default(now()) @map("created_at")
+  metricResult      MetricResult    @relation(fields: [metricResultId], references: [id], onDelete: Cascade)
+  metricCondition   MetricCondition @relation(fields: [metricConditionId], references: [id], onDelete: Cascade)
+
+  @@unique([metricResultId, metricConditionId])
+  @@index([metricConditionId])
+  @@map("metric_evaluations")
 }

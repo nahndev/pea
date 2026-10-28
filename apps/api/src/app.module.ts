@@ -6,7 +6,9 @@ import { AnalysisResultModule } from './modules/analysis-result/analysis-result.
 import { AnalysesModule } from './modules/analyses/analyses.module';
 import { AnalysisContextsModule } from './modules/analysis-contexts/analysis-contexts.module';
 import { IssuesModule } from './modules/issues/issues.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
 import { MergeRequestsModule } from './modules/merge-requests/merge-requests.module';
+import { QualityGatesModule } from './modules/quality-gates/quality-gates.module';
 import { RulesModule } from './modules/rules/rules.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -20,6 +22,8 @@ import { PrismaModule } from './prisma/prisma.module';
     AnalysisContextsModule,
     RulesModule,
     IssuesModule,
+    MetricsModule,
+    QualityGatesModule,
     AnalysisResultModule,
   ],
   controllers: [HealthController],

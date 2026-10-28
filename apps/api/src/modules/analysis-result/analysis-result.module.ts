@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AnalysesModule } from '../analyses/analyses.module';
 import { IssuesModule } from '../issues/issues.module';
+import { MetricsModule } from '../metrics/metrics.module';
+import { QualityGatesModule } from '../quality-gates/quality-gates.module';
 import { RulesModule } from '../rules/rules.module';
 import { AnalysisResultController } from './analysis-result.controller';
 import { AnalysisResultListener } from './analysis-result.listener';
@@ -9,7 +11,7 @@ import { AnalysisResultService } from './analysis-result.service';
 import { LatestAnalysisResultController } from './latest-analysis-result.controller';
 
 @Module({
-  imports: [AnalysesModule, RulesModule, IssuesModule],
+  imports: [AnalysesModule, RulesModule, IssuesModule, MetricsModule, QualityGatesModule],
   controllers: [AnalysisResultController, LatestAnalysisResultController],
   providers: [AnalysisResultService, AnalysisResultRepository, AnalysisResultListener],
 })
