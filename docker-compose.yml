@@ -1,22 +1,18 @@
 services:
   postgres:
-    image: nexus.leaneo.com/docker-hub/postgres:17-alpine
-    container_name: pea-postgres
-    restart: unless-stopped
+    image: postgres:17-alpine
+    command: ["postgres", "-c", "wal_level=logical"]
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pea}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pea}
-      POSTGRES_DB: ${POSTGRES_DB:-pea}
+      POSTGRES_USER: tomato
+      POSTGRES_PASSWORD: tomato
+      POSTGRES_DB: pea
     ports:
-      - "${POSTGRES_PORT:-5435}:5432"
+      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-pea} -d ${POSTGRES_DB:-pea}",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U tomato -d pea"]
       interval: 5s
       timeout: 5s
       retries: 10
