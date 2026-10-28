@@ -17,4 +17,11 @@ export class AnalysisResultRepository {
   ): Promise<AnalysisResult> {
     return this.prismaService.analysisResult.update({ where: { id }, data });
   }
+
+  findLatestByAnalysis(analysisId: string): Promise<AnalysisResult | null> {
+    return this.prismaService.analysisResult.findFirst({
+      where: { analysisId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
+  }
 }

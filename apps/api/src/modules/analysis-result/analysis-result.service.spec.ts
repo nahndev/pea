@@ -123,3 +123,53 @@ describe('AnalysisResultService', () => {
     expect(analysisResultRepository.create).not.toHaveBeenCalled();
   });
 });
+
+describe('AnalysisResultService reads', () => {
+  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'findLatestByAnalysis'>>;
+  let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
+  let issuesService: jest.Mocked<Pick<IssuesService, 'findPage'>>;
+  let metricsService: jest.Mocked<Pick<MetricsService, 'findResultViews'>>;
+  let analysisResultService: AnalysisResultService;
+
+  const query = { limit: 20, offset: 0 };
+
+  beforeEach(() => {
+    analysisResultRepository = { findLatestByAnalysis: jest.fn() };
+    analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1' }) };
+    issuesService = { findPage: jest.fn().mockResolvedValue({ items: [], total: 0 }) };
+    metricsService = { findResultViews: jest.fn().mockResolvedValue([]) };
+    analysisResultService = new AnalysisResultService(
+      analysisResultRepository as unknown as AnalysisResultRepository,
+      analysesService as unknown as AnalysesService,
+      {} as RulesService,
+      issuesService as unknown as IssuesService,
+      {} as RuleHandlerFactory,
+      metricsService as unknown as MetricsService,
+      {} as QualityGatesService,
+    );
+  });
+
+  it('lists the issues of the latest result with the filters', async () => {
+    analysisResultRepository.findLatestByAnalysis.mockResolvedValue({ id: 'res-2' } as never);
+
+    await analysisResultService.listIssues('an-1', { ...query, status: 'OPEN' });
+
+    expect(issuesService.findPage).toHaveBeenCalledWith('res-2', { ...query, status: 'OPEN' });
+  });
+
+  it('returns empty pages while the analysis has no result yet', async () => {
+    analysisResultRepository.findLatestByAnalysis.mockResolvedValue(null);
+
+    await expect(analysisResultService.listIssues('an-1', query)).resolves.toEqual({ items: [], total: 0 });
+    await expect(analysisResultService.listMetrics('an-1')).resolves.toEqual([]);
+    expect(issuesService.findPage).not.toHaveBeenCalled();
+    expect(metricsService.findResultViews).not.toHaveBeenCalled();
+  });
+
+  it('propagates ANALYSIS_NOT_FOUND from the analysis lookup', async () => {
+    analysesService.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND }));
+
+    await expect(analysisResultService.listMetrics('missing')).rejects.toBeInstanceOf(NotFoundException);
+    expect(analysisResultRepository.findLatestByAnalysis).not.toHaveBeenCalled();
+  });
+});

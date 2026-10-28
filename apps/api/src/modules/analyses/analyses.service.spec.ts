@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { AnalysisContextType, AnalysisEvent, ErrorCode } from '@tomato/constants';
 import { StorageService } from '../files/storage.service';
@@ -94,5 +94,101 @@ describe('AnalysesService', () => {
     await expect(codeOf(analysesService.findOne('missing'))).resolves.toEqual({
       code: ErrorCode.ANALYSIS_NOT_FOUND,
     });
+  });
+});
+
+describe('AnalysesService reads', () => {
+  let analysesRepository: jest.Mocked<
+    Pick<AnalysesRepository, 'findDetailById' | 'findPageByBranch' | 'findRecentByBranch'>
+  >;
+  let branchesService: jest.Mocked<Pick<BranchesService, 'findOne'>>;
+  let analysesService: AnalysesService;
+
+  const createdAt = new Date('2026-10-01T00:00:00.000Z');
+  const result = (evaluationStatuses: string[]) => ({
+    id: 'res-1',
+    status: 'COMPLETED',
+    issueCount: 2,
+    metricResults: [{ evaluations: evaluationStatuses.map((evaluationStatus) => ({ status: evaluationStatus })) }],
+  });
+
+  beforeEach(() => {
+    analysesRepository = { findDetailById: jest.fn(), findPageByBranch: jest.fn(), findRecentByBranch: jest.fn() };
+    branchesService = { findOne: jest.fn().mockResolvedValue({ id: 'br-1', name: 'feat/x' }) };
+    analysesService = new AnalysesService(
+      analysesRepository as unknown as AnalysesRepository,
+      branchesService as unknown as BranchesService,
+      {} as StorageService,
+    );
+  });
+
+  it('throws ANALYSIS_NOT_FOUND when the analysis does not exist', async () => {
+    analysesRepository.findDetailById.mockResolvedValue(null);
+
+    const error = await analysesService.findDetail('missing').catch((e: NotFoundException) => e);
+
+    expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.ANALYSIS_NOT_FOUND });
+  });
+
+  it.each([
+    [[], null],
+    [['PASSED', 'PASSED'], 'PASSED'],
+    [['PASSED', 'FAILED'], 'FAILED'],
+  ])('derives the gate status from evaluations %j as %s', async (evaluationStatuses, expected) => {
+    analysesRepository.findPageByBranch.mockResolvedValue({
+      items: [{ id: 'an-1', mergeRequestIid: 3, createdAt, results: [result(evaluationStatuses)] }] as never,
+      total: 1,
+    });
+
+    const page = await analysesService.findByBranch('br-1', { limit: 20, offset: 0 });
+
+    expect(page.total).toBe(1);
+    expect(page.items[0]).toEqual({
+      id: 'an-1',
+      mergeRequestIid: 3,
+      createdAt: createdAt.toISOString(),
+      latestResult: { id: 'res-1', status: 'COMPLETED', issueCount: 2, gateStatus: expected },
+    });
+  });
+
+  it('returns a null latest result when the analysis has not been evaluated', async () => {
+    analysesRepository.findPageByBranch.mockResolvedValue({
+      items: [{ id: 'an-1', mergeRequestIid: null, createdAt, results: [] }] as never,
+      total: 1,
+    });
+
+    const page = await analysesService.findByBranch('br-1', { limit: 20, offset: 0 });
+
+    expect(page.items[0].latestResult).toBeNull();
+  });
+
+  it('rejects listing analyses of an unknown branch', async () => {
+    branchesService.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND }));
+
+    await expect(analysesService.findByBranch('missing', { limit: 20, offset: 0 })).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(analysesRepository.findPageByBranch).not.toHaveBeenCalled();
+  });
+
+  it('averages metric values per type over contexts and orders the trend oldest first', async () => {
+    const metricResults = (values: [string, number][]) => ({
+      metricResults: values.map(([type, value]) => ({ value, metric: { type } })),
+    });
+    analysesRepository.findRecentByBranch.mockResolvedValue([
+      { id: 'an-2', createdAt, mergeRequestIid: null, results: [metricResults([['P90', 400]])] },
+      {
+        id: 'an-1',
+        createdAt,
+        mergeRequestIid: 5,
+        results: [metricResults([['P90', 100], ['P90', 300], ['P50', 50]])],
+      },
+    ] as never);
+
+    const trend = await analysesService.getMetricTrend('br-1', 20);
+
+    expect(trend.map(({ analysisId }) => analysisId)).toEqual(['an-1', 'an-2']);
+    expect(trend[0].values).toEqual({ P90: 200, P50: 50 });
+    expect(trend[1].values).toEqual({ P90: 400 });
   });
 });

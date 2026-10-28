@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { AnalysisResultStatus } from '@tomato/constants';
+import type { IssueView, MetricResultView, Paginated } from '@tomato/types';
 import type { AnalysisResult } from '../../generated/client';
 import { AnalysesService } from '../analyses/analyses.service';
+import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { IssuesService } from '../issues/issues.service';
 import { MetricsService } from '../metrics/metrics.service';
 import { QualityGatesService } from '../quality-gates/quality-gates.service';
@@ -43,5 +45,22 @@ export class AnalysisResultService {
       throw error;
     }
     return this.analysisResultRepository.finish(result.id, { status: AnalysisResultStatus.COMPLETED, issueCount });
+  }
+
+  async listIssues(analysisId: string, query: ListIssuesQueryDto): Promise<Paginated<IssueView>> {
+    const result = await this.findLatest(analysisId);
+    if (!result) return { items: [], total: 0 };
+    return this.issuesService.findPage(result.id, query);
+  }
+
+  async listMetrics(analysisId: string): Promise<MetricResultView[]> {
+    const result = await this.findLatest(analysisId);
+    if (!result) return [];
+    return this.metricsService.findResultViews(result.id);
+  }
+
+  private async findLatest(analysisId: string): Promise<AnalysisResult | null> {
+    await this.analysesService.findOne(analysisId);
+    return this.analysisResultRepository.findLatestByAnalysis(analysisId);
   }
 }

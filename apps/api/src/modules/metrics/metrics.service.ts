@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { MetricConditionOperator, MetricEvaluationStatus, MetricType } from '@tomato/constants';
+import type { MetricResultView } from '@tomato/types';
 import type { AnalysisContext, MetricResult } from '../../generated/client';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
@@ -27,5 +29,21 @@ export class MetricsService {
 
   findResults(analysisResultId: string): Promise<MetricResult[]> {
     return this.metricResultsRepository.findByAnalysisResult(analysisResultId);
+  }
+
+  async findResultViews(analysisResultId: string): Promise<MetricResultView[]> {
+    const results = await this.metricResultsRepository.findDetailedByAnalysisResult(analysisResultId);
+    return results.map(({ id, value, metric, analysisContext, evaluations }) => ({
+      id,
+      value,
+      metric: { type: metric.type as MetricType, description: metric.description },
+      context: { file: analysisContext.file },
+      evaluations: evaluations.map((evaluation) => ({
+        status: evaluation.status as MetricEvaluationStatus,
+        operator: evaluation.operator as MetricConditionOperator,
+        threshold: evaluation.threshold,
+        qualityGate: evaluation.metricCondition.qualityGate.name,
+      })),
+    }));
   }
 }

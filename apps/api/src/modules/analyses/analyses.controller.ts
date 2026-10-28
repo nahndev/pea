@@ -1,6 +1,9 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -11,6 +14,8 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { memoryStorage } from "multer";
@@ -54,5 +59,12 @@ export class AnalysesController {
     @UploadedFiles() filesByField: Record<string, Express.Multer.File[]>,
   ) {
     return this.analysesService.create(dto, filesByField);
+  }
+
+  @Get(":id")
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  findOne(@Param("id", ParseUUIDPipe) id: string) {
+    return this.analysesService.findDetail(id);
   }
 }
