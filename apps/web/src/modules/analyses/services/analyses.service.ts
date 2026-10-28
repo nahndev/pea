@@ -1,0 +1,32 @@
+import type { AnalysisDetail, AnalysisSummary, Paginated } from '@tomato/types';
+import { apiClient } from '@/shared/lib/api-client';
+import { toOffset } from '@/shared/lib/pagination';
+import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
+import { LOG_FILE_FIELDS } from '../analyses.constants';
+import type { CreateAnalysisInput } from '../analyses.schemas';
+
+export const analysesService = {
+  async listByBranch(branchId: string, page: number) {
+    const { data } = await apiClient.get<Paginated<AnalysisSummary>>(`/branches/${branchId}/analyses`, {
+      params: { limit: PAGE_SIZE, offset: toOffset(page) },
+    });
+    return data;
+  },
+
+  async get(id: string) {
+    const { data } = await apiClient.get<AnalysisDetail>(`/analyses/${id}`);
+    return data;
+  },
+
+  async create(input: CreateAnalysisInput) {
+    const body = new FormData();
+    body.set('branch', input.branch);
+    if (input.mergeRequestIid) body.set('mergeRequestIid', String(input.mergeRequestIid));
+    for (const { name } of LOG_FILE_FIELDS) {
+      const file = input[name];
+      if (file) body.set(name, file);
+    }
+    const { data } = await apiClient.post<{ id: string }>('/analyses', body);
+    return data;
+  },
+};

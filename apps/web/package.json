@@ -1,0 +1,46 @@
+{
+  "name": "@tomato/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@next/eslint-plugin-next": "16.4.3",
+    "@tanstack/react-query": "5.105.0",
+    "@tomato/constants": "workspace:*",
+    "@tomato/tailwind-config": "workspace:*",
+    "@tomato/types": "workspace:*",
+    "@tomato/ui": "workspace:*",
+    "axios": "1.21.0",
+    "lucide-react": "1.62.0",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "recharts": "3.8.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@tomato/eslint-config": "workspace:*",
+    "@tomato/tsconfig": "workspace:*",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "eslint": "10.13.0",
+    "jsdom": "30.1.3",
+    "postcss": "8.5.32",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

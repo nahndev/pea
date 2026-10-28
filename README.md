@@ -61,7 +61,7 @@ This project aims to build a tool similar to SonarQube, but focused on system pe
 
 ```bash
 pnpm install
-pnpm dev        # web (http://localhost:3000) + api (http://localhost:3001/api)
+pnpm dev        # web (http://localhost:3000) + api (http://localhost:3001/rest)
 pnpm build
 pnpm lint
 pnpm typecheck
@@ -70,8 +70,8 @@ pnpm test
 
 - Scripts run through Turborepo; `packages/*` are built (tsup → `dist/`) before the apps use them.
 - Database (api): `docker compose up -d` starts PostgreSQL; copy `apps/api/.env.example` → `apps/api/.env` (`DATABASE_URL`), then `pnpm migrate` (dev migration; `pnpm --filter @tomato/api migrate:deploy` in production). `pnpm generate` regenerates the Prisma client in `apps/api/src/generated` (gitignored); it also runs on install/build/dev.
-- Web environment variables: copy `apps/web/.env.example` → `apps/web/.env.local` (`NEXT_PUBLIC_API_URL`).
-- The api listens on `PORT` (default `3001`) with the `/api` prefix, e.g. `GET /api/health`. Swagger UI is served at `/api/docs`.
+- Web environment variables: copy `apps/web/.env.example` → `apps/web/.env.local` (`API_URL`, the api origin). The browser calls the relative `/rest/*`; Next.js rewrites it to `API_URL`, so the api needs no CORS.
+- The api listens on `PORT` (default `3001`) with the `/rest` prefix, e.g. `GET /rest/health`. Swagger UI is served at `/rest/docs`.
 - The api validates its env at startup (`@tomato/config`, zod) and refuses to start when a variable is missing or invalid: every variable listed in its `.env.example` is required, there are no defaults.
 
 ## 4. Shared Packages
@@ -80,7 +80,7 @@ pnpm test
 - `@tomato/types`: types/interfaces
 - `@tomato/utils`: pure functions
 - `@tomato/config`: env validation (zod) + `@nestjs/config` module for Nest apps
-- `@tomato/ui`: React components
+- `@tomato/ui`: React components (shadcn/ui; exports source, transpiled by Next via `transpilePackages`)
 - `@tomato/tailwind-config`: Tailwind 4 theme
 - `@tomato/eslint-config`, `@tomato/tsconfig`: lint / tsconfig presets
 
