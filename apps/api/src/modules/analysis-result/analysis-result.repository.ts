@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import type { AnalysisResultStatus } from '@tomato/constants';
-import type { AnalysisResult } from '../../generated/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import type { AnalysisResultStatus } from "@tomato/constants";
+import type { AnalysisResult } from "../../generated/client";
+import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
 export class AnalysisResultRepository {
@@ -25,7 +25,12 @@ export class AnalysisResultRepository {
   findLatest(analysisId: string): Promise<AnalysisResult | null> {
     return this.prismaService.analysisResult.findFirst({
       where: { analysisId },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      include: {
+        issues: {
+          include: { rule: true },
+        },
+      },
     });
   }
 
@@ -36,7 +41,12 @@ export class AnalysisResultRepository {
   ): Promise<{ items: AnalysisResult[]; total: number }> {
     const where = { analysisId };
     const [items, total] = await this.prismaService.$transaction([
-      this.prismaService.analysisResult.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
+      this.prismaService.analysisResult.findMany({
+        where,
+        orderBy: { id: "desc" },
+        take: limit,
+        skip: offset,
+      }),
       this.prismaService.analysisResult.count({ where }),
     ]);
     return { items, total };
