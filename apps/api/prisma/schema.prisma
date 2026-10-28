@@ -23,6 +23,7 @@ model Analysis {
   createdAt      DateTime          @default(now()) @map("created_at")
   mergeRequest   MergeRequest      @relation(fields: [mergeRequestId], references: [id], onDelete: Cascade)
   contexts       AnalysisContext[]
+  results        AnalysisResult[]
 
   @@index([mergeRequestId, createdAt(sort: Desc)])
   @@map("analyses")
@@ -32,6 +33,7 @@ model AnalysisContext {
   id         String   @id @default(uuid(7)) @db.Uuid
   analysisId String   @map("analysis_id") @db.Uuid
   file       String   @db.VarChar(255)
+  path       String   @db.VarChar(300)
   type       String   @db.VarChar(50)
   createdAt  DateTime @default(now()) @map("created_at")
   analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
@@ -46,6 +48,7 @@ model Rule {
   id          String   @id @default(uuid(7)) @db.Uuid
   type        String   @db.VarChar(50)
   description String
+  config      Json     @default("{}") @db.JsonB
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   issues      Issue[]
@@ -58,14 +61,31 @@ model Issue {
   id                String          @id @default(uuid(7)) @db.Uuid
   ruleId            String          @map("rule_id") @db.Uuid
   analysisContextId String          @map("analysis_context_id") @db.Uuid
+  analysisResultId  String?         @map("analysis_result_id") @db.Uuid
   status            String          @default("OPEN") @db.VarChar(20)
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
   rule              Rule            @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   analysisContext   AnalysisContext @relation(fields: [analysisContextId], references: [id], onDelete: Cascade)
+  analysisResult    AnalysisResult? @relation(fields: [analysisResultId], references: [id], onDelete: Cascade)
 
   @@index([ruleId])
   @@index([analysisContextId])
+  @@index([analysisResultId])
   @@index([status])
   @@map("issues")
+}
+
+model AnalysisResult {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  analysisId String   @map("analysis_id") @db.Uuid
+  status     String   @default("RUNNING") @db.VarChar(20)
+  issueCount Int      @default(0) @map("issue_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  issues     Issue[]
+
+  @@index([analysisId, createdAt(sort: Desc)])
+  @@map("analysis_results")
 }

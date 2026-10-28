@@ -1,29 +1,28 @@
 import { BadRequestException } from '@nestjs/common';
 import { AnalysisContextType, ErrorCode } from '@tomato/constants';
+import { UploadService } from '../files/upload.service';
+import type { UploadedFile } from '../files/upload.service';
+import { MergeRequestsService } from '../merge-requests/merge-requests.service';
 import { AnalysesRepository } from './analyses.repository';
 import { AnalysesService } from './analyses.service';
-import { LogStorageService } from '../analysis-contexts/log-storage.service';
-import { MergeRequestsService } from '../merge-requests/merge-requests.service';
 
 const SHA = 'a'.repeat(40);
-
-const upload = (originalname: string) =>
-  ({ originalname, buffer: Buffer.from('x') }) as Express.Multer.File;
+const UPLOADED_FILES: UploadedFile[] = [{ file: 'sql.log', path: 'p-1' }];
 
 describe('AnalysesService', () => {
-  let repository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'delete' | 'findById'>>;
+  let repository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
   let mergeRequests: jest.Mocked<Pick<MergeRequestsService, 'findOrCreateByIid'>>;
-  let storage: jest.Mocked<Pick<LogStorageService, 'save' | 'remove'>>;
+  let uploadService: jest.Mocked<Pick<UploadService, 'remove'>>;
   let service: AnalysesService;
 
   beforeEach(() => {
-    repository = { create: jest.fn(), delete: jest.fn(), findById: jest.fn() };
+    repository = { create: jest.fn(), findById: jest.fn() };
     mergeRequests = { findOrCreateByIid: jest.fn().mockResolvedValue({ id: 'mr-1', iid: 7 }) };
-    storage = { save: jest.fn(), remove: jest.fn() };
+    uploadService = { remove: jest.fn().mockResolvedValue(undefined) };
     service = new AnalysesService(
       repository as unknown as AnalysesRepository,
       mergeRequests as unknown as MergeRequestsService,
-      storage as unknown as LogStorageService,
+      uploadService as unknown as UploadService,
     );
   });
 
@@ -32,66 +31,25 @@ describe('AnalysesService', () => {
     return (error as BadRequestException).getResponse();
   };
 
-  it('rejects a request without files', async () => {
-    await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, []))).resolves.toEqual({
-      code: ErrorCode.LOG_FILE_REQUIRED,
-    });
-    expect(mergeRequests.findOrCreateByIid).not.toHaveBeenCalled();
-  });
-
-  it.each(['../evil.log', 'api.txt', 'a/b.log', '.log'])('rejects file name %s', async (name) => {
-    await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, [upload(name)]))).resolves.toEqual({
-      code: ErrorCode.LOG_FILE_INVALID,
-    });
-  });
-
-  it('rejects a log file with an unknown type', async () => {
-    await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, [upload('foo.log')]))).resolves.toEqual({
-      code: ErrorCode.LOG_FILE_INVALID,
-    });
-  });
-
-  it('rejects duplicated file names', async () => {
-    const files = [upload('sql.log'), upload('sql.log')];
-    await expect(codeOf(service.create({ iid: 7, commitSha: SHA }, files))).resolves.toEqual({
-      code: ErrorCode.LOG_FILE_DUPLICATED,
-    });
-  });
-
-  it('creates the merge request, the analysis and stores the files', async () => {
+  it('creates the merge request and the analysis from the uploaded files', async () => {
     const analysis = { id: 'an-1', mergeRequestId: 'mr-1', commitSha: SHA, contexts: [] };
     repository.create.mockResolvedValue(analysis as never);
 
-    const result = await service.create({ iid: 7, commitSha: SHA }, [
-      upload('api_metric.log'),
-      upload('sql.log'),
-    ]);
+    const result = await service.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES);
 
     expect(mergeRequests.findOrCreateByIid).toHaveBeenCalledWith(7);
-    expect(repository.create).toHaveBeenCalledWith({
-      mergeRequestId: 'mr-1',
-      commitSha: SHA,
-      files: [
-        { file: 'api_metric.log', type: AnalysisContextType.API_METRIC },
-        { file: 'sql.log', type: AnalysisContextType.SQL },
-      ],
+    expect(repository.create).toHaveBeenCalledWith({ mergeRequestId: 'mr-1', commitSha: SHA, 
+      files: [{ file: 'sql.log', path: 'p-1', type: AnalysisContextType.API_METRIC }],
     });
-    expect(storage.save).toHaveBeenCalledWith('an-1', [
-      { file: 'api_metric.log', buffer: expect.any(Buffer) },
-      { file: 'sql.log', buffer: expect.any(Buffer) },
-    ]);
+    expect(uploadService.remove).not.toHaveBeenCalled();
     expect(result).toBe(analysis);
   });
 
-  it('rolls back the analysis when storing files fails', async () => {
-    repository.create.mockResolvedValue({ id: 'an-1' } as never);
-    storage.save.mockRejectedValue(new Error('disk full'));
+  it('removes the uploaded files when creating the analysis fails', async () => {
+    repository.create.mockRejectedValue(new Error('db down'));
 
-    await expect(service.create({ iid: 7, commitSha: SHA }, [upload('sql.log')])).rejects.toThrow(
-      'disk full',
-    );
-    expect(repository.delete).toHaveBeenCalledWith('an-1');
-    expect(storage.remove).toHaveBeenCalledWith('an-1');
+    await expect(service.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES)).rejects.toThrow('db down');
+    expect(uploadService.remove).toHaveBeenCalledWith(UPLOADED_FILES);
   });
 
   it('throws when the analysis does not exist', async () => {

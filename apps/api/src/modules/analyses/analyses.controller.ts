@@ -8,8 +8,8 @@ import {
   Query,
   UploadedFiles,
   UseInterceptors,
-} from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+} from "@nestjs/common";
+import { FilesInterceptor } from "@nestjs/platform-express";
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -18,31 +18,39 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { memoryStorage } from 'multer';
-import { AnalysesService } from './analyses.service';
-import { LOG_FILE_FIELD, MAX_LOG_FILE_COUNT, MAX_LOG_FILE_SIZE } from './analyses.constants';
-import { CreateAnalysisDto } from './dto/create-analysis.dto';
-import { ListAnalysesQueryDto } from './dto/list-analyses-query.dto';
+} from "@nestjs/swagger";
+import { memoryStorage } from "multer";
+import { UploadService } from "../files/upload.service";
+import {
+  LOG_FILE_FIELD,
+  MAX_LOG_FILE_COUNT,
+  MAX_LOG_FILE_SIZE,
+} from "./analyses.constants";
+import { AnalysesService } from "./analyses.service";
+import { CreateAnalysisDto } from "./dto/create-analysis.dto";
+import { ListAnalysesQueryDto } from "./dto/list-analyses-query.dto";
 
-@ApiTags('analyses')
-@Controller('analyses')
+@ApiTags("analyses")
+@Controller("analyses")
 export class AnalysesController {
-  constructor(private readonly service: AnalysesService) {}
+  constructor(
+    private readonly service: AnalysesService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Post()
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
-      type: 'object',
-      required: ['iid', 'commitSha', LOG_FILE_FIELD],
+      type: "object",
+      required: ["iid", "commitSha", LOG_FILE_FIELD],
       properties: {
-        iid: { type: 'integer', minimum: 1 },
-        commitSha: { type: 'string', minLength: 40, maxLength: 64 },
+        iid: { type: "integer", minimum: 1 },
+        commitSha: { type: "string", minLength: 40, maxLength: 64 },
         [LOG_FILE_FIELD]: {
-          type: 'array',
+          type: "array",
           maxItems: MAX_LOG_FILE_COUNT,
-          items: { type: 'string', format: 'binary' },
+          items: { type: "string", format: "binary" },
         },
       },
     },
@@ -55,8 +63,12 @@ export class AnalysesController {
       limits: { fileSize: MAX_LOG_FILE_SIZE },
     }),
   )
-  create(@Body() dto: CreateAnalysisDto, @UploadedFiles() files: Express.Multer.File[]) {
-    return this.service.create(dto, files);
+  async create(
+    @Body() dto: CreateAnalysisDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const contextFiles = await this.uploadService.save(files);
+    return this.service.create(dto, contextFiles);
   }
 
   @Get()
@@ -65,10 +77,10 @@ export class AnalysesController {
     return this.service.findAll(query);
   }
 
-  @Get(':id')
+  @Get(":id")
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
+  findOne(@Param("id", ParseUUIDPipe) id: string) {
     return this.service.findOne(id);
   }
 }

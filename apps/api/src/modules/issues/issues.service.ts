@@ -7,7 +7,7 @@ import { RulesService } from '../rules/rules.service';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { ListIssuesQueryDto } from './dto/list-issues-query.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
-import { IssuesRepository } from './issues.repository';
+import { IssuesRepository, type IssueSource } from './issues.repository';
 
 @Injectable()
 export class IssuesService {
@@ -23,6 +23,11 @@ export class IssuesService {
       this.analysisContextsService.findOne(dto.analysisContextId),
     ]);
     return this.repository.create(dto);
+  }
+
+  async createMany(analysisResultId: string, items: IssueSource[]): Promise<number> {
+    if (!items.length) return 0;
+    return this.repository.createMany(analysisResultId, items);
   }
 
   findAll({ limit, offset, ...filter }: ListIssuesQueryDto): Promise<Paginated<Issue>> {

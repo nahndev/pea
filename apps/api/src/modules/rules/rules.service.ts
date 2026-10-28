@@ -15,6 +15,10 @@ export class RulesService {
     return this.repository.create(dto);
   }
 
+  listAll(): Promise<Rule[]> {
+    return this.repository.findAll();
+  }
+
   findAll({ type, limit, offset }: ListRulesQueryDto): Promise<Paginated<Rule>> {
     return this.repository.findMany(type, limit, offset);
   }

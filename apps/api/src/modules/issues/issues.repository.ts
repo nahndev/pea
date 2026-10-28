@@ -7,7 +7,13 @@ import { CreateIssueDto } from './dto/create-issue.dto';
 interface IssueFilter {
   ruleId?: string;
   analysisContextId?: string;
+  analysisResultId?: string;
   status?: IssueStatus;
+}
+
+export interface IssueSource {
+  ruleId: string;
+  analysisContextId: string;
 }
 
 @Injectable()
@@ -16,6 +22,13 @@ export class IssuesRepository {
 
   create(data: CreateIssueDto): Promise<Issue> {
     return this.prisma.issue.create({ data });
+  }
+
+  async createMany(analysisResultId: string, items: IssueSource[]): Promise<number> {
+    const { count } = await this.prisma.issue.createMany({
+      data: items.map((item) => ({ ...item, analysisResultId })),
+    });
+    return count;
   }
 
   findById(id: string): Promise<Issue | null> {

@@ -9,5 +9,6 @@ import { IssuesService } from './issues.service';
   imports: [RulesModule, AnalysisContextsModule],
   controllers: [IssuesController],
   providers: [IssuesService, IssuesRepository],
+  exports: [IssuesService],
 })
 export class IssuesModule {}

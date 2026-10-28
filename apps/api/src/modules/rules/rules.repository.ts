@@ -13,6 +13,10 @@ export class RulesRepository {
     return this.prisma.rule.create({ data });
   }
 
+  findAll(): Promise<Rule[]> {
+    return this.prisma.rule.findMany({ orderBy: { id: 'asc' } });
+  }
+
   findById(id: string): Promise<Rule | null> {
     return this.prisma.rule.findUnique({ where: { id } });
   }

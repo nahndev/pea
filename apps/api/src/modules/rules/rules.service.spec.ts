@@ -7,7 +7,7 @@ describe('RulesService', () => {
   let repository: jest.Mocked<Pick<RulesRepository, 'create' | 'findById' | 'update' | 'delete'>>;
   let service: RulesService;
 
-  const rule = { id: 'r-1', type: RuleType.SQL, description: 'no N+1' };
+  const rule = { id: 'r-1', type: RuleType.P90_FAILURE, description: 'no N+1' };
 
   beforeEach(() => {
     repository = { create: jest.fn(), findById: jest.fn(), update: jest.fn(), delete: jest.fn() };
@@ -33,7 +33,7 @@ describe('RulesService', () => {
 
   it('does not update a missing rule', async () => {
     repository.findById.mockResolvedValue(null);
-    await expect(codeOf(service.update('missing', { type: RuleType.API_METRIC }))).resolves.toEqual({
+    await expect(codeOf(service.update('missing', { type: RuleType.P95_FAILURE }))).resolves.toEqual({
       code: ErrorCode.RULE_NOT_FOUND,
     });
     expect(repository.update).not.toHaveBeenCalled();
@@ -47,9 +47,9 @@ describe('RulesService', () => {
 
   it('updates an existing rule', async () => {
     repository.findById.mockResolvedValue(rule as never);
-    repository.update.mockResolvedValue({ ...rule, type: RuleType.API_METRIC } as never);
-    await service.update('r-1', { type: RuleType.API_METRIC });
-    expect(repository.update).toHaveBeenCalledWith('r-1', { type: RuleType.API_METRIC });
+    repository.update.mockResolvedValue({ ...rule, type: RuleType.P95_FAILURE } as never);
+    await service.update('r-1', { type: RuleType.P95_FAILURE });
+    expect(repository.update).toHaveBeenCalledWith('r-1', { type: RuleType.P95_FAILURE });
   });
 
   it('deletes an existing rule', async () => {

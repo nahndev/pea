@@ -12,6 +12,10 @@ export class ListIssuesQueryDto extends PaginationQueryDto {
   analysisContextId?: string;
 
   @IsOptional()
+  @IsUUID()
+  analysisResultId?: string;
+
+  @IsOptional()
   @IsIn(Object.values(IssueStatus))
   status?: IssueStatus;
 }

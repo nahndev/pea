@@ -4,9 +4,9 @@ import { RuleType } from '@tomato/constants';
 import { PrismaClient } from '../src/generated/client';
 
 const RULES = [
-  { type: RuleType.API_METRIC, description: 'P90 failure' },
-  { type: RuleType.API_METRIC, description: 'P95 failure' },
-  { type: RuleType.API_METRIC, description: 'P50 failure' },
+  { type: RuleType.P90_FAILURE, description: 'P90 failure', config: { thresholdMs: 1000 } },
+  { type: RuleType.P95_FAILURE, description: 'P95 failure', config: { thresholdMs: 2000 } },
+  { type: RuleType.P50_FAILURE, description: 'P50 failure', config: { thresholdMs: 500 } },
 ];
 
 async function main() {
@@ -16,8 +16,10 @@ async function main() {
 
   try {
     for (const rule of RULES) {
-      const exists = await prisma.rule.findFirst({ where: rule, select: { id: true } });
-      if (!exists) await prisma.rule.create({ data: rule });
+      const { type, description, config } = rule;
+      const existing = await prisma.rule.findFirst({ where: { type, description }, select: { id: true } });
+      if (existing) await prisma.rule.update({ where: { id: existing.id }, data: { config } });
+      else await prisma.rule.create({ data: rule });
     }
   } finally {
     await prisma.$disconnect();
