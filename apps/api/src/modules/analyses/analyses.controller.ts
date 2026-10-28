@@ -1,11 +1,7 @@
 import {
   Body,
   Controller,
-  Get,
-  Param,
-  ParseUUIDPipe,
   Post,
-  Query,
   UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
@@ -15,15 +11,12 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
 import { memoryStorage } from "multer";
 import { LOG_FILE_FIELDS, MAX_LOG_FILE_SIZE } from "./analyses.constants";
 import { AnalysesService } from "./analyses.service";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
-import { ListAnalysesQueryDto } from "./dto/list-analyses-query.dto";
 
 @ApiTags("analyses")
 @Controller("analyses")
@@ -35,10 +28,9 @@ export class AnalysesController {
   @ApiBody({
     schema: {
       type: "object",
-      required: ["iid", "commitSha"],
+      required: ["branch"],
       properties: {
-        iid: { type: "integer", minimum: 1 },
-        commitSha: { type: "string", minLength: 40, maxLength: 64 },
+        branch: { type: "string", minLength: 1, maxLength: 255 },
         ...Object.fromEntries(
           LOG_FILE_FIELDS.map(({ name }) => [
             name,
@@ -61,18 +53,5 @@ export class AnalysesController {
     @UploadedFiles() filesByField: Record<string, Express.Multer.File[]>,
   ) {
     return this.analysesService.create(dto, filesByField);
-  }
-
-  @Get()
-  @ApiOkResponse()
-  findAll(@Query() query: ListAnalysesQueryDto) {
-    return this.analysesService.findAll(query);
-  }
-
-  @Get(":id")
-  @ApiOkResponse()
-  @ApiNotFoundResponse()
-  findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.analysesService.findOne(id);
   }
 }

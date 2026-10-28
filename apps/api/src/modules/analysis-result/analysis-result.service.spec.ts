@@ -11,7 +11,7 @@ import { AnalysisResultRepository } from './analysis-result.repository';
 import { AnalysisResultService } from './analysis-result.service';
 
 describe('AnalysisResultService', () => {
-  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish' | 'findById' | 'findLatest'>>;
+  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
   let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
@@ -31,8 +31,6 @@ describe('AnalysisResultService', () => {
     analysisResultRepository = {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
-      findById: jest.fn(),
-      findLatest: jest.fn(),
     };
     analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
     rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
@@ -123,27 +121,5 @@ describe('AnalysisResultService', () => {
     );
     await expect(analysisResultService.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
     expect(analysisResultRepository.create).not.toHaveBeenCalled();
-  });
-
-  it('throws ANALYSIS_RESULT_NOT_FOUND when the result is missing', async () => {
-    analysisResultRepository.findById.mockResolvedValue(null);
-    const error = await analysisResultService.findOne('missing').catch((e: NotFoundException) => e);
-    expect((error as NotFoundException).getResponse()).toEqual({
-      code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
-    });
-  });
-
-  it('returns the latest result of an analysis', async () => {
-    analysisResultRepository.findLatest.mockResolvedValue({ id: 'res-2' } as never);
-    await expect(analysisResultService.findLatest('an-1')).resolves.toEqual({ id: 'res-2' });
-    expect(analysisResultRepository.findLatest).toHaveBeenCalledWith('an-1');
-  });
-
-  it('throws ANALYSIS_RESULT_NOT_FOUND when the analysis has no result yet', async () => {
-    analysisResultRepository.findLatest.mockResolvedValue(null);
-    const error = await analysisResultService.findLatest('an-1').catch((e: NotFoundException) => e);
-    expect((error as NotFoundException).getResponse()).toEqual({
-      code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
-    });
   });
 });

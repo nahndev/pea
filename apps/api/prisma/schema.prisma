@@ -8,24 +8,23 @@ datasource db {
   provider = "postgresql"
 }
 
-model MergeRequest {
+model Branch {
   id       String     @id @default(uuid(7)) @db.Uuid
-  iid      Int        @unique
+  name     String     @unique @db.VarChar(255)
   analyses Analysis[]
 
-  @@map("merge_requests")
+  @@map("branches")
 }
 
 model Analysis {
-  id             String            @id @default(uuid(7)) @db.Uuid
-  mergeRequestId String            @map("merge_request_id") @db.Uuid
-  commitSha      String            @map("commit_sha") @db.VarChar(64)
-  createdAt      DateTime          @default(now()) @map("created_at")
-  mergeRequest   MergeRequest      @relation(fields: [mergeRequestId], references: [id], onDelete: Cascade)
-  contexts       AnalysisContext[]
-  results        AnalysisResult[]
+  id        String            @id @default(uuid(7)) @db.Uuid
+  branchId  String            @map("branch_id") @db.Uuid
+  createdAt DateTime          @default(now()) @map("created_at")
+  branch    Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  contexts  AnalysisContext[]
+  results   AnalysisResult[]
 
-  @@index([mergeRequestId, createdAt(sort: Desc)])
+  @@index([branchId, createdAt(sort: Desc)])
   @@map("analyses")
 }
 
