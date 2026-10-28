@@ -13,7 +13,7 @@ import { ListAnalysesQueryDto } from './dto/list-analyses-query.dto';
 @Injectable()
 export class AnalysesService {
   constructor(
-    private readonly repository: AnalysesRepository,
+    private readonly analysesRepository: AnalysesRepository,
     private readonly mergeRequestsService: MergeRequestsService,
     private readonly uploadService: UploadService,
   ) {}
@@ -24,7 +24,7 @@ export class AnalysesService {
   ): Promise<AnalysisWithContexts> {
     try {
       const mergeRequest = await this.mergeRequestsService.findOrCreateByIid(iid);
-      return await this.repository.create({
+      return await this.analysesRepository.create({
         mergeRequestId: mergeRequest.id,
         commitSha,
         files: uploadedFiles.map((uploadedFile) => ({
@@ -39,11 +39,11 @@ export class AnalysesService {
   }
 
   findAll({ mergeRequestId, limit, offset }: ListAnalysesQueryDto): Promise<Paginated<Analysis>> {
-    return this.repository.findMany(mergeRequestId, limit, offset);
+    return this.analysesRepository.findMany(mergeRequestId, limit, offset);
   }
 
   async findOne(id: string): Promise<AnalysisWithContexts> {
-    const analysis = await this.repository.findById(id);
+    const analysis = await this.analysesRepository.findById(id);
     if (!analysis) throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
     return analysis;
   }

@@ -18,21 +18,21 @@ export interface IssueSource {
 
 @Injectable()
 export class IssuesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   create(data: CreateIssueDto): Promise<Issue> {
-    return this.prisma.issue.create({ data });
+    return this.prismaService.issue.create({ data });
   }
 
   async createMany(analysisResultId: string, items: IssueSource[]): Promise<number> {
-    const { count } = await this.prisma.issue.createMany({
+    const { count } = await this.prismaService.issue.createMany({
       data: items.map((item) => ({ ...item, analysisResultId })),
     });
     return count;
   }
 
   findById(id: string): Promise<Issue | null> {
-    return this.prisma.issue.findUnique({ where: { id } });
+    return this.prismaService.issue.findUnique({ where: { id } });
   }
 
   async findMany(
@@ -40,18 +40,18 @@ export class IssuesRepository {
     limit: number,
     offset: number,
   ): Promise<{ items: Issue[]; total: number }> {
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.issue.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
-      this.prisma.issue.count({ where }),
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.issue.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
+      this.prismaService.issue.count({ where }),
     ]);
     return { items, total };
   }
 
   updateStatus(id: string, status: IssueStatus): Promise<Issue> {
-    return this.prisma.issue.update({ where: { id }, data: { status } });
+    return this.prismaService.issue.update({ where: { id }, data: { status } });
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.issue.delete({ where: { id } });
+    await this.prismaService.issue.delete({ where: { id } });
   }
 }

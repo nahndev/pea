@@ -7,19 +7,19 @@ import { MergeRequestsRepository } from './merge-requests.repository';
 
 @Injectable()
 export class MergeRequestsService {
-  constructor(private readonly repository: MergeRequestsRepository) {}
+  constructor(private readonly mergeRequestsRepository: MergeRequestsRepository) {}
 
   findAll({ limit, offset }: PaginationQueryDto): Promise<Paginated<MergeRequest>> {
-    return this.repository.findMany(limit, offset);
+    return this.mergeRequestsRepository.findMany(limit, offset);
   }
 
   async findOne(id: string): Promise<MergeRequest> {
-    const mergeRequest = await this.repository.findById(id);
+    const mergeRequest = await this.mergeRequestsRepository.findById(id);
     if (!mergeRequest) throw new NotFoundException({ code: ErrorCode.MERGE_REQUEST_NOT_FOUND });
     return mergeRequest;
   }
 
   findOrCreateByIid(iid: number): Promise<MergeRequest> {
-    return this.repository.upsertByIid(iid);
+    return this.mergeRequestsRepository.upsertByIid(iid);
   }
 }

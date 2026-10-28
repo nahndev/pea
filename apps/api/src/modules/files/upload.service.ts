@@ -14,8 +14,8 @@ export interface UploadedFile {
 export class UploadService {
   private readonly rootDir: string;
 
-  constructor(config: ConfigService<Env, true>) {
-    this.rootDir = resolve(config.get('UPLOAD_DIR', { infer: true }));
+  constructor(configService: ConfigService<Env, true>) {
+    this.rootDir = resolve(configService.get('UPLOAD_DIR', { infer: true }));
   }
 
   async save(files: Express.Multer.File[]): Promise<UploadedFile[]> {

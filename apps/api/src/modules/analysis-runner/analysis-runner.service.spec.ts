@@ -9,13 +9,13 @@ import { AnalysisRunnerRepository } from './analysis-runner.repository';
 import { AnalysisRunnerService } from './analysis-runner.service';
 
 describe('AnalysisRunnerService', () => {
-  let repository: jest.Mocked<Pick<AnalysisRunnerRepository, 'create' | 'finish' | 'findById'>>;
-  let analyses: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
-  let rules: jest.Mocked<Pick<RulesService, 'listAll'>>;
-  let issues: jest.Mocked<Pick<IssuesService, 'createMany'>>;
-  let factory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
+  let analysisRunnerRepository: jest.Mocked<Pick<AnalysisRunnerRepository, 'create' | 'finish' | 'findById'>>;
+  let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
+  let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
+  let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
+  let ruleHandlerFactory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
   let handler: jest.Mocked<RuleHandler>;
-  let service: AnalysisRunnerService;
+  let analysisRunnerService: AnalysisRunnerService;
 
   const contexts = [{ id: 'c-1' }, { id: 'c-2' }];
   const ruleList = [
@@ -24,25 +24,25 @@ describe('AnalysisRunnerService', () => {
   ];
 
   beforeEach(() => {
-    repository = {
+    analysisRunnerRepository = {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
       findById: jest.fn(),
     };
-    analyses = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
-    rules = { listAll: jest.fn().mockResolvedValue(ruleList) };
-    issues = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
+    analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
+    rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
+    issuesService = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
     handler = { handle: jest.fn().mockResolvedValue([]) };
-    factory = {
+    ruleHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90_FAILURE'),
       create: jest.fn().mockReturnValue(handler),
     };
-    service = new AnalysisRunnerService(
-      repository as unknown as AnalysisRunnerRepository,
-      analyses as unknown as AnalysesService,
-      rules as unknown as RulesService,
-      issues as unknown as IssuesService,
-      factory as unknown as RuleHandlerFactory,
+    analysisRunnerService = new AnalysisRunnerService(
+      analysisRunnerRepository as unknown as AnalysisRunnerRepository,
+      analysesService as unknown as AnalysesService,
+      rulesService as unknown as RulesService,
+      issuesService as unknown as IssuesService,
+      ruleHandlerFactory as unknown as RuleHandlerFactory,
     );
   });
 
@@ -51,28 +51,28 @@ describe('AnalysisRunnerService', () => {
       Promise.resolve([{ ruleId: rule.id, analysisContextId: context.id }]),
     );
 
-    const result = await service.run({ analysisId: 'an-1' });
+    const result = await analysisRunnerService.run({ analysisId: 'an-1' });
 
     expect(handler.handle).toHaveBeenCalledTimes(2);
-    expect(issues.createMany).toHaveBeenCalledWith('res-1', [
+    expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
       { ruleId: 'r-1', analysisContextId: 'c-1' },
     ]);
-    expect(issues.createMany).toHaveBeenCalledWith('res-1', [
+    expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
       { ruleId: 'r-1', analysisContextId: 'c-2' },
     ]);
     expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 2 });
   });
 
   it('completes with zero issues when nothing is found', async () => {
-    await expect(service.run({ analysisId: 'an-1' })).resolves.toMatchObject({
+    await expect(analysisRunnerService.run({ analysisId: 'an-1' })).resolves.toMatchObject({
       status: AnalysisResultStatus.COMPLETED,
       issueCount: 0,
     });
   });
 
   it('skips rules whose type has no handler', async () => {
-    await service.run({ analysisId: 'an-1' });
-    expect(factory.create).not.toHaveBeenCalledWith('P95_FAILURE');
+    await analysisRunnerService.run({ analysisId: 'an-1' });
+    expect(ruleHandlerFactory.create).not.toHaveBeenCalledWith('P95_FAILURE');
   });
 
   it('marks the result FAILED with the issues so far and rethrows', async () => {
@@ -80,24 +80,24 @@ describe('AnalysisRunnerService', () => {
       .mockResolvedValueOnce([{ ruleId: 'r-1', analysisContextId: 'c-1' }])
       .mockRejectedValueOnce(new Error('duckdb'));
 
-    await expect(service.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
-    expect(repository.finish).toHaveBeenCalledWith('res-1', {
+    await expect(analysisRunnerService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
+    expect(analysisRunnerRepository.finish).toHaveBeenCalledWith('res-1', {
       status: AnalysisResultStatus.FAILED,
       issueCount: 1,
     });
   });
 
   it('does not create a result when the analysis does not exist', async () => {
-    analyses.findOne.mockRejectedValue(
+    analysesService.findOne.mockRejectedValue(
       new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND }),
     );
-    await expect(service.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
-    expect(repository.create).not.toHaveBeenCalled();
+    await expect(analysisRunnerService.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
+    expect(analysisRunnerRepository.create).not.toHaveBeenCalled();
   });
 
   it('throws ANALYSIS_RESULT_NOT_FOUND when the result is missing', async () => {
-    repository.findById.mockResolvedValue(null);
-    const error = await service.findOne('missing').catch((e: NotFoundException) => e);
+    analysisRunnerRepository.findById.mockResolvedValue(null);
+    const error = await analysisRunnerService.findOne('missing').catch((e: NotFoundException) => e);
     expect((error as NotFoundException).getResponse()).toEqual({
       code: ErrorCode.ANALYSIS_RESULT_NOT_FOUND,
     });

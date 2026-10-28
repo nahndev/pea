@@ -10,18 +10,18 @@ const SHA = 'a'.repeat(40);
 const UPLOADED_FILES: UploadedFile[] = [{ file: 'sql.log', path: 'p-1' }];
 
 describe('AnalysesService', () => {
-  let repository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
-  let mergeRequests: jest.Mocked<Pick<MergeRequestsService, 'findOrCreateByIid'>>;
+  let analysesRepository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
+  let mergeRequestsService: jest.Mocked<Pick<MergeRequestsService, 'findOrCreateByIid'>>;
   let uploadService: jest.Mocked<Pick<UploadService, 'remove'>>;
-  let service: AnalysesService;
+  let analysesService: AnalysesService;
 
   beforeEach(() => {
-    repository = { create: jest.fn(), findById: jest.fn() };
-    mergeRequests = { findOrCreateByIid: jest.fn().mockResolvedValue({ id: 'mr-1', iid: 7 }) };
+    analysesRepository = { create: jest.fn(), findById: jest.fn() };
+    mergeRequestsService = { findOrCreateByIid: jest.fn().mockResolvedValue({ id: 'mr-1', iid: 7 }) };
     uploadService = { remove: jest.fn().mockResolvedValue(undefined) };
-    service = new AnalysesService(
-      repository as unknown as AnalysesRepository,
-      mergeRequests as unknown as MergeRequestsService,
+    analysesService = new AnalysesService(
+      analysesRepository as unknown as AnalysesRepository,
+      mergeRequestsService as unknown as MergeRequestsService,
       uploadService as unknown as UploadService,
     );
   });
@@ -33,12 +33,12 @@ describe('AnalysesService', () => {
 
   it('creates the merge request and the analysis from the uploaded files', async () => {
     const analysis = { id: 'an-1', mergeRequestId: 'mr-1', commitSha: SHA, contexts: [] };
-    repository.create.mockResolvedValue(analysis as never);
+    analysesRepository.create.mockResolvedValue(analysis as never);
 
-    const result = await service.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES);
+    const result = await analysesService.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES);
 
-    expect(mergeRequests.findOrCreateByIid).toHaveBeenCalledWith(7);
-    expect(repository.create).toHaveBeenCalledWith({ mergeRequestId: 'mr-1', commitSha: SHA, 
+    expect(mergeRequestsService.findOrCreateByIid).toHaveBeenCalledWith(7);
+    expect(analysesRepository.create).toHaveBeenCalledWith({ mergeRequestId: 'mr-1', commitSha: SHA, 
       files: [{ file: 'sql.log', path: 'p-1', type: AnalysisContextType.API_METRIC }],
     });
     expect(uploadService.remove).not.toHaveBeenCalled();
@@ -46,15 +46,15 @@ describe('AnalysesService', () => {
   });
 
   it('removes the uploaded files when creating the analysis fails', async () => {
-    repository.create.mockRejectedValue(new Error('db down'));
+    analysesRepository.create.mockRejectedValue(new Error('db down'));
 
-    await expect(service.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES)).rejects.toThrow('db down');
+    await expect(analysesService.create({ iid: 7, commitSha: SHA }, UPLOADED_FILES)).rejects.toThrow('db down');
     expect(uploadService.remove).toHaveBeenCalledWith(UPLOADED_FILES);
   });
 
   it('throws when the analysis does not exist', async () => {
-    repository.findById.mockResolvedValue(null);
-    await expect(codeOf(service.findOne('missing'))).resolves.toEqual({
+    analysesRepository.findById.mockResolvedValue(null);
+    await expect(codeOf(analysesService.findOne('missing'))).resolves.toEqual({
       code: ErrorCode.ANALYSIS_NOT_FOUND,
     });
   });

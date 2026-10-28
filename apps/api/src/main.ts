@@ -21,8 +21,8 @@ async function bootstrap() {
   );
   SwaggerModule.setup("rest/docs", app, document);
 
-  const config = app.get<ConfigService<Env, true>>(ConfigService);
-  await app.listen(config.get("PORT", { infer: true }));
+  const configService = app.get<ConfigService<Env, true>>(ConfigService);
+  await app.listen(configService.get("PORT", { infer: true }));
 }
 
 void bootstrap();

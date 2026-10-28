@@ -4,14 +4,14 @@ import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
 
 describe('RulesService', () => {
-  let repository: jest.Mocked<Pick<RulesRepository, 'create' | 'findById' | 'update' | 'delete'>>;
-  let service: RulesService;
+  let rulesRepository: jest.Mocked<Pick<RulesRepository, 'create' | 'findById' | 'update' | 'delete'>>;
+  let rulesService: RulesService;
 
   const rule = { id: 'r-1', type: RuleType.P90_FAILURE, description: 'no N+1' };
 
   beforeEach(() => {
-    repository = { create: jest.fn(), findById: jest.fn(), update: jest.fn(), delete: jest.fn() };
-    service = new RulesService(repository as unknown as RulesRepository);
+    rulesRepository = { create: jest.fn(), findById: jest.fn(), update: jest.fn(), delete: jest.fn() };
+    rulesService = new RulesService(rulesRepository as unknown as RulesRepository);
   });
 
   const codeOf = async (promise: Promise<unknown>) => {
@@ -20,41 +20,41 @@ describe('RulesService', () => {
   };
 
   it('returns the rule', async () => {
-    repository.findById.mockResolvedValue(rule as never);
-    await expect(service.findOne('r-1')).resolves.toEqual(rule);
+    rulesRepository.findById.mockResolvedValue(rule as never);
+    await expect(rulesService.findOne('r-1')).resolves.toEqual(rule);
   });
 
   it('throws RULE_NOT_FOUND when missing', async () => {
-    repository.findById.mockResolvedValue(null);
-    await expect(codeOf(service.findOne('missing'))).resolves.toEqual({
+    rulesRepository.findById.mockResolvedValue(null);
+    await expect(codeOf(rulesService.findOne('missing'))).resolves.toEqual({
       code: ErrorCode.RULE_NOT_FOUND,
     });
   });
 
   it('does not update a missing rule', async () => {
-    repository.findById.mockResolvedValue(null);
-    await expect(codeOf(service.update('missing', { type: RuleType.P95_FAILURE }))).resolves.toEqual({
+    rulesRepository.findById.mockResolvedValue(null);
+    await expect(codeOf(rulesService.update('missing', { type: RuleType.P95_FAILURE }))).resolves.toEqual({
       code: ErrorCode.RULE_NOT_FOUND,
     });
-    expect(repository.update).not.toHaveBeenCalled();
+    expect(rulesRepository.update).not.toHaveBeenCalled();
   });
 
   it('does not delete a missing rule', async () => {
-    repository.findById.mockResolvedValue(null);
-    await codeOf(service.remove('missing'));
-    expect(repository.delete).not.toHaveBeenCalled();
+    rulesRepository.findById.mockResolvedValue(null);
+    await codeOf(rulesService.remove('missing'));
+    expect(rulesRepository.delete).not.toHaveBeenCalled();
   });
 
   it('updates an existing rule', async () => {
-    repository.findById.mockResolvedValue(rule as never);
-    repository.update.mockResolvedValue({ ...rule, type: RuleType.P95_FAILURE } as never);
-    await service.update('r-1', { type: RuleType.P95_FAILURE });
-    expect(repository.update).toHaveBeenCalledWith('r-1', { type: RuleType.P95_FAILURE });
+    rulesRepository.findById.mockResolvedValue(rule as never);
+    rulesRepository.update.mockResolvedValue({ ...rule, type: RuleType.P95_FAILURE } as never);
+    await rulesService.update('r-1', { type: RuleType.P95_FAILURE });
+    expect(rulesRepository.update).toHaveBeenCalledWith('r-1', { type: RuleType.P95_FAILURE });
   });
 
   it('deletes an existing rule', async () => {
-    repository.findById.mockResolvedValue(rule as never);
-    await service.remove('r-1');
-    expect(repository.delete).toHaveBeenCalledWith('r-1');
+    rulesRepository.findById.mockResolvedValue(rule as never);
+    await rulesService.remove('r-1');
+    expect(rulesRepository.delete).toHaveBeenCalledWith('r-1');
   });
 });

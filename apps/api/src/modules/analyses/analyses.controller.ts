@@ -34,7 +34,7 @@ import { ListAnalysesQueryDto } from "./dto/list-analyses-query.dto";
 @Controller("analyses")
 export class AnalysesController {
   constructor(
-    private readonly service: AnalysesService,
+    private readonly analysesService: AnalysesService,
     private readonly uploadService: UploadService,
   ) {}
 
@@ -68,19 +68,19 @@ export class AnalysesController {
     @UploadedFiles() files: Express.Multer.File[],
   ) {
     const contextFiles = await this.uploadService.save(files);
-    return this.service.create(dto, contextFiles);
+    return this.analysesService.create(dto, contextFiles);
   }
 
   @Get()
   @ApiOkResponse()
   findAll(@Query() query: ListAnalysesQueryDto) {
-    return this.service.findAll(query);
+    return this.analysesService.findAll(query);
   }
 
   @Get(":id")
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param("id", ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+    return this.analysesService.findOne(id);
   }
 }

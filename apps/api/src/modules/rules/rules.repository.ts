@@ -7,18 +7,18 @@ import { UpdateRuleDto } from './dto/update-rule.dto';
 
 @Injectable()
 export class RulesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   create(data: CreateRuleDto): Promise<Rule> {
-    return this.prisma.rule.create({ data });
+    return this.prismaService.rule.create({ data });
   }
 
   findAll(): Promise<Rule[]> {
-    return this.prisma.rule.findMany({ orderBy: { id: 'asc' } });
+    return this.prismaService.rule.findMany({ orderBy: { id: 'asc' } });
   }
 
   findById(id: string): Promise<Rule | null> {
-    return this.prisma.rule.findUnique({ where: { id } });
+    return this.prismaService.rule.findUnique({ where: { id } });
   }
 
   async findMany(
@@ -27,18 +27,18 @@ export class RulesRepository {
     offset: number,
   ): Promise<{ items: Rule[]; total: number }> {
     const where = { type };
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.rule.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
-      this.prisma.rule.count({ where }),
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.rule.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
+      this.prismaService.rule.count({ where }),
     ]);
     return { items, total };
   }
 
   update(id: string, data: UpdateRuleDto): Promise<Rule> {
-    return this.prisma.rule.update({ where: { id }, data });
+    return this.prismaService.rule.update({ where: { id }, data });
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.rule.delete({ where: { id } });
+    await this.prismaService.rule.delete({ where: { id } });
   }
 }

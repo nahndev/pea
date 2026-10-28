@@ -6,29 +6,29 @@ import { IssuesRepository } from './issues.repository';
 import { IssuesService } from './issues.service';
 
 describe('IssuesService', () => {
-  let repository: jest.Mocked<
+  let issuesRepository: jest.Mocked<
     Pick<IssuesRepository, 'create' | 'findById' | 'updateStatus' | 'delete'>
   >;
-  let rules: jest.Mocked<Pick<RulesService, 'findOne'>>;
-  let contexts: jest.Mocked<Pick<AnalysisContextsService, 'findOne'>>;
-  let service: IssuesService;
+  let rulesService: jest.Mocked<Pick<RulesService, 'findOne'>>;
+  let analysisContextsService: jest.Mocked<Pick<AnalysisContextsService, 'findOne'>>;
+  let issuesService: IssuesService;
 
   const issue = { id: 'i-1', ruleId: 'r-1', analysisContextId: 'c-1', status: IssueStatus.OPEN };
   const dto = { ruleId: 'r-1', analysisContextId: 'c-1' };
 
   beforeEach(() => {
-    repository = {
+    issuesRepository = {
       create: jest.fn(),
       findById: jest.fn(),
       updateStatus: jest.fn(),
       delete: jest.fn(),
     };
-    rules = { findOne: jest.fn().mockResolvedValue({ id: 'r-1' }) };
-    contexts = { findOne: jest.fn().mockResolvedValue({ id: 'c-1' }) };
-    service = new IssuesService(
-      repository as unknown as IssuesRepository,
-      rules as unknown as RulesService,
-      contexts as unknown as AnalysisContextsService,
+    rulesService = { findOne: jest.fn().mockResolvedValue({ id: 'r-1' }) };
+    analysisContextsService = { findOne: jest.fn().mockResolvedValue({ id: 'c-1' }) };
+    issuesService = new IssuesService(
+      issuesRepository as unknown as IssuesRepository,
+      rulesService as unknown as RulesService,
+      analysisContextsService as unknown as AnalysisContextsService,
     );
   });
 
@@ -38,57 +38,57 @@ describe('IssuesService', () => {
   };
 
   it('creates an issue after checking the rule and the context', async () => {
-    repository.create.mockResolvedValue(issue as never);
-    await expect(service.create(dto)).resolves.toEqual(issue);
-    expect(rules.findOne).toHaveBeenCalledWith('r-1');
-    expect(contexts.findOne).toHaveBeenCalledWith('c-1');
-    expect(repository.create).toHaveBeenCalledWith(dto);
+    issuesRepository.create.mockResolvedValue(issue as never);
+    await expect(issuesService.create(dto)).resolves.toEqual(issue);
+    expect(rulesService.findOne).toHaveBeenCalledWith('r-1');
+    expect(analysisContextsService.findOne).toHaveBeenCalledWith('c-1');
+    expect(issuesRepository.create).toHaveBeenCalledWith(dto);
   });
 
   it('does not create an issue for a missing rule', async () => {
-    rules.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.RULE_NOT_FOUND }));
-    await expect(codeOf(service.create(dto))).resolves.toEqual({ code: ErrorCode.RULE_NOT_FOUND });
-    expect(repository.create).not.toHaveBeenCalled();
+    rulesService.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.RULE_NOT_FOUND }));
+    await expect(codeOf(issuesService.create(dto))).resolves.toEqual({ code: ErrorCode.RULE_NOT_FOUND });
+    expect(issuesRepository.create).not.toHaveBeenCalled();
   });
 
   it('does not create an issue for a missing context', async () => {
-    contexts.findOne.mockRejectedValue(
+    analysisContextsService.findOne.mockRejectedValue(
       new NotFoundException({ code: ErrorCode.ANALYSIS_CONTEXT_NOT_FOUND }),
     );
-    await expect(codeOf(service.create(dto))).resolves.toEqual({
+    await expect(codeOf(issuesService.create(dto))).resolves.toEqual({
       code: ErrorCode.ANALYSIS_CONTEXT_NOT_FOUND,
     });
-    expect(repository.create).not.toHaveBeenCalled();
+    expect(issuesRepository.create).not.toHaveBeenCalled();
   });
 
   it('throws ISSUE_NOT_FOUND when missing', async () => {
-    repository.findById.mockResolvedValue(null);
-    await expect(codeOf(service.findOne('missing'))).resolves.toEqual({
+    issuesRepository.findById.mockResolvedValue(null);
+    await expect(codeOf(issuesService.findOne('missing'))).resolves.toEqual({
       code: ErrorCode.ISSUE_NOT_FOUND,
     });
   });
 
   it('does not update a missing issue', async () => {
-    repository.findById.mockResolvedValue(null);
-    await codeOf(service.update('missing', { status: IssueStatus.RESOLVED }));
-    expect(repository.updateStatus).not.toHaveBeenCalled();
+    issuesRepository.findById.mockResolvedValue(null);
+    await codeOf(issuesService.update('missing', { status: IssueStatus.RESOLVED }));
+    expect(issuesRepository.updateStatus).not.toHaveBeenCalled();
   });
 
   it('updates the status of an existing issue', async () => {
-    repository.findById.mockResolvedValue(issue as never);
-    await service.update('i-1', { status: IssueStatus.RESOLVED });
-    expect(repository.updateStatus).toHaveBeenCalledWith('i-1', IssueStatus.RESOLVED);
+    issuesRepository.findById.mockResolvedValue(issue as never);
+    await issuesService.update('i-1', { status: IssueStatus.RESOLVED });
+    expect(issuesRepository.updateStatus).toHaveBeenCalledWith('i-1', IssueStatus.RESOLVED);
   });
 
   it('does not delete a missing issue', async () => {
-    repository.findById.mockResolvedValue(null);
-    await codeOf(service.remove('missing'));
-    expect(repository.delete).not.toHaveBeenCalled();
+    issuesRepository.findById.mockResolvedValue(null);
+    await codeOf(issuesService.remove('missing'));
+    expect(issuesRepository.delete).not.toHaveBeenCalled();
   });
 
   it('deletes an existing issue', async () => {
-    repository.findById.mockResolvedValue(issue as never);
-    await service.remove('i-1');
-    expect(repository.delete).toHaveBeenCalledWith('i-1');
+    issuesRepository.findById.mockResolvedValue(issue as never);
+    await issuesService.remove('i-1');
+    expect(issuesRepository.delete).toHaveBeenCalledWith('i-1');
   });
 });

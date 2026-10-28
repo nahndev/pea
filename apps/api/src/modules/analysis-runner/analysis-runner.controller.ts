@@ -13,26 +13,26 @@ import { RunAnalysisDto } from './dto/run-analysis.dto';
 @ApiTags('analysis-results')
 @Controller('analysis-results')
 export class AnalysisRunnerController {
-  constructor(private readonly service: AnalysisRunnerService) {}
+  constructor(private readonly analysisRunnerService: AnalysisRunnerService) {}
 
   @Post()
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   run(@Body() dto: RunAnalysisDto) {
-    return this.service.run(dto);
+    return this.analysisRunnerService.run(dto);
   }
 
   @Get()
   @ApiOkResponse()
   findAll(@Query() query: ListAnalysisResultsQueryDto) {
-    return this.service.findAll(query);
+    return this.analysisRunnerService.findAll(query);
   }
 
   @Get(':id')
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+    return this.analysisRunnerService.findOne(id);
   }
 }

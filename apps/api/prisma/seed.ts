@@ -10,19 +10,19 @@ const RULES = [
 ];
 
 async function main() {
-  const prisma = new PrismaClient({
+  const prismaClient = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
 
   try {
     for (const rule of RULES) {
       const { type, description, config } = rule;
-      const existing = await prisma.rule.findFirst({ where: { type, description }, select: { id: true } });
-      if (existing) await prisma.rule.update({ where: { id: existing.id }, data: { config } });
-      else await prisma.rule.create({ data: rule });
+      const existing = await prismaClient.rule.findFirst({ where: { type, description }, select: { id: true } });
+      if (existing) await prismaClient.rule.update({ where: { id: existing.id }, data: { config } });
+      else await prismaClient.rule.create({ data: rule });
     }
   } finally {
-    await prisma.$disconnect();
+    await prismaClient.$disconnect();
   }
 }
 

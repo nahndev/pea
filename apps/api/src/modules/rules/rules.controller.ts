@@ -26,26 +26,26 @@ import { RulesService } from './rules.service';
 @ApiTags('rules')
 @Controller('rules')
 export class RulesController {
-  constructor(private readonly service: RulesService) {}
+  constructor(private readonly rulesService: RulesService) {}
 
   @Post()
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   create(@Body() dto: CreateRuleDto) {
-    return this.service.create(dto);
+    return this.rulesService.create(dto);
   }
 
   @Get()
   @ApiOkResponse()
   findAll(@Query() query: ListRulesQueryDto) {
-    return this.service.findAll(query);
+    return this.rulesService.findAll(query);
   }
 
   @Get(':id')
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+    return this.rulesService.findOne(id);
   }
 
   @Patch(':id')
@@ -53,7 +53,7 @@ export class RulesController {
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateRuleDto) {
-    return this.service.update(id, dto);
+    return this.rulesService.update(id, dto);
   }
 
   @Delete(':id')
@@ -61,6 +61,6 @@ export class RulesController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse()
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+    return this.rulesService.remove(id);
   }
 }

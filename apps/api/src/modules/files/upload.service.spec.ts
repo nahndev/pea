@@ -9,36 +9,36 @@ const multerFile = (originalname: string, content = 'x') =>
 
 describe('UploadService', () => {
   let dir: string;
-  let service: UploadService;
+  let uploadService: UploadService;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'pea-uploads-'));
-    service = new UploadService({ get: () => dir } as unknown as ConfigService<never, true>);
+    uploadService = new UploadService({ get: () => dir } as unknown as ConfigService<never, true>);
   });
 
   afterEach(() => rm(dir, { recursive: true, force: true }));
 
   it('saves each file and returns its name with the stored path', async () => {
-    const [sql] = await service.save([multerFile('sql.log', 'select 1')]);
+    const [sql] = await uploadService.save([multerFile('sql.log', 'select 1')]);
 
     expect(sql.file).toBe('sql.log');
-    await expect(readFile(service.resolve(sql.path), 'utf8')).resolves.toBe('select 1');
+    await expect(readFile(uploadService.resolve(sql.path), 'utf8')).resolves.toBe('select 1');
   });
 
   it('never uses the uploaded name as the stored path', async () => {
-    const [evil] = await service.save([multerFile('../evil.log')]);
+    const [evil] = await uploadService.save([multerFile('../evil.log')]);
     expect(evil.path).not.toContain('evil');
     await expect(stat(join(dir, '..', 'evil.log'))).rejects.toThrow();
   });
 
   it('removes the stored files', async () => {
-    const files = await service.save([multerFile('sql.log'), multerFile('api_metric.log')]);
-    await service.remove(files);
-    await expect(stat(service.resolve(files[0].path))).rejects.toThrow();
-    await expect(stat(service.resolve(files[1].path))).rejects.toThrow();
+    const files = await uploadService.save([multerFile('sql.log'), multerFile('api_metric.log')]);
+    await uploadService.remove(files);
+    await expect(stat(uploadService.resolve(files[0].path))).rejects.toThrow();
+    await expect(stat(uploadService.resolve(files[1].path))).rejects.toThrow();
   });
 
   it('does not fail when removing a missing file', async () => {
-    await expect(service.remove([{ path: 'missing' }])).resolves.toBeUndefined();
+    await expect(uploadService.remove([{ path: 'missing' }])).resolves.toBeUndefined();
   });
 });

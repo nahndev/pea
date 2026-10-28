@@ -12,7 +12,7 @@ import { IssuesRepository, type IssueSource } from './issues.repository';
 @Injectable()
 export class IssuesService {
   constructor(
-    private readonly repository: IssuesRepository,
+    private readonly issuesRepository: IssuesRepository,
     private readonly rulesService: RulesService,
     private readonly analysisContextsService: AnalysisContextsService,
   ) {}
@@ -22,31 +22,31 @@ export class IssuesService {
       this.rulesService.findOne(dto.ruleId),
       this.analysisContextsService.findOne(dto.analysisContextId),
     ]);
-    return this.repository.create(dto);
+    return this.issuesRepository.create(dto);
   }
 
   async createMany(analysisResultId: string, items: IssueSource[]): Promise<number> {
     if (!items.length) return 0;
-    return this.repository.createMany(analysisResultId, items);
+    return this.issuesRepository.createMany(analysisResultId, items);
   }
 
   findAll({ limit, offset, ...filter }: ListIssuesQueryDto): Promise<Paginated<Issue>> {
-    return this.repository.findMany(filter, limit, offset);
+    return this.issuesRepository.findMany(filter, limit, offset);
   }
 
   async findOne(id: string): Promise<Issue> {
-    const issue = await this.repository.findById(id);
+    const issue = await this.issuesRepository.findById(id);
     if (!issue) throw new NotFoundException({ code: ErrorCode.ISSUE_NOT_FOUND });
     return issue;
   }
 
   async update(id: string, { status }: UpdateIssueDto): Promise<Issue> {
     await this.findOne(id);
-    return this.repository.updateStatus(id, status);
+    return this.issuesRepository.updateStatus(id, status);
   }
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.repository.delete(id);
+    await this.issuesRepository.delete(id);
   }
 }

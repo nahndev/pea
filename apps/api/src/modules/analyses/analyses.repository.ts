@@ -13,10 +13,10 @@ interface CreateAnalysisData {
 
 @Injectable()
 export class AnalysesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   create({ mergeRequestId, commitSha, files }: CreateAnalysisData): Promise<AnalysisWithContexts> {
-    return this.prisma.analysis.create({
+    return this.prismaService.analysis.create({
       data: {
         mergeRequestId,
         commitSha,
@@ -27,7 +27,7 @@ export class AnalysesRepository {
   }
 
   findById(id: string): Promise<AnalysisWithContexts | null> {
-    return this.prisma.analysis.findUnique({ where: { id }, include: { contexts: true } });
+    return this.prismaService.analysis.findUnique({ where: { id }, include: { contexts: true } });
   }
 
   async findMany(
@@ -36,14 +36,14 @@ export class AnalysesRepository {
     offset: number,
   ): Promise<{ items: Analysis[]; total: number }> {
     const where = { mergeRequestId };
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.analysis.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
-      this.prisma.analysis.count({ where }),
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.analysis.findMany({ where, orderBy: { id: 'desc' }, take: limit, skip: offset }),
+      this.prismaService.analysis.count({ where }),
     ]);
     return { items, total };
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.analysis.delete({ where: { id } });
+    await this.prismaService.analysis.delete({ where: { id } });
   }
 }

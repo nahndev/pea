@@ -7,16 +7,16 @@ import { ListAnalysisContextsQueryDto } from './dto/list-analysis-contexts-query
 
 @Injectable()
 export class AnalysisContextsService {
-  constructor(private readonly repository: AnalysisContextsRepository) {}
+  constructor(private readonly analysisContextsRepository: AnalysisContextsRepository) {}
 
   findAll({ limit, offset, ...filter }: ListAnalysisContextsQueryDto): Promise<
     Paginated<AnalysisContext>
   > {
-    return this.repository.findMany(filter, limit, offset);
+    return this.analysisContextsRepository.findMany(filter, limit, offset);
   }
 
   async findOne(id: string): Promise<AnalysisContext> {
-    const context = await this.repository.findById(id);
+    const context = await this.analysisContextsRepository.findById(id);
     if (!context) throw new NotFoundException({ code: ErrorCode.ANALYSIS_CONTEXT_NOT_FOUND });
     return context;
   }

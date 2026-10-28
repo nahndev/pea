@@ -5,10 +5,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AnalysisContextsRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   findById(id: string): Promise<AnalysisContext | null> {
-    return this.prisma.analysisContext.findUnique({ where: { id } });
+    return this.prismaService.analysisContext.findUnique({ where: { id } });
   }
 
   async findMany(
@@ -16,14 +16,14 @@ export class AnalysisContextsRepository {
     limit: number,
     offset: number,
   ): Promise<{ items: AnalysisContext[]; total: number }> {
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.analysisContext.findMany({
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.analysisContext.findMany({
         where,
         orderBy: { id: 'desc' },
         take: limit,
         skip: offset,
       }),
-      this.prisma.analysisContext.count({ where }),
+      this.prismaService.analysisContext.count({ where }),
     ]);
     return { items, total };
   }

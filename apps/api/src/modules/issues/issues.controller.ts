@@ -26,27 +26,27 @@ import { IssuesService } from './issues.service';
 @ApiTags('issues')
 @Controller('issues')
 export class IssuesController {
-  constructor(private readonly service: IssuesService) {}
+  constructor(private readonly issuesService: IssuesService) {}
 
   @Post()
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   create(@Body() dto: CreateIssueDto) {
-    return this.service.create(dto);
+    return this.issuesService.create(dto);
   }
 
   @Get()
   @ApiOkResponse()
   findAll(@Query() query: ListIssuesQueryDto) {
-    return this.service.findAll(query);
+    return this.issuesService.findAll(query);
   }
 
   @Get(':id')
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+    return this.issuesService.findOne(id);
   }
 
   @Patch(':id')
@@ -54,7 +54,7 @@ export class IssuesController {
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateIssueDto) {
-    return this.service.update(id, dto);
+    return this.issuesService.update(id, dto);
   }
 
   @Delete(':id')
@@ -62,6 +62,6 @@ export class IssuesController {
   @ApiNoContentResponse()
   @ApiNotFoundResponse()
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+    return this.issuesService.remove(id);
   }
 }
