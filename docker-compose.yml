@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: nexus.leaneo.com/docker-hub/postgres:17-alpine
+    container_name: pea-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pea}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pea}
+      POSTGRES_DB: ${POSTGRES_DB:-pea}
+    ports:
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-pea} -d ${POSTGRES_DB:-pea}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:

@@ -1,0 +1,4 @@
+{
+  "extends": "@tomato/tsconfig/library.json",
+  "include": ["src"]
+}

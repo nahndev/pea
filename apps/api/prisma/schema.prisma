@@ -1,0 +1,40 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model MergeRequest {
+  id       String     @id @default(uuid(7)) @db.Uuid
+  iid      Int        @unique
+  analyses Analysis[]
+
+  @@map("merge_requests")
+}
+
+model Analysis {
+  id             String            @id @default(uuid(7)) @db.Uuid
+  mergeRequestId String            @map("merge_request_id") @db.Uuid
+  commitSha      String            @map("commit_sha") @db.VarChar(64)
+  createdAt      DateTime          @default(now()) @map("created_at")
+  mergeRequest   MergeRequest      @relation(fields: [mergeRequestId], references: [id], onDelete: Cascade)
+  contexts       AnalysisContext[]
+
+  @@index([mergeRequestId, createdAt(sort: Desc)])
+  @@map("analyses")
+}
+
+model AnalysisContext {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  analysisId String   @map("analysis_id") @db.Uuid
+  file       String   @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at")
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, file])
+  @@map("analysis_contexts")
+}

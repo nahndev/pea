@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-code-rules.mjs\"",
+            "if": "Bash(git commit *)",
+            "timeout": 30,
+            "statusMessage": "Checking code rules..."
+          }
+        ]
+      }
+    ]
+  }
+}
