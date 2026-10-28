@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./theme/index.css";
+@import "./utilities/state.css";
+@import "./utilities/motion.css";
+@import "./utilities/intent.css";
+@import "./utilities/variant.css";
+
+@custom-variant dark (&:is(.dark, .dark *));
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}

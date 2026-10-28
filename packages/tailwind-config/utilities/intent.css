@@ -1,0 +1,136 @@
+:root,
+[data-theme] {
+  --c-solid: var(--primary);
+  --c-solid-foreground: var(--primary-foreground);
+  --c-hover: var(--primary-hover);
+  --c-active: var(--primary-active);
+  --c-focus: var(--primary-focus);
+  --c-disabled: var(--primary-disabled);
+  --c-disabled-foreground: var(--primary-disabled-foreground);
+  --c-soft: var(--primary-soft);
+  --c-soft-hover: var(--primary-soft-hover);
+  --c-selected: var(--primary-selected);
+  --c-soft-foreground: var(--primary-soft-foreground);
+  --c-outline: var(--primary-border);
+  --c-outline-hover: var(--primary-border-hover);
+  --c-outline-strong: var(--primary-border-strong);
+}
+
+@utility primary {
+  --c-solid: var(--primary);
+  --c-solid-foreground: var(--primary-foreground);
+  --c-hover: var(--primary-hover);
+  --c-active: var(--primary-active);
+  --c-focus: var(--primary-focus);
+  --c-disabled: var(--primary-disabled);
+  --c-disabled-foreground: var(--primary-disabled-foreground);
+  --c-soft: var(--primary-soft);
+  --c-soft-hover: var(--primary-soft-hover);
+  --c-selected: var(--primary-selected);
+  --c-soft-foreground: var(--primary-soft-foreground);
+  --c-outline: var(--primary-border);
+  --c-outline-hover: var(--primary-border-hover);
+  --c-outline-strong: var(--primary-border-strong);
+}
+
+@utility accent {
+  --c-solid: var(--accent);
+  --c-solid-foreground: var(--accent-foreground);
+  --c-hover: var(--accent-hover);
+  --c-active: var(--accent-active);
+  --c-focus: var(--accent-focus);
+  --c-disabled: var(--accent-disabled);
+  --c-disabled-foreground: var(--accent-disabled-foreground);
+  --c-soft: var(--accent-soft);
+  --c-soft-hover: var(--accent-soft-hover);
+  --c-selected: var(--accent-selected);
+  --c-soft-foreground: var(--accent-soft-foreground);
+  --c-outline: var(--accent-border);
+  --c-outline-hover: var(--accent-border-hover);
+  --c-outline-strong: var(--accent-border-strong);
+}
+
+@utility neutral {
+  --c-solid: var(--neutral);
+  --c-solid-foreground: var(--neutral-foreground);
+  --c-hover: var(--neutral-hover);
+  --c-active: var(--neutral-active);
+  --c-focus: var(--neutral-focus);
+  --c-disabled: var(--neutral-disabled);
+  --c-disabled-foreground: var(--neutral-disabled-foreground);
+  --c-soft: var(--neutral-soft);
+  --c-soft-hover: var(--neutral-soft-hover);
+  --c-selected: var(--neutral-selected);
+  --c-soft-foreground: var(--neutral-soft-foreground);
+  --c-outline: var(--neutral-border);
+  --c-outline-hover: var(--neutral-border-hover);
+  --c-outline-strong: var(--neutral-border-strong);
+}
+
+@utility success {
+  --c-solid: var(--success);
+  --c-solid-foreground: var(--success-foreground);
+  --c-hover: var(--success-hover);
+  --c-active: var(--success-active);
+  --c-focus: var(--success-focus);
+  --c-disabled: var(--success-disabled);
+  --c-disabled-foreground: var(--success-disabled-foreground);
+  --c-soft: var(--success-soft);
+  --c-soft-hover: var(--success-soft-hover);
+  --c-selected: var(--success-selected);
+  --c-soft-foreground: var(--success-soft-foreground);
+  --c-outline: var(--success-border);
+  --c-outline-hover: var(--success-border-hover);
+  --c-outline-strong: var(--success-border-strong);
+}
+
+@utility warning {
+  --c-solid: var(--warning);
+  --c-solid-foreground: var(--warning-foreground);
+  --c-hover: var(--warning-hover);
+  --c-active: var(--warning-active);
+  --c-focus: var(--warning-focus);
+  --c-disabled: var(--warning-disabled);
+  --c-disabled-foreground: var(--warning-disabled-foreground);
+  --c-soft: var(--warning-soft);
+  --c-soft-hover: var(--warning-soft-hover);
+  --c-selected: var(--warning-selected);
+  --c-soft-foreground: var(--warning-soft-foreground);
+  --c-outline: var(--warning-border);
+  --c-outline-hover: var(--warning-border-hover);
+  --c-outline-strong: var(--warning-border-strong);
+}
+
+@utility danger {
+  --c-solid: var(--danger);
+  --c-solid-foreground: var(--danger-foreground);
+  --c-hover: var(--danger-hover);
+  --c-active: var(--danger-active);
+  --c-focus: var(--danger-focus);
+  --c-disabled: var(--danger-disabled);
+  --c-disabled-foreground: var(--danger-disabled-foreground);
+  --c-soft: var(--danger-soft);
+  --c-soft-hover: var(--danger-soft-hover);
+  --c-selected: var(--danger-selected);
+  --c-soft-foreground: var(--danger-soft-foreground);
+  --c-outline: var(--danger-border);
+  --c-outline-hover: var(--danger-border-hover);
+  --c-outline-strong: var(--danger-border-strong);
+}
+
+@utility info {
+  --c-solid: var(--info);
+  --c-solid-foreground: var(--info-foreground);
+  --c-hover: var(--info-hover);
+  --c-active: var(--info-active);
+  --c-focus: var(--info-focus);
+  --c-disabled: var(--info-disabled);
+  --c-disabled-foreground: var(--info-disabled-foreground);
+  --c-soft: var(--info-soft);
+  --c-soft-hover: var(--info-soft-hover);
+  --c-selected: var(--info-selected);
+  --c-soft-foreground: var(--info-soft-foreground);
+  --c-outline: var(--info-border);
+  --c-outline-hover: var(--info-border-hover);
+  --c-outline-strong: var(--info-border-strong);
+}

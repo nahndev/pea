@@ -1,0 +1,15 @@
+@utility variant-solid {
+  @apply motion-base focus-ring bg-solid text-solid-foreground is-hover:bg-hover is-active:bg-active is-selected:bg-active is-disabled:bg-disabled is-disabled:text-disabled-foreground;
+}
+
+@utility variant-soft {
+  @apply motion-base focus-ring bg-soft text-soft-foreground is-hover:bg-soft-hover is-active:bg-selected is-selected:bg-selected is-disabled:bg-disabled is-disabled:text-disabled-foreground;
+}
+
+@utility variant-outlined {
+  @apply motion-base focus-ring border border-outline bg-transparent text-soft-foreground is-hover:border-outline-hover is-hover:bg-soft is-active:bg-soft-hover is-selected:border-outline-strong is-selected:bg-selected is-disabled:border-disabled is-disabled:text-disabled-foreground;
+}
+
+@utility variant-ghost {
+  @apply motion-base focus-ring bg-transparent text-soft-foreground is-hover:bg-soft is-active:bg-soft-hover is-selected:bg-selected is-disabled:text-disabled-foreground;
+}

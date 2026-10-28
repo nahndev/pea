@@ -1,0 +1,11 @@
+@custom-variant is-hover (&:hover:not(:disabled, [aria-disabled="true"], [data-disabled]));
+@custom-variant is-active (&:active:not(:disabled, [aria-disabled="true"], [data-disabled]));
+@custom-variant is-selected (&:is([aria-pressed="true"], [aria-selected="true"], [aria-current="page"], [data-selected="true"], [data-state="on"], [data-state="active"], [data-state="checked"]));
+@custom-variant is-disabled (&:is(:disabled, [aria-disabled="true"], [data-disabled]));
+
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+}
