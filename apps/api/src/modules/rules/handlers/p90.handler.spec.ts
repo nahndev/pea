@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Rule } from '../../../generated/client';
-import { UploadService } from '../../files/upload.service';
+import { StorageService } from '../../files/storage.service';
 import { P90Handler } from './p90.handler';
 
 describe('P90Handler', () => {
@@ -23,8 +23,8 @@ describe('P90Handler', () => {
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'p90-'));
-    const uploadService = { resolve: (path: string) => join(dir, path) };
-    p90Handler = new P90Handler(uploadService as unknown as UploadService);
+    const storageService = { resolve: (path: string) => join(dir, path) };
+    p90Handler = new P90Handler(storageService as unknown as StorageService);
   });
 
   afterEach(() => rm(dir, { recursive: true, force: true }));
@@ -48,7 +48,7 @@ describe('P90Handler', () => {
 
   it('ignores contexts that are not api metrics', async () => {
     await writeLog([1000]);
-    await expect(p90Handler.handle(rule(), context(AnalysisContextType.SQL))).resolves.toEqual([]);
+    await expect(p90Handler.handle(rule(), context(AnalysisContextType.QUERY))).resolves.toEqual([]);
   });
 
   it('returns no issue when the rule has no threshold', async () => {

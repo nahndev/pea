@@ -1,5 +1,5 @@
 export const AnalysisContextType = {
-  SQL: 'SQL',
+  QUERY: 'QUERY',
   API_METRIC: 'API_METRIC',
 } as const;
 
