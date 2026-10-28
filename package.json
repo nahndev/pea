@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "generate": "pnpm --filter @tomato/api generate",
-    "migrate": "pnpm --filter @tomato/api migrate"
+    "migrate": "pnpm --filter @tomato/api migrate",
+    "seed": "pnpm --filter @tomato/api seed"
   },
   "devDependencies": {
     "turbo": "2.11.10",
