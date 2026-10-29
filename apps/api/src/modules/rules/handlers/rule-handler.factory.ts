@@ -4,6 +4,7 @@ import { LatencyHandler } from './latency.handler';
 import { RateHandler } from './rate.handler';
 import { RouteErrorRateHandler } from './route-error-rate.handler';
 import type { RuleHandler } from './rule-handler.types';
+import { SlowApiHandler } from './slow-api.handler';
 import { SlowRouteHandler } from './slow-route.handler';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class RuleHandlerFactory {
     rateHandler: RateHandler,
     slowRouteHandler: SlowRouteHandler,
     routeErrorRateHandler: RouteErrorRateHandler,
+    slowApiHandler: SlowApiHandler,
   ) {
     this.handlers = new Map<string, RuleHandler>([
       [RuleType.P50_FAILURE, latencyHandler],
@@ -27,6 +29,7 @@ export class RuleHandlerFactory {
       [RuleType.ERROR_RATE, rateHandler],
       [RuleType.CLIENT_ERROR_RATE, rateHandler],
       [RuleType.SLOW_ROUTE, slowRouteHandler],
+      [RuleType.SLOW_API, slowApiHandler],
       [RuleType.ROUTE_ERROR_RATE, routeErrorRateHandler],
     ]);
   }

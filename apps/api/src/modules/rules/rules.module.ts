@@ -4,6 +4,7 @@ import { LatencyHandler } from './handlers/latency.handler';
 import { RateHandler } from './handlers/rate.handler';
 import { RouteErrorRateHandler } from './handlers/route-error-rate.handler';
 import { RuleHandlerFactory } from './handlers/rule-handler.factory';
+import { SlowApiHandler } from './handlers/slow-api.handler';
 import { SlowRouteHandler } from './handlers/slow-route.handler';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -16,6 +17,7 @@ import { RulesService } from './rules.service';
     LatencyHandler,
     RateHandler,
     SlowRouteHandler,
+    SlowApiHandler,
     RouteErrorRateHandler,
     RuleHandlerFactory,
   ],

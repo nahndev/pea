@@ -55,11 +55,15 @@ e.g. `GET /api/cart`. Endpoints with fewer than `minRequests` requests are ignor
 | ------------------ | -------------------------------------- | ----------------------- | ---------------------------- | ------------------------ |
 | `SLOW_ROUTE`       | endpoint P95 > `thresholdMs`           | `SlowRouteHandler`      | `thresholdMs`, `minRequests` | `1500` ms, `10`          |
 | `ROUTE_ERROR_RATE` | endpoint 5xx share > `maxPercent`      | `RouteErrorRateHandler` | `maxPercent`, `minRequests`  | `5` %, `10`              |
+| `SLOW_API`         | any request of the endpoint > `thresholdMs` | `SlowApiHandler`   | `thresholdMs`                | `2000` ms                |
+
+`SLOW_API` ignores `minRequests`: one request over the limit is enough. Issues are ordered by the slowest request.
 
 Issue examples:
 
 - `GET /api/cart P95 1594.7ms exceeds threshold 1500ms`
 - `GET /api/cart 5xx error rate 6.1% exceeds threshold 5%`
+- `GET /api/cart expected less than 2000ms, current max is 3372.5ms`
 
 ## Seed data behaviour
 
@@ -69,7 +73,7 @@ With the default config, the files in `seed/` trigger:
 | --------------------------- | ---------------------------------------------------------------------------- |
 | `api_metric.healthy.jsonl`  | none                                                                         |
 | `api_metric.degraded.jsonl` | P90, average, slow request rate, 5xx rate, 4 slow routes, 1 route 5xx rate   |
-| `api_metric.critical.jsonl` | P50–P99, average, max, slow request rate, 6 slow routes                      |
+| `api_metric.critical.jsonl` | P50–P99, average, max, slow request rate, 6 slow routes, 6 slow APIs             |
 
 ## Adding a rule
 

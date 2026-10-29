@@ -14,6 +14,7 @@ const RULES = [
   { type: RuleType.ERROR_RATE, description: '5xx error rate', config: { maxPercent: 1 } },
   { type: RuleType.CLIENT_ERROR_RATE, description: '4xx error rate', config: { maxPercent: 5 } },
   { type: RuleType.SLOW_ROUTE, description: 'Slow route', config: { thresholdMs: 1500, minRequests: 10 } },
+  { type: RuleType.SLOW_API, description: 'Slow API', config: { thresholdMs: 2000 } },
   { type: RuleType.ROUTE_ERROR_RATE, description: 'Route 5xx error rate', config: { maxPercent: 5, minRequests: 10 } },
 ];
 

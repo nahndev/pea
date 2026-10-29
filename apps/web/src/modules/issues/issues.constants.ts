@@ -18,6 +18,7 @@ export const RULE_TYPE_LABEL: Record<RuleType, string> = {
   [RuleType.ERROR_RATE]: '5xx error rate',
   [RuleType.CLIENT_ERROR_RATE]: '4xx error rate',
   [RuleType.SLOW_ROUTE]: 'Slow route',
+  [RuleType.SLOW_API]: 'Slow API',
   [RuleType.ROUTE_ERROR_RATE]: 'Route 5xx error rate',
 };
 
