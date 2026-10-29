@@ -15,7 +15,7 @@ description: Create a new ticket file using the standard layout in changelogs/<v
 ## Layout
 
 1. **Title** — short summary (one line, imperative)
-2. **Currently** — context, reason, goal, mockups/references
+2. **Currently** — context, mockups/references
 3. **Acceptance Criteria** — definition of done (checklist or Given-When-Then)
 4. **Solutions** — technical assessment, risks, implementation approach, technical/architecture design (or UI/UX if applicable)
 
