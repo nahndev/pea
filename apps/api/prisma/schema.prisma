@@ -19,6 +19,7 @@ model Branch {
 model Analysis {
   id              String           @id @default(uuid(7)) @db.Uuid
   branchId        String           @map("branch_id") @db.Uuid
+  schema          String           @db.VarChar(20)
   mergeRequestIid Int?             @map("merge_request_iid")
   file            String           @db.VarChar(255)
   path            String           @db.VarChar(300)
@@ -26,12 +27,13 @@ model Analysis {
   branch          Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
   results         AnalysisResult[]
 
-  @@index([branchId, createdAt(sort: Desc)])
+  @@index([branchId, schema, createdAt(sort: Desc)])
   @@map("analyses")
 }
 
 model Rule {
   id          String   @id @default(uuid(7)) @db.Uuid
+  schema      String   @db.VarChar(20)
   type        String   @db.VarChar(50)
   description String
   severity    String   @default("MEDIUM") @db.VarChar(20)
@@ -40,7 +42,7 @@ model Rule {
   updatedAt   DateTime @updatedAt @map("updated_at")
   issues      Issue[]
 
-  @@index([type])
+  @@index([schema, type])
   @@map("rules")
 }
 
@@ -80,6 +82,7 @@ model AnalysisResult {
 
 model Metric {
   id          String            @id @default(uuid(7)) @db.Uuid
+  schema      String            @db.VarChar(20)
   type        String            @db.VarChar(50)
   unit        String            @default("MILLISECOND") @db.VarChar(20)
   description String
@@ -88,7 +91,7 @@ model Metric {
   results     MetricResult[]
   conditions  MetricCondition[]
 
-  @@index([type])
+  @@index([schema, type])
   @@map("metrics")
 }
 
@@ -108,33 +111,18 @@ model MetricResult {
   @@map("metric_results")
 }
 
-model QualityGate {
-  id          String            @id @default(uuid(7)) @db.Uuid
-  name        String            @unique @db.VarChar(100)
-  description String?
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
-  conditions  MetricCondition[]
-
-  @@map("quality_gates")
-}
-
 model MetricCondition {
   id            String             @id @default(uuid(7)) @db.Uuid
-  qualityGateId String             @map("quality_gate_id") @db.Uuid
   metricId      String             @map("metric_id") @db.Uuid
   operator      String             @db.VarChar(10)
   threshold     Float
   isActive      Boolean            @default(true) @map("is_active")
   createdAt     DateTime           @default(now()) @map("created_at")
   updatedAt     DateTime           @updatedAt @map("updated_at")
-  qualityGate   QualityGate        @relation(fields: [qualityGateId], references: [id], onDelete: Cascade)
   metric        Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
   evaluations   MetricEvaluation[]
 
-  @@unique([qualityGateId, metricId])
-  @@index([qualityGateId])
-  @@index([metricId])
+  @@unique([metricId])
   @@map("metric_conditions")
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import type { AnalysisSchema } from '@tomato/constants';
 import Link from 'next/link';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
@@ -13,13 +14,14 @@ import { GateStatusBadge, ResultStatusBadge } from './analysis-status-badges';
 
 interface AnalysisListViewProps {
   branchId: string;
+  schema: AnalysisSchema;
   page: number;
 }
 
 const linkClass = 'text-sm underline-offset-4 hover:underline focus-ring rounded-sm';
 
-export function AnalysisListView({ branchId, page }: AnalysisListViewProps) {
-  const { data, error, isPending } = useBranchAnalyses(branchId, page);
+export function AnalysisListView({ branchId, schema, page }: AnalysisListViewProps) {
+  const { data, error, isPending } = useBranchAnalyses(branchId, schema, page);
   const pathname = `/branches/${branchId}`;
 
   return (
@@ -40,7 +42,7 @@ export function AnalysisListView({ branchId, page }: AnalysisListViewProps) {
                   <TableHead>Merge request</TableHead>
                   <TableHead>Result</TableHead>
                   <TableHead className="text-right">Issues</TableHead>
-                  <TableHead>Quality gate</TableHead>
+                  <TableHead>Conditions</TableHead>
                   <TableHead>Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -69,7 +71,7 @@ export function AnalysisListView({ branchId, page }: AnalysisListViewProps) {
               </TableBody>
             </Table>
           </div>
-          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined })} />
+          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { schema, page: target > 1 ? target : undefined })} />
         </>
       ) : null}
     </section>

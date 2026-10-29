@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ErrorCode, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricResultView, MetricView } from '@tomato/types';
 import type { Analysis, Metric, MetricResult } from '../../generated/client';
 import { UpdateMetricDto } from './dto/update-metric.dto';
@@ -16,7 +16,7 @@ export class MetricsService {
   ) {}
 
   async measure(analysisResultId: string, analysis: Analysis): Promise<number> {
-    const metrics = await this.metricsRepository.findAll({ isActive: true });
+    const metrics = await this.metricsRepository.findAll({ isActive: true, schema: analysis.schema as AnalysisSchema });
     const items: MetricResultSource[] = [];
     for (const metric of metrics) {
       if (!this.metricHandlerFactory.supports(metric.type)) continue;
@@ -28,7 +28,7 @@ export class MetricsService {
     return this.metricResultsRepository.createMany(analysisResultId, items);
   }
 
-  async findAll(filter: { isActive?: boolean } = {}): Promise<MetricView[]> {
+  async findAll(filter: { isActive?: boolean; schema?: AnalysisSchema } = {}): Promise<MetricView[]> {
     const metrics = await this.metricsRepository.findAll(filter);
     return metrics.map((metric) => this.toView(metric));
   }
@@ -71,12 +71,11 @@ export class MetricsService {
         status: evaluation.status as MetricEvaluationStatus,
         operator: evaluation.operator as MetricConditionOperator,
         threshold: evaluation.threshold,
-        qualityGate: evaluation.metricCondition.qualityGate.name,
       })),
     }));
   }
 
-  private toView({ id, type, unit, description, isActive }: Metric): MetricView {
-    return { id, type: type as MetricType, unit: unit as MetricUnit, description, isActive };
+  private toView({ id, schema, type, unit, description, isActive }: Metric): MetricView {
+    return { id, schema: schema as AnalysisSchema, type: type as MetricType, unit: unit as MetricUnit, description, isActive };
   }
 }

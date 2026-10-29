@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { AnalysisListView, pageParamsSchema } from '@/modules/analyses';
-import { BranchHeader } from '@/modules/branches';
-import { MetricTrendChart } from '@/modules/metrics';
+import { AnalysisListView } from '@/modules/analyses';
+import { BranchHeader, BranchSchemaTabs, branchDetailParamsSchema } from '@/modules/branches';
+import { TrendChartBySchema } from '@/modules/metrics';
 
 export const metadata: Metadata = { title: 'Branch analyses' };
 
@@ -12,13 +12,14 @@ interface BranchPageProps {
 
 export default async function BranchPage({ params, searchParams }: BranchPageProps) {
   const { id: branchId } = await params;
-  const { page } = pageParamsSchema.parse(await searchParams);
+  const { schema, page } = branchDetailParamsSchema.parse(await searchParams);
 
   return (
     <>
-      <BranchHeader branchId={branchId} />
-      <MetricTrendChart branchId={branchId} />
-      <AnalysisListView branchId={branchId} page={page} />
+      <BranchHeader branchId={branchId} schema={schema} />
+      <BranchSchemaTabs branchId={branchId} schema={schema} />
+      <TrendChartBySchema schema={schema} branchId={branchId} />
+      <AnalysisListView branchId={branchId} schema={schema} page={page} />
     </>
   );
 }

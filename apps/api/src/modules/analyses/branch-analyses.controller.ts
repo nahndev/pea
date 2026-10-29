@@ -1,7 +1,7 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { AnalysesService } from './analyses.service';
+import { ListBranchAnalysesQueryDto } from './dto/list-branch-analyses-query.dto';
 import { MetricTrendQueryDto } from './dto/metric-trend-query.dto';
 
 @ApiTags('branches')
@@ -12,14 +12,14 @@ export class BranchAnalysesController {
   @Get('analyses')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  findAnalyses(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() query: PaginationQueryDto) {
+  findAnalyses(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() query: ListBranchAnalysesQueryDto) {
     return this.analysesService.findByBranch(branchId, query);
   }
 
   @Get('metrics/trend')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  getMetricTrend(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() { limit, pick }: MetricTrendQueryDto) {
-    return this.analysesService.getMetricTrend(branchId, limit, pick);
+  getMetricTrend(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() { schema, limit, pick }: MetricTrendQueryDto) {
+    return this.analysesService.getMetricTrend(branchId, schema, limit, pick);
   }
 }

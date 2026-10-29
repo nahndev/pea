@@ -10,33 +10,39 @@ const messages = (input: unknown) => {
 
 describe('createAnalysisSchema', () => {
   it('accepts a branch with a file and trims the branch', () => {
-    const parsed = createAnalysisSchema.parse({ branch: '  feat/x ', mergeRequestIid: '', api_metric: file() });
+    const parsed = createAnalysisSchema.parse({ branch: '  feat/x ', schema: 'API', mergeRequestIid: '', api_metric: file() });
 
     expect(parsed.branch).toBe('feat/x');
     expect(parsed.mergeRequestIid).toBeUndefined();
   });
 
   it('coerces the merge request number', () => {
-    expect(createAnalysisSchema.parse({ branch: 'a', mergeRequestIid: '12', api_metric: file() }).mergeRequestIid).toBe(12);
+    expect(createAnalysisSchema.parse({ branch: 'a', schema: 'API', mergeRequestIid: '12', api_metric: file() }).mergeRequestIid).toBe(12);
   });
 
   it('requires a branch', () => {
-    expect(messages({ branch: '   ', api_metric: file() })).toContain('branch:required');
+    expect(messages({ branch: '   ', schema: 'API', api_metric: file() })).toContain('branch:required');
   });
 
   it('rejects invalid merge request numbers', () => {
-    expect(messages({ branch: 'a', mergeRequestIid: '0', api_metric: file() })).toContain('mergeRequestIid:invalid');
-    expect(messages({ branch: 'a', mergeRequestIid: '1.5', api_metric: file() })).toContain('mergeRequestIid:invalid');
+    expect(messages({ branch: 'a', schema: 'API', mergeRequestIid: '0', api_metric: file() })).toContain('mergeRequestIid:invalid');
+    expect(messages({ branch: 'a', schema: 'API', mergeRequestIid: '1.5', api_metric: file() })).toContain('mergeRequestIid:invalid');
+  });
+
+  it('requires a known schema', () => {
+    expect(messages({ branch: 'a', api_metric: file() })).toContain('schema:required');
+    expect(messages({ branch: 'a', schema: 'NOPE', api_metric: file() })).toContain('schema:required');
+    expect(createAnalysisSchema.parse({ branch: 'a', schema: 'QUERY', api_metric: file() }).schema).toBe('QUERY');
   });
 
   it('requires a file', () => {
-    expect(messages({ branch: 'a' })).toContain('api_metric:file_required');
+    expect(messages({ branch: 'a', schema: 'API' })).toContain('api_metric:file_required');
   });
 
   it('rejects empty and oversized files', () => {
-    expect(messages({ branch: 'a', api_metric: file('') })).toContain('api_metric:empty');
+    expect(messages({ branch: 'a', schema: 'API', api_metric: file('') })).toContain('api_metric:empty');
     const big = file();
     Object.defineProperty(big, 'size', { value: MAX_LOG_FILE_SIZE + 1 });
-    expect(messages({ branch: 'a', api_metric: big })).toContain('api_metric:too_large');
+    expect(messages({ branch: 'a', schema: 'API', api_metric: big })).toContain('api_metric:too_large');
   });
 });

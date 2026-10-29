@@ -1,6 +1,6 @@
 'use client';
 
-import { MetricUnit } from '@tomato/constants';
+import { type AnalysisSchema, MetricUnit } from '@tomato/constants';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, Skeleton, type ChartConfig } from '@tomato/ui';
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts';
 import { EmptyState } from '@/shared/components/empty-state';
@@ -14,17 +14,23 @@ const SHORT_DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'sh
 
 const SERIES_COLORS = ['var(--info)', 'var(--primary)', 'var(--warning)', 'var(--success)', 'var(--danger)', 'var(--accent)'];
 
-interface MetricTrendChartProps {
+export interface TrendChartProps {
   branchId: string | undefined;
   picks?: string[];
   limits?: Record<string, number>;
   onClear?: () => void;
 }
 
+interface MetricTrendChartProps extends TrendChartProps {
+  schema: AnalysisSchema;
+  title: string;
+  defaultMetrics: string;
+}
+
 const NO_PICKS: string[] = [];
 
-export function MetricTrendChart({ branchId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
-  const { data, error, isPending } = useMetricTrend(branchId, picks);
+export function MetricTrendChart({ schema, title, defaultMetrics, branchId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
+  const { data, error, isPending } = useMetricTrend(branchId, schema, picks);
 
   const series = (data?.series ?? []).map((item, index) => ({
     ...item,
@@ -47,10 +53,10 @@ export function MetricTrendChart({ branchId, picks = NO_PICKS, limits = {}, onCl
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
-            <CardTitle>Metric trend</CardTitle>
+            <CardTitle>{title}</CardTitle>
             <CardDescription>
-              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? 'P50, P90 and P95 (tick rows below to pick others)' : 'P50, P90 and P95'}, averaged per analysis over this branch’s last {TREND_LIMIT} analyses.
-              {hasLimits ? ' Dashed lines mark the quality gate limits.' : ''}
+              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${defaultMetrics} (tick rows below to pick others)` : defaultMetrics}, averaged per analysis over this branch’s last {TREND_LIMIT} analyses.
+              {hasLimits ? ' Dashed lines mark the condition limits.' : ''}
             </CardDescription>
           </div>
           {picks.length > 0 && onClear ? (

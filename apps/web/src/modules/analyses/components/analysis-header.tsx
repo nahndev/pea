@@ -66,7 +66,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           {isRunning ? <span role="status" className="text-xs text-muted-foreground">Processing…</span> : null}
         </div>
         <div className="flex items-center gap-2">
-          <dt className="text-muted-foreground">Quality gate</dt>
+          <dt className="text-muted-foreground">Conditions</dt>
           <dd>
             <GateStatusBadge status={latestResult?.gateStatus ?? null} />
           </dd>

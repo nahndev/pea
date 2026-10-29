@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Severity } from '@tomato/constants';
+import type { AnalysisSchema, Severity } from '@tomato/constants';
 import type { Prisma, Rule } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -7,19 +7,24 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class RulesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAll(): Promise<Rule[]> {
-    return this.prismaService.rule.findMany({ orderBy: { id: 'asc' } });
+  findAll(filter: { schema?: AnalysisSchema } = {}): Promise<Rule[]> {
+    return this.prismaService.rule.findMany({ where: filter, orderBy: { id: 'asc' } });
   }
 
   findById(id: string): Promise<Rule | null> {
     return this.prismaService.rule.findUnique({ where: { id } });
   }
 
-  findByTypeAndDescription(type: string, description: string): Promise<Rule | null> {
-    return this.prismaService.rule.findFirst({ where: { type, description } });
+  findByTypeAndDescription(schema: AnalysisSchema, type: string, description: string): Promise<Rule | null> {
+    return this.prismaService.rule.findFirst({ where: { schema, type, description } });
   }
 
-  create(data: { type: string; description: string; severity: Severity; config: Prisma.InputJsonObject }): Promise<Rule> {
+  create(data: {
+    schema: AnalysisSchema;
+    type: string; description: string;
+    severity: Severity;
+    config: Prisma.InputJsonObject;
+  }): Promise<Rule> {
     return this.prismaService.rule.create({ data });
   }
 

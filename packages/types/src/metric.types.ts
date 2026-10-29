@@ -1,7 +1,14 @@
-import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
+import type {
+  AnalysisSchema,
+  MetricConditionOperator,
+  MetricEvaluationStatus,
+  MetricType,
+  MetricUnit,
+} from '@tomato/constants';
 
 export interface MetricView {
   id: string;
+  schema: AnalysisSchema;
   type: MetricType;
   unit: MetricUnit;
   description: string;
@@ -12,7 +19,6 @@ export interface MetricEvaluationView {
   status: MetricEvaluationStatus;
   operator: MetricConditionOperator;
   threshold: number;
-  qualityGate: string;
 }
 
 export interface MetricResultView {

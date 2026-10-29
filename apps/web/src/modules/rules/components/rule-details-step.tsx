@@ -41,7 +41,7 @@ export function RuleDetailsStep({ base, onBack }: RuleDetailsStepProps) {
     setFieldErrors(errors);
     if (!description.success || !config.success) return;
 
-    mutate({ type: base.type, description: description.data, severity, config: config.data }, { onSuccess: ({ id }) => router.push(`/rules/${id}`) });
+    mutate({ schema: base.schema, type: base.type, description: description.data, severity, config: config.data }, { onSuccess: ({ id }) => router.push(`/rules/${id}`) });
   };
 
   return (

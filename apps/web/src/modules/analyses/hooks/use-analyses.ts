@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AnalysisResultStatus } from '@tomato/constants';
+import { AnalysisResultStatus, type AnalysisSchema } from '@tomato/constants';
 import type { AnalysisDetail } from '@tomato/types';
 import { POLL_INTERVAL_MS, POLL_TIMEOUT_MS } from '../analyses.constants';
 import type { CreateAnalysisInput } from '../analyses.schemas';
@@ -10,8 +10,11 @@ const isRunning = (analysis: AnalysisDetail | undefined) =>
   (!analysis.latestResult || analysis.latestResult.status === AnalysisResultStatus.RUNNING) &&
   Date.now() - new Date(analysis.createdAt).getTime() < POLL_TIMEOUT_MS;
 
-export const useBranchAnalyses = (branchId: string, page: number) =>
-  useQuery({ queryKey: ['analyses', 'branch', branchId, { page }], queryFn: () => analysesService.listByBranch(branchId, page) });
+export const useBranchAnalyses = (branchId: string, schema: AnalysisSchema, page: number) =>
+  useQuery({
+    queryKey: ['analyses', 'branch', branchId, { schema, page }],
+    queryFn: () => analysesService.listByBranch(branchId, schema, page),
+  });
 
 export const useAnalysis = (analysisId: string) =>
   useQuery({

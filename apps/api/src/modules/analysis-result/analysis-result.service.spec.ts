@@ -1,9 +1,9 @@
 import { Logger, NotFoundException } from '@nestjs/common';
-import { AnalysisResultStatus, ErrorCode } from '@tomato/constants';
+import { AnalysisResultStatus, AnalysisSchema, ErrorCode } from '@tomato/constants';
 import { AnalysesService } from '../analyses/analyses.service';
+import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { IssuesService } from '../issues/issues.service';
 import { MetricsService } from '../metrics/metrics.service';
-import { QualityGatesService } from '../quality-gates/quality-gates.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import type { RuleHandler } from '../rules/handlers/rule-handler.types';
 import { RulesService } from '../rules/rules.service';
@@ -13,15 +13,15 @@ import { AnalysisResultService } from './analysis-result.service';
 describe('AnalysisResultService', () => {
   let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
-  let rulesService: jest.Mocked<Pick<RulesService, 'listAll'>>;
+  let rulesService: jest.Mocked<Pick<RulesService, 'listBySchema'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
   let ruleHandlerFactory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
   let metricsService: jest.Mocked<Pick<MetricsService, 'measure'>>;
-  let qualityGatesService: jest.Mocked<Pick<QualityGatesService, 'evaluate'>>;
+  let metricConditionsService: jest.Mocked<Pick<MetricConditionsService, 'evaluate'>>;
   let handler: jest.Mocked<RuleHandler>;
   let analysisResultService: AnalysisResultService;
 
-  const analysis = { id: 'an-1', file: 'a.jsonl', path: 'p-1' };
+  const analysis = { id: 'an-1', schema: AnalysisSchema.API, file: 'a.jsonl', path: 'p-1' };
   const ruleList = [
     { id: 'r-1', type: 'P90_FAILURE', severity: 'HIGH' },
     { id: 'r-2', type: 'P95_FAILURE', severity: 'LOW' },
@@ -33,10 +33,10 @@ describe('AnalysisResultService', () => {
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
     };
     analysesService = { findOne: jest.fn().mockResolvedValue(analysis) };
-    rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
+    rulesService = { listBySchema: jest.fn().mockResolvedValue(ruleList) };
     issuesService = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
     metricsService = { measure: jest.fn().mockResolvedValue(0) };
-    qualityGatesService = { evaluate: jest.fn().mockResolvedValue(0) };
+    metricConditionsService = { evaluate: jest.fn().mockResolvedValue(0) };
     handler = { handle: jest.fn().mockResolvedValue([]) };
     ruleHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90_FAILURE'),
@@ -49,7 +49,7 @@ describe('AnalysisResultService', () => {
       issuesService as unknown as IssuesService,
       ruleHandlerFactory as unknown as RuleHandlerFactory,
       metricsService as unknown as MetricsService,
-      qualityGatesService as unknown as QualityGatesService,
+      metricConditionsService as unknown as MetricConditionsService,
     );
   });
 
@@ -66,13 +66,13 @@ describe('AnalysisResultService', () => {
     expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 1 });
   });
 
-  it('measures metrics then evaluates quality gates for the result', async () => {
+  it('measures metrics then evaluates conditions for the result', async () => {
     await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(metricsService.measure).toHaveBeenCalledWith('res-1', analysis);
-    expect(qualityGatesService.evaluate).toHaveBeenCalledWith('res-1');
+    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', AnalysisSchema.API);
     expect(metricsService.measure.mock.invocationCallOrder[0]).toBeLessThan(
-      qualityGatesService.evaluate.mock.invocationCallOrder[0],
+      metricConditionsService.evaluate.mock.invocationCallOrder[0],
     );
   });
 
@@ -80,11 +80,20 @@ describe('AnalysisResultService', () => {
     metricsService.measure.mockRejectedValue(new Error('duckdb'));
 
     await expect(analysisResultService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');
-    expect(qualityGatesService.evaluate).not.toHaveBeenCalled();
+    expect(metricConditionsService.evaluate).not.toHaveBeenCalled();
     expect(analysisResultRepository.finish).toHaveBeenCalledWith('res-1', {
       status: AnalysisResultStatus.FAILED,
       issueCount: 0,
     });
+  });
+
+  it('only loads the rules of the analysis schema', async () => {
+    analysesService.findOne.mockResolvedValue({ ...analysis, schema: AnalysisSchema.QUERY } as never);
+
+    await analysisResultService.run({ analysisId: 'an-1' });
+
+    expect(rulesService.listBySchema).toHaveBeenCalledWith(AnalysisSchema.QUERY);
+    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', AnalysisSchema.QUERY);
   });
 
   it('completes with zero issues when nothing is found', async () => {
@@ -178,7 +187,7 @@ describe('AnalysisResultService reads', () => {
       issuesService as unknown as IssuesService,
       {} as RuleHandlerFactory,
       metricsService as unknown as MetricsService,
-      {} as QualityGatesService,
+      {} as MetricConditionsService,
     );
   });
 

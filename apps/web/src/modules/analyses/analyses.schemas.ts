@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from './analyses.constants';
 
 const logFileSchema = z
@@ -8,6 +9,7 @@ const logFileSchema = z
 
 export const createAnalysisSchema = z.object({
   branch: z.string().trim().min(1, 'required').max(255, 'too_long'),
+  schema: z.enum(analysisSchemaValues, 'required'),
   mergeRequestIid: z.preprocess(
     (value) => (value === '' || value === null ? undefined : value),
     z.coerce.number('invalid').int('invalid').min(1, 'invalid').optional(),
@@ -16,7 +18,3 @@ export const createAnalysisSchema = z.object({
 });
 
 export type CreateAnalysisInput = z.infer<typeof createAnalysisSchema>;
-
-export const pageParamsSchema = z.object({
-  page: z.coerce.number().int().min(1).catch(1),
-});

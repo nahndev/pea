@@ -1,4 +1,4 @@
-import type { AnalysisResultStatus, MetricEvaluationStatus } from '@tomato/constants';
+import type { AnalysisResultStatus, AnalysisSchema, MetricEvaluationStatus } from '@tomato/constants';
 import type { Branch } from './branch.types';
 
 export interface AnalysisResultSummary {
@@ -10,6 +10,7 @@ export interface AnalysisResultSummary {
 
 export interface AnalysisSummary {
   id: string;
+  schema: AnalysisSchema;
   mergeRequestIid: number | null;
   createdAt: string;
   latestResult: AnalysisResultSummary | null;

@@ -4,6 +4,7 @@ export * from './severity.constants';
 export * from './rule-type.constants';
 export * from './analysis-result-status.constants';
 export * from './analysis-event.constants';
+export * from './analysis-schema.constants';
 export * from './metric-type.constants';
 export * from './metric-unit.constants';
 export * from './metric-condition-operator.constants';

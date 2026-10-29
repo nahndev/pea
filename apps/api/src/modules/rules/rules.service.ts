@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ErrorCode, type RuleType, type Severity } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type RuleType, type Severity } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import type { Rule } from '../../generated/client';
 import { CreateRuleDto } from './dto/create-rule.dto';
@@ -11,12 +11,12 @@ import { RulesRepository } from './rules.repository';
 export class RulesService {
   constructor(private readonly rulesRepository: RulesRepository) {}
 
-  listAll(): Promise<Rule[]> {
-    return this.rulesRepository.findAll();
+  listBySchema(schema: AnalysisSchema): Promise<Rule[]> {
+    return this.rulesRepository.findAll({ schema });
   }
 
-  async findAll(): Promise<RuleView[]> {
-    const rules = await this.rulesRepository.findAll();
+  async findAll(filter: { schema?: AnalysisSchema } = {}): Promise<RuleView[]> {
+    const rules = await this.rulesRepository.findAll(filter);
     return rules.map((rule) => this.toView(rule));
   }
 
@@ -26,17 +26,17 @@ export class RulesService {
     return this.toView(rule);
   }
 
-  async create({ type, description, severity, config }: CreateRuleDto): Promise<RuleView> {
+  async create({ schema, type, description, severity, config }: CreateRuleDto): Promise<RuleView> {
     const required: readonly string[] = CONFIG_FIELDS_BY_RULE_TYPE[type];
     const entries = Object.entries(config).filter(([, value]) => value !== undefined);
     if (entries.length !== required.length || entries.some(([field]) => !required.includes(field))) {
       throw new BadRequestException({ code: ErrorCode.RULE_CONFIG_INVALID });
     }
-    if (await this.rulesRepository.findByTypeAndDescription(type, description)) {
+    if (await this.rulesRepository.findByTypeAndDescription(schema, type, description)) {
       throw new ConflictException({ code: ErrorCode.RULE_ALREADY_EXISTS });
     }
 
-    const rule = await this.rulesRepository.create({ type, description, severity, config: Object.fromEntries(entries) });
+    const rule = await this.rulesRepository.create({ schema, type, description, severity, config: Object.fromEntries(entries) });
     return this.toView(rule);
   }
 
@@ -61,6 +61,7 @@ export class RulesService {
   private toView(rule: Rule): RuleView {
     return {
       id: rule.id,
+      schema: rule.schema as AnalysisSchema,
       type: rule.type as RuleType,
       description: rule.description,
       severity: rule.severity as Severity,

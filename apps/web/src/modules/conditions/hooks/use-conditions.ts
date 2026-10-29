@@ -15,8 +15,6 @@ export const useUpdateCondition = (conditionId: string) => {
   });
 };
 
-export const useQualityGates = () => useQuery({ queryKey: ['quality-gates'], queryFn: () => conditionsService.listGates() });
-
 export const useMetricOptions = () => useQuery({ queryKey: ['metrics', 'options'], queryFn: () => conditionsService.listMetrics() });
 
 export const useCreateCondition = () => {

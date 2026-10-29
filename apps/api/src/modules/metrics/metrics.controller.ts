@@ -11,8 +11,8 @@ export class MetricsController {
 
   @Get()
   @ApiOkResponse()
-  findAll(@Query() { isActive }: ListMetricsQueryDto) {
-    return this.metricsService.findAll({ isActive });
+  findAll(@Query() { isActive, schema }: ListMetricsQueryDto) {
+    return this.metricsService.findAll({ isActive, schema });
   }
 
   @Get(':id')

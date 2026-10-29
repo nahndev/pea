@@ -6,7 +6,6 @@ describe('CreateMetricConditionDto', () => {
   const pipe = createValidationPipe();
   const validate = (body: unknown) => pipe.transform(body, { type: 'body', metatype: CreateMetricConditionDto });
   const valid = {
-    qualityGateId: '0192f6f0-1111-7222-8333-944455556666',
     metricId: '0192f6f0-2222-7222-8333-944455556666',
     operator: 'GT',
     threshold: 1000,
@@ -18,7 +17,8 @@ describe('CreateMetricConditionDto', () => {
   });
 
   it.each([
-    ['a gate id that is not a uuid', { ...valid, qualityGateId: 'default' }],
+    ['a metric id that is not a uuid', { ...valid, metricId: 'p90' }],
+    ['a quality gate id (no longer supported)', { ...valid, qualityGateId: '0192f6f0-1111-7222-8333-944455556666' }],
     ['a missing metric', { ...valid, metricId: undefined }],
     ['an unknown operator', { ...valid, operator: 'EQ' }],
     ['a negative threshold', { ...valid, threshold: -1 }],

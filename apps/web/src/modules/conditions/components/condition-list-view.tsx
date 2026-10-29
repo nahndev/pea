@@ -6,6 +6,7 @@ import { StatusBadge } from '@/shared/components/status-badge';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
+import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
 import { useConditions } from '../hooks/use-conditions';
 
@@ -22,21 +23,21 @@ export function ConditionListView() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Quality gate</TableHead>
                 <TableHead>Metric</TableHead>
+                <TableHead>Schema</TableHead>
                 <TableHead>Fails when</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map(({ id, qualityGate, metric, operator, threshold, isActive }) => (
+              {data.map(({ id, schema, metric, operator, threshold, isActive }) => (
                 <TableRow key={id}>
                   <TableCell className="font-medium">
                     <Link href={`/conditions/${id}`} className="hover:underline focus-ring rounded-sm">
-                      {qualityGate.name}
+                      {METRIC_LABEL[metric.type]}
                     </Link>
                   </TableCell>
-                  <TableCell>{METRIC_LABEL[metric.type]}</TableCell>
+                  <TableCell>{ANALYSIS_SCHEMA_LABEL[schema]}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {VIOLATION_PHRASE[operator]} {formatMetricValue(metric.unit, threshold)}
                   </TableCell>

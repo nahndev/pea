@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { AnalysisSchema } from '@tomato/constants';
 import type { Analysis, Prisma } from '../../generated/client';
 import type { StoredFile } from '../files/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -14,6 +15,7 @@ import {
 
 interface CreateAnalysisData {
   branchId: string;
+  schema: AnalysisSchema;
   mergeRequestIid?: number;
   file: StoredFile;
 }
@@ -22,8 +24,8 @@ interface CreateAnalysisData {
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, mergeRequestIid, file }: CreateAnalysisData): Promise<Analysis> {
-    return this.prismaService.analysis.create({ data: { branchId, mergeRequestIid, ...file } });
+  create({ branchId, schema, mergeRequestIid, file }: CreateAnalysisData): Promise<Analysis> {
+    return this.prismaService.analysis.create({ data: { branchId, schema, mergeRequestIid, ...file } });
   }
 
   findById(id: string): Promise<Analysis | null> {
@@ -39,10 +41,11 @@ export class AnalysesRepository {
 
   async findPageByBranch(
     branchId: string,
+    schema: AnalysisSchema,
     limit: number,
     offset: number,
   ): Promise<{ items: AnalysisWithLatestResult[]; total: number }> {
-    const where = { branchId };
+    const where = { branchId, schema };
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.analysis.findMany({
         where,
@@ -56,12 +59,17 @@ export class AnalysesRepository {
     return { items, total };
   }
 
-  findRecentByBranch(branchId: string, limit: number, picks: MetricTrendPick[]): Promise<AnalysisTrendRecord[]> {
+  findRecentByBranch(
+    branchId: string,
+    schema: AnalysisSchema,
+    limit: number,
+    picks: MetricTrendPick[],
+  ): Promise<AnalysisTrendRecord[]> {
     const where: Prisma.MetricResultWhereInput = picks.length
       ? { OR: picks }
       : { subject: '', metric: { type: { in: [...DEFAULT_TREND_METRIC_TYPES] } } };
     return this.prismaService.analysis.findMany({
-      where: { branchId },
+      where: { branchId, schema },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit,
       select: {

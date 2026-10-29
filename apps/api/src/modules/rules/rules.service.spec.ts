@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { ErrorCode, RuleType, Severity } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode, RuleType, Severity } from '@tomato/constants';
 import type { Rule } from '../../generated/client';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -10,6 +10,7 @@ describe('RulesService', () => {
 
   const slowApi: Rule = {
     id: 'r-1',
+    schema: AnalysisSchema.API,
     type: RuleType.SLOW_API,
     description: 'Slow API',
     severity: Severity.LOW,
@@ -33,12 +34,27 @@ describe('RulesService', () => {
     rulesRepository.findAll.mockResolvedValue([{ ...slowApi, config: { thresholdMs: 2000, note: 'x' } }]);
 
     await expect(rulesService.findAll()).resolves.toEqual([
-      { id: 'r-1', type: RuleType.SLOW_API, description: 'Slow API', severity: Severity.LOW, config: { thresholdMs: 2000 } },
+      {
+        id: 'r-1',
+        schema: AnalysisSchema.API,
+        type: RuleType.SLOW_API,
+        description: 'Slow API',
+        severity: Severity.LOW,
+        config: { thresholdMs: 2000 },
+      },
     ]);
+  });
+
+  it('lists only the rules of a schema for an analysis', async () => {
+    rulesRepository.findAll.mockResolvedValue([slowApi]);
+
+    await expect(rulesService.listBySchema(AnalysisSchema.API)).resolves.toEqual([slowApi]);
+    expect(rulesRepository.findAll).toHaveBeenCalledWith({ schema: AnalysisSchema.API });
   });
 
   describe('create', () => {
     const dto = {
+      schema: AnalysisSchema.API,
       type: RuleType.SLOW_ROUTE,
       description: 'Strict slow route',
       severity: Severity.HIGH,
@@ -50,6 +66,7 @@ describe('RulesService', () => {
 
       await expect(rulesService.create(dto)).resolves.toEqual({ id: 'r-2', ...dto });
       expect(rulesRepository.create).toHaveBeenCalledWith({
+        schema: AnalysisSchema.API,
         type: RuleType.SLOW_ROUTE,
         description: 'Strict slow route',
         severity: Severity.HIGH,
@@ -75,7 +92,7 @@ describe('RulesService', () => {
       expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.RULE_CONFIG_INVALID });
     });
 
-    it('throws RULE_ALREADY_EXISTS for a duplicate type and title', async () => {
+    it('throws RULE_ALREADY_EXISTS for a duplicate schema, type and title', async () => {
       rulesRepository.findByTypeAndDescription.mockResolvedValue(slowApi);
 
       const error = await rulesService.create(dto).catch((e: ConflictException) => e);
@@ -91,6 +108,7 @@ describe('RulesService', () => {
 
     await expect(rulesService.findOne('r-1')).resolves.toEqual({
       id: 'r-1',
+      schema: AnalysisSchema.API,
       type: RuleType.SLOW_API,
       description: 'Slow API',
       severity: Severity.LOW,

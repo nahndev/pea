@@ -1,17 +1,20 @@
 'use client';
 
-import { Button, Input, Label } from '@tomato/ui';
+import type { AnalysisSchema } from '@tomato/constants';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tomato/ui';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
+import { ANALYSIS_SCHEMA_LABEL, DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
 
 interface NewAnalysisFormProps {
   branch?: string;
+  schema?: AnalysisSchema;
 }
 
 const FIELD_ERRORS: Record<string, string> = {
@@ -23,17 +26,21 @@ const FIELD_ERRORS: Record<string, string> = {
   file_required: 'Attach the log file.',
 };
 
-export function NewAnalysisForm({ branch = '' }: NewAnalysisFormProps) {
+export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_ANALYSIS_SCHEMA }: NewAnalysisFormProps) {
   const router = useRouter();
   const { mutate, isPending, error: requestError } = useCreateAnalysis();
+  const [schema, setSchema] = useState<AnalysisSchema>(initialSchema);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const raw = Object.fromEntries(
-      [...form.entries()].filter(([, value]) => !(value instanceof File && value.size === 0 && value.name === '')),
-    );
+    const raw = {
+      ...Object.fromEntries(
+        [...form.entries()].filter(([, value]) => !(value instanceof File && value.size === 0 && value.name === '')),
+      ),
+      schema,
+    };
     const parsed = createAnalysisSchema.safeParse(raw);
     if (!parsed.success) {
       setFieldErrors(Object.fromEntries(parsed.error.issues.map(({ path, message }) => [String(path[0]), FIELD_ERRORS[message] ?? FIELD_ERRORS.invalid])));
@@ -53,6 +60,21 @@ export function NewAnalysisForm({ branch = '' }: NewAnalysisFormProps) {
           <Label htmlFor="branch">Branch</Label>
           <Input id="branch" name="branch" defaultValue={branch} placeholder="feat/my-branch" maxLength={255} aria-invalid={Boolean(fieldErrors.branch)} aria-describedby="branch-error" required />
           <FieldError id="branch-error" message={fieldErrors.branch} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="schema">Schema</Label>
+          <Select value={schema} onValueChange={(value) => setSchema(value as AnalysisSchema)}>
+            <SelectTrigger id="schema" className="w-40" aria-invalid={Boolean(fieldErrors.schema)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {analysisSchemaValues.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {ANALYSIS_SCHEMA_LABEL[value]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="mergeRequestIid">Merge request number (optional)</Label>

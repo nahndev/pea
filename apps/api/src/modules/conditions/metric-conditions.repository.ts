@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { MetricConditionOperator } from '@tomato/constants';
+import type { AnalysisSchema, MetricConditionOperator } from '@tomato/constants';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { MetricConditionWithRelations } from './quality-gates.types';
+import type { MetricConditionWithRelations } from './conditions.types';
 
 const INCLUDE = {
-  qualityGate: { select: { id: true, name: true } },
-  metric: { select: { id: true, type: true, unit: true, description: true, isActive: true } },
+  metric: { select: { id: true, schema: true, type: true, unit: true, description: true, isActive: true } },
 } as const;
 
 @Injectable()
@@ -14,7 +13,15 @@ export class MetricConditionsRepository {
 
   findAll(): Promise<MetricConditionWithRelations[]> {
     return this.prismaService.metricCondition.findMany({
-      orderBy: [{ qualityGate: { name: 'asc' } }, { id: 'asc' }],
+      orderBy: [{ metric: { schema: 'asc' } }, { metric: { type: 'asc' } }, { id: 'asc' }],
+      include: INCLUDE,
+    });
+  }
+
+  findActiveBySchema(schema: AnalysisSchema): Promise<MetricConditionWithRelations[]> {
+    return this.prismaService.metricCondition.findMany({
+      where: { isActive: true, metric: { schema } },
+      orderBy: { id: 'asc' },
       include: INCLUDE,
     });
   }
@@ -23,15 +30,11 @@ export class MetricConditionsRepository {
     return this.prismaService.metricCondition.findUnique({ where: { id }, include: INCLUDE });
   }
 
-  findByGateAndMetric(qualityGateId: string, metricId: string): Promise<MetricConditionWithRelations | null> {
-    return this.prismaService.metricCondition.findUnique({
-      where: { qualityGateId_metricId: { qualityGateId, metricId } },
-      include: INCLUDE,
-    });
+  findByMetric(metricId: string): Promise<MetricConditionWithRelations | null> {
+    return this.prismaService.metricCondition.findUnique({ where: { metricId }, include: INCLUDE });
   }
 
   create(data: {
-    qualityGateId: string;
     metricId: string;
     operator: MetricConditionOperator;
     threshold: number;

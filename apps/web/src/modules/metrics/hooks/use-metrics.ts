@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AnalysisSchema } from '@tomato/constants';
 import { useAnalysisProgress } from '@/modules/analyses';
 import type { UpdateMetricInput } from '../metrics.schemas';
 import { metricsService } from '../services/metrics.service';
@@ -13,10 +14,10 @@ export const useMetricResults = (analysisId: string) => {
   });
 };
 
-export const useMetricTrend = (branchId: string | undefined, picks: string[]) =>
+export const useMetricTrend = (branchId: string | undefined, schema: AnalysisSchema, picks: string[]) =>
   useQuery({
-    queryKey: ['metrics', 'trend', branchId, picks],
-    queryFn: () => metricsService.getTrend(branchId as string, picks),
+    queryKey: ['metrics', 'trend', branchId, schema, picks],
+    queryFn: () => metricsService.getTrend(branchId as string, schema, picks),
     enabled: Boolean(branchId),
     placeholderData: keepPreviousData,
   });

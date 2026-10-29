@@ -1,3 +1,4 @@
+import type { AnalysisSchema } from '@tomato/constants';
 import type { MetricResultView, MetricTrend, MetricView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { TREND_LIMIT } from '../metrics.constants';
@@ -24,9 +25,9 @@ export const metricsService = {
     return data;
   },
 
-  async getTrend(branchId: string, picks: string[]) {
+  async getTrend(branchId: string, schema: AnalysisSchema, picks: string[]) {
     const { data } = await apiClient.get<MetricTrend>(`/branches/${branchId}/metrics/trend`, {
-      params: { limit: TREND_LIMIT, pick: picks },
+      params: { schema, limit: TREND_LIMIT, pick: picks },
       paramsSerializer: { indexes: null },
     });
     return data;

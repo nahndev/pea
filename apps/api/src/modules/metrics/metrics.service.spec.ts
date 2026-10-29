@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { ErrorCode } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode } from '@tomato/constants';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import type { MetricHandler } from './handlers/metric-handler.types';
 import { MetricResultsRepository } from './metric-results.repository';
@@ -15,7 +15,7 @@ describe('MetricsService', () => {
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
 
-  const analysis = { id: 'an-1', file: 'a.jsonl', path: 'p-1' } as never;
+  const analysis = { id: 'an-1', schema: AnalysisSchema.API, file: 'a.jsonl', path: 'p-1' } as never;
   const metricList = [
     { id: 'm-1', type: 'P90' },
     { id: 'm-2', type: 'UNKNOWN' },
@@ -40,9 +40,9 @@ describe('MetricsService', () => {
     );
   });
 
-  it('only measures active metrics', async () => {
+  it('only measures active metrics of the analysis schema', async () => {
     await metricsService.measure('res-1', analysis);
-    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: true });
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: true, schema: AnalysisSchema.API });
   });
 
   it('stores a result for every supported metric', async () => {
@@ -110,13 +110,13 @@ describe('MetricsService', () => {
 
   it('lists the metrics with their unit', async () => {
     metricsRepository.findAll.mockResolvedValue([
-      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, config: {} },
+      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, config: {} },
     ] as never);
 
-    await expect(metricsService.findAll({ isActive: false })).resolves.toEqual([
-      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false },
+    await expect(metricsService.findAll({ isActive: false, schema: AnalysisSchema.API })).resolves.toEqual([
+      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false },
     ]);
-    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: false });
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: false, schema: AnalysisSchema.API });
   });
 
   it('returns one metric, or null when it does not exist', async () => {

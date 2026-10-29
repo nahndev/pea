@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -8,6 +8,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
+import { ListRulesQueryDto } from './dto/list-rules-query.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { RulesService } from './rules.service';
 
@@ -18,8 +19,8 @@ export class RulesController {
 
   @Get()
   @ApiOkResponse()
-  findAll() {
-    return this.rulesService.findAll();
+  findAll(@Query() { schema }: ListRulesQueryDto) {
+    return this.rulesService.findAll({ schema });
   }
 
   @Post()

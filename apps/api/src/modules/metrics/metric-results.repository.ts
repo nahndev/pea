@@ -3,10 +3,7 @@ import type { MetricResult, Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
-  include: {
-    metric: true;
-    evaluations: { include: { metricCondition: { select: { qualityGate: { select: { name: true } } } } } };
-  };
+  include: { metric: true; evaluations: true };
 }>;
 
 export interface MetricResultSource {
@@ -36,10 +33,7 @@ export class MetricResultsRepository {
       orderBy: [{ metric: { type: 'asc' } }, { subject: 'asc' }],
       include: {
         metric: true,
-        evaluations: {
-          orderBy: { id: 'asc' },
-          include: { metricCondition: { select: { qualityGate: { select: { name: true } } } } },
-        },
+        evaluations: { orderBy: { id: 'asc' } },
       },
     });
   }

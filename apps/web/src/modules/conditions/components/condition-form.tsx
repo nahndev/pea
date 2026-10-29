@@ -44,7 +44,7 @@ export function ConditionForm({ condition }: ConditionFormProps) {
       noValidate
       className="flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-card"
     >
-      <p className="text-sm text-muted-foreground">The quality gate fails a result when its value matches this condition.</p>
+      <p className="text-sm text-muted-foreground">A result fails when its value matches this condition.</p>
       <div className="flex items-center gap-2">
         <input
           id="is-active"

@@ -12,7 +12,7 @@ const result = (
   value,
   subject,
   metric: { id: `m-${type}`, type, unit: 'MILLISECOND', description: type },
-  evaluations: statuses.map((status) => ({ status, operator: 'GT', threshold: 1000, qualityGate: 'Default' })),
+  evaluations: statuses.map((status) => ({ status, operator: 'GT', threshold: 1000 })),
 });
 
 describe('summarizeMetrics', () => {

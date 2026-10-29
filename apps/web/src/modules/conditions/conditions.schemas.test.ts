@@ -35,14 +35,13 @@ describe('updateConditionSchema', () => {
 });
 
 describe('createConditionSchema', () => {
-  const valid = { qualityGateId: 'g-1', metricId: 'm-1', operator: 'GT', threshold: '1000' };
+  const valid = { metricId: 'm-1', operator: 'GT', threshold: '1000' };
 
-  it('accepts a gate, a metric, an operator and a threshold', () => {
+  it('accepts a metric, an operator and a threshold', () => {
     expect(createConditionSchema.parse(valid)).toEqual({ ...valid, threshold: 1000 });
   });
 
-  it('requires a gate and a metric', () => {
-    expect(createConditionSchema.safeParse({ ...valid, qualityGateId: '' }).success).toBe(false);
+  it('requires a metric', () => {
     expect(createConditionSchema.safeParse({ ...valid, metricId: '' }).success).toBe(false);
   });
 

@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
-import { AnalysisEvent, ErrorCode } from '@tomato/constants';
+import { AnalysisEvent, AnalysisSchema, ErrorCode } from '@tomato/constants';
 import { StorageService } from '../files/storage.service';
 import type { StoredFile } from '../files/storage.service';
 import { BranchesService } from '../branches/branches.service';
@@ -42,12 +42,13 @@ describe('AnalysesService', () => {
     const analysis = { id: 'an-1', branchId: 'br-1', ...STORED_FILE };
     analysesRepository.create.mockResolvedValue(analysis as never);
 
-    const result = await analysesService.create({ branch: 'feat/x', mergeRequestIid: 7 }, UPLOAD);
+    const result = await analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API, mergeRequestIid: 7 }, UPLOAD);
 
     expect(storageService.save).toHaveBeenCalledWith(UPLOAD);
     expect(branchesService.findOrCreateByName).toHaveBeenCalledWith('feat/x');
     expect(analysesRepository.create).toHaveBeenCalledWith({
       branchId: 'br-1',
+      schema: AnalysisSchema.API,
       mergeRequestIid: 7,
       file: STORED_FILE,
     });
@@ -57,7 +58,7 @@ describe('AnalysesService', () => {
   });
 
   it('rejects a missing file before touching the database or the disk', async () => {
-    await expect(codeOf(analysesService.create({ branch: 'feat/x' }))).resolves.toEqual({
+    await expect(codeOf(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API }))).resolves.toEqual({
       code: ErrorCode.LOG_FILE_REQUIRED,
     });
     expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
@@ -68,7 +69,7 @@ describe('AnalysesService', () => {
   it('removes the stored files when creating the analysis fails', async () => {
     analysesRepository.create.mockRejectedValue(new Error('db down'));
 
-    await expect(analysesService.create({ branch: 'feat/x' }, UPLOAD)).rejects.toThrow('db down');
+    await expect(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API }, UPLOAD)).rejects.toThrow('db down');
     expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
@@ -120,15 +121,16 @@ describe('AnalysesService reads', () => {
     [['PASSED', 'FAILED'], 'FAILED'],
   ])('derives the gate status from evaluations %j as %s', async (evaluationStatuses, expected) => {
     analysesRepository.findPageByBranch.mockResolvedValue({
-      items: [{ id: 'an-1', mergeRequestIid: 3, createdAt, results: [result(evaluationStatuses)] }] as never,
+      items: [{ id: 'an-1', schema: 'API', mergeRequestIid: 3, createdAt, results: [result(evaluationStatuses)] }] as never,
       total: 1,
     });
 
-    const page = await analysesService.findByBranch('br-1', { limit: 20, offset: 0 });
+    const page = await analysesService.findByBranch('br-1', { schema: AnalysisSchema.API, limit: 20, offset: 0 });
 
     expect(page.total).toBe(1);
     expect(page.items[0]).toEqual({
       id: 'an-1',
+      schema: 'API',
       mergeRequestIid: 3,
       createdAt: createdAt.toISOString(),
       latestResult: { id: 'res-1', status: 'COMPLETED', issueCount: 2, gateStatus: expected },
@@ -137,11 +139,11 @@ describe('AnalysesService reads', () => {
 
   it('returns a null latest result when the analysis has not been evaluated', async () => {
     analysesRepository.findPageByBranch.mockResolvedValue({
-      items: [{ id: 'an-1', mergeRequestIid: null, createdAt, results: [] }] as never,
+      items: [{ id: 'an-1', schema: 'API', mergeRequestIid: null, createdAt, results: [] }] as never,
       total: 1,
     });
 
-    const page = await analysesService.findByBranch('br-1', { limit: 20, offset: 0 });
+    const page = await analysesService.findByBranch('br-1', { schema: AnalysisSchema.API, limit: 20, offset: 0 });
 
     expect(page.items[0].latestResult).toBeNull();
   });
@@ -149,7 +151,7 @@ describe('AnalysesService reads', () => {
   it('rejects listing analyses of an unknown branch', async () => {
     branchesService.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND }));
 
-    await expect(analysesService.findByBranch('missing', { limit: 20, offset: 0 })).rejects.toBeInstanceOf(
+    await expect(analysesService.findByBranch('missing', { schema: AnalysisSchema.API, limit: 20, offset: 0 })).rejects.toBeInstanceOf(
       NotFoundException,
     );
     expect(analysesRepository.findPageByBranch).not.toHaveBeenCalled();
@@ -177,9 +179,9 @@ describe('AnalysesService reads', () => {
         },
       ] as never);
 
-      const trend = await analysesService.getMetricTrend('br-1', 20);
+      const trend = await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20);
 
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, []);
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', AnalysisSchema.API, 20, []);
       expect(trend.points.map(({ analysisId }) => analysisId)).toEqual(['an-1', 'an-2']);
       expect(trend.points[0].values).toEqual({ 'm-90:': 200, 'm-50:': 50 });
       expect(trend.points[1].values).toEqual({ 'm-90:': 400 });
@@ -199,9 +201,9 @@ describe('AnalysesService reads', () => {
         },
       ] as never);
 
-      const trend = await analysesService.getMetricTrend('br-1', 20, [`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
+      const trend = await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20, [`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
 
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, [
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', AnalysisSchema.API, 20, [
         { metricId: m2, subject: '' },
         { metricId: m1, subject: 'GET /api/cart' },
         { metricId: m1, subject: 'GET /api/orders' },
@@ -214,9 +216,9 @@ describe('AnalysesService reads', () => {
       analysesRepository.findRecentByBranch.mockResolvedValue([] as never);
       const metricId = '11111111-1111-1111-1111-111111111111';
 
-      await analysesService.getMetricTrend('br-1', 20, [`${metricId}:GET /a:b`]);
+      await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20, [`${metricId}:GET /a:b`]);
 
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, [{ metricId, subject: 'GET /a:b' }]);
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', AnalysisSchema.API, 20, [{ metricId, subject: 'GET /a:b' }]);
     });
   });
 });

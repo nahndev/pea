@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AnalysisResultStatus } from '@tomato/constants';
+import { type AnalysisSchema, AnalysisResultStatus } from '@tomato/constants';
 import type { IssueView, MetricResultView, Paginated } from '@tomato/types';
 import type { Analysis, AnalysisResult } from '../../generated/client';
 import { AnalysesService } from '../analyses/analyses.service';
+import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { IssuesService } from '../issues/issues.service';
 import { MetricsService } from '../metrics/metrics.service';
-import { QualityGatesService } from '../quality-gates/quality-gates.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import { RulesService } from '../rules/rules.service';
 import { AnalysisResultRepository } from './analysis-result.repository';
@@ -23,7 +23,7 @@ export class AnalysisResultService {
     private readonly issuesService: IssuesService,
     private readonly ruleHandlerFactory: RuleHandlerFactory,
     private readonly metricsService: MetricsService,
-    private readonly qualityGatesService: QualityGatesService,
+    private readonly metricConditionsService: MetricConditionsService,
   ) {}
 
   async run({ analysisId }: RunAnalysisDto): Promise<AnalysisResult> {
@@ -59,9 +59,10 @@ export class AnalysisResultService {
   }
 
   private async execute(analysis: Analysis, result: AnalysisResult): Promise<AnalysisResult> {
+    const schema = analysis.schema as AnalysisSchema;
     let issueCount = 0;
     try {
-      const rules = await this.rulesService.listAll();
+      const rules = await this.rulesService.listBySchema(schema);
       for (const rule of rules) {
         if (!this.ruleHandlerFactory.supports(rule.type)) continue;
         const issues = await this.ruleHandlerFactory.create(rule.type).handle(rule, analysis);
@@ -71,7 +72,7 @@ export class AnalysisResultService {
         );
       }
       await this.metricsService.measure(result.id, analysis);
-      await this.qualityGatesService.evaluate(result.id);
+      await this.metricConditionsService.evaluate(result.id, schema);
     } catch (error) {
       await this.analysisResultRepository.finish(result.id, { status: AnalysisResultStatus.FAILED, issueCount });
       throw error;

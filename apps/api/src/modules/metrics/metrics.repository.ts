@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { AnalysisSchema } from '@tomato/constants';
 import type { Metric } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -6,7 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class MetricsRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAll(filter: { isActive?: boolean } = {}): Promise<Metric[]> {
+  findAll(filter: { isActive?: boolean; schema?: AnalysisSchema } = {}): Promise<Metric[]> {
     return this.prismaService.metric.findMany({ where: filter, orderBy: { id: 'asc' } });
   }
 

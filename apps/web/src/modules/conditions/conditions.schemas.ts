@@ -8,7 +8,6 @@ export const updateConditionSchema = z.object({
 });
 
 export const createConditionSchema = z.object({
-  qualityGateId: z.string().min(1, 'required'),
   metricId: z.string().min(1, 'required'),
   operator: updateConditionSchema.shape.operator,
   threshold: updateConditionSchema.shape.threshold,

@@ -1,10 +1,15 @@
+import { AnalysisSchema } from '@tomato/constants';
 import { Transform, Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 import { MAX_TREND_PICKS } from '../analyses.constants';
 
 const PICK_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:.{0,255}$/i;
 
 export class MetricTrendQueryDto {
+  @IsOptional()
+  @IsIn(Object.values(AnalysisSchema))
+  schema: AnalysisSchema = AnalysisSchema.API;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

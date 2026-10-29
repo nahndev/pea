@@ -19,11 +19,11 @@ export function MetricSummaryCards({ summaries }: MetricSummaryCardsProps) {
           </CardHeader>
           <CardContent className="flex flex-col gap-2 text-sm">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground">Quality gate</span>
+              <span className="text-muted-foreground">Conditions</span>
               <GateStatusBadge status={gateStatus} />
             </div>
             <p className="text-muted-foreground">
-              {limit ? `Fails when ${VIOLATION_PHRASE[limit.operator]} ${formatDuration(limit.threshold)}.` : 'No gate condition applies.'}
+              {limit ? `Fails when ${VIOLATION_PHRASE[limit.operator]} ${formatDuration(limit.threshold)}.` : 'No condition applies.'}
             </p>
           </CardContent>
         </Card>

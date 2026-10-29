@@ -18,6 +18,7 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { AnalysisSchema } from "@tomato/constants";
 import { memoryStorage } from "multer";
 import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from "./analyses.constants";
 import { AnalysesService } from "./analyses.service";
@@ -33,9 +34,10 @@ export class AnalysesController {
   @ApiBody({
     schema: {
       type: "object",
-      required: ["branch", LOG_FILE_FIELD],
+      required: ["branch", "schema", LOG_FILE_FIELD],
       properties: {
         branch: { type: "string", minLength: 1, maxLength: 255 },
+        schema: { type: "string", enum: Object.values(AnalysisSchema) },
         mergeRequestIid: { type: "integer", minimum: 1 },
         [LOG_FILE_FIELD]: { type: "string", format: "binary" },
       },

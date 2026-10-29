@@ -6,6 +6,7 @@ import {
 import {
   AnalysisEvent,
   type AnalysisResultStatus,
+  type AnalysisSchema,
   ErrorCode,
   MetricEvaluationStatus,
   type MetricType,
@@ -28,7 +29,7 @@ import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
 import type { AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
-import { PaginationQueryDto } from "../../common/dto/pagination-query.dto";
+import { ListBranchAnalysesQueryDto } from "./dto/list-branch-analyses-query.dto";
 
 @Injectable()
 export class AnalysesService {
@@ -40,7 +41,7 @@ export class AnalysesService {
 
   @EmitEvent(AnalysisEvent.CREATED)
   async create(
-    { branch, mergeRequestIid }: CreateAnalysisDto,
+    { branch, schema, mergeRequestIid }: CreateAnalysisDto,
     upload?: Express.Multer.File,
   ): Promise<Analysis> {
     if (!upload)
@@ -48,7 +49,7 @@ export class AnalysesService {
     const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
     const file = await this.storageService.save(upload);
     try {
-      return await this.analysesRepository.create({ branchId, mergeRequestIid, file });
+      return await this.analysesRepository.create({ branchId, schema, mergeRequestIid, file });
     } catch (error) {
       await this.storageService.remove([file]).catch(() => undefined);
       throw error;
@@ -76,17 +77,17 @@ export class AnalysesService {
 
   async findByBranch(
     branchId: string,
-    { limit, offset }: PaginationQueryDto,
+    { schema, limit, offset }: ListBranchAnalysesQueryDto,
   ): Promise<Paginated<AnalysisSummary>> {
     await this.branchesService.findOne(branchId);
-    const { items, total } = await this.analysesRepository.findPageByBranch(branchId, limit, offset);
+    const { items, total } = await this.analysesRepository.findPageByBranch(branchId, schema, limit, offset);
     return { items: items.map((analysis) => this.toSummary(analysis)), total };
   }
 
-  async getMetricTrend(branchId: string, limit: number, picks: string[] = []): Promise<MetricTrend> {
+  async getMetricTrend(branchId: string, schema: AnalysisSchema, limit: number, picks: string[] = []): Promise<MetricTrend> {
     await this.branchesService.findOne(branchId);
     const pickList = picks.map((pick) => this.parsePick(pick));
-    const analyses = await this.analysesRepository.findRecentByBranch(branchId, limit, pickList);
+    const analyses = await this.analysesRepository.findRecentByBranch(branchId, schema, limit, pickList);
 
     const seriesByKey = new Map<string, MetricTrendSeries>();
     const points = analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
@@ -125,6 +126,7 @@ export class AnalysesService {
     const [result] = analysis.results;
     return {
       id: analysis.id,
+      schema: analysis.schema as AnalysisSchema,
       mergeRequestIid: analysis.mergeRequestIid,
       createdAt: analysis.createdAt.toISOString(),
       latestResult: result ? this.toResultSummary(result) : null,

@@ -8,32 +8,27 @@ import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
 import { METRIC_LABEL, METRIC_UNIT_LABEL } from '@/modules/metrics';
+import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { createConditionSchema } from '../conditions.schemas';
-import { useConditions, useCreateCondition, useMetricOptions, useQualityGates } from '../hooks/use-conditions';
+import { useConditions, useCreateCondition, useMetricOptions } from '../hooks/use-conditions';
 import { ConditionLimitFields } from './condition-limit-fields';
 
 export function ConditionCreateForm() {
   const router = useRouter();
-  const gates = useQualityGates();
   const metrics = useMetricOptions();
   const conditions = useConditions();
   const { mutate, isPending, error: requestError } = useCreateCondition();
-  const [gateId, setGateId] = useState<string>();
   const [metricId, setMetricId] = useState<string>();
   const [operator, setOperator] = useState<MetricConditionOperator>(MetricConditionOperator.GT);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const selectedGateId = gateId ?? gates.data?.[0]?.id;
-  const usedMetricIds = new Set(
-    (conditions.data ?? []).filter(({ qualityGate }) => qualityGate.id === selectedGateId).map(({ metric }) => metric.id),
-  );
+  const usedMetricIds = new Set((conditions.data ?? []).map(({ metric }) => metric.id));
   const selectedMetric = metrics.data?.find(({ id }) => id === metricId);
-  const loadError = gates.error ?? metrics.error ?? conditions.error;
+  const loadError = metrics.error ?? conditions.error;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const parsed = createConditionSchema.safeParse({
-      qualityGateId: selectedGateId ?? '',
       metricId: metricId ?? '',
       operator,
       threshold: new FormData(event.currentTarget).get('threshold'),
@@ -48,34 +43,13 @@ export function ConditionCreateForm() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="Create condition" description="Add a limit to a quality gate. A gate has one condition per metric, and a new condition is active.">
+      <PageHeader title="Create condition" description="Add a limit to a metric. A metric has one condition, applied to every analysis of its schema, and a new condition is active.">
         <Breadcrumbs entries={[{ label: 'Conditions', href: '/conditions' }, { label: 'Create condition' }]} />
       </PageHeader>
       {loadError ? <ErrorState error={loadError} /> : null}
-      {!loadError && (!gates.data || !metrics.data || !conditions.data) ? <Skeleton className="h-40 w-full" /> : null}
-      {gates.data && metrics.data && conditions.data ? (
+      {!loadError && (!metrics.data || !conditions.data) ? <Skeleton className="h-40 w-full" /> : null}
+      {metrics.data && conditions.data ? (
         <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-5 shadow-card">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="quality-gate">Quality gate</Label>
-            <Select
-              value={selectedGateId}
-              onValueChange={(value) => {
-                setGateId(value);
-                setMetricId(undefined);
-              }}
-            >
-              <SelectTrigger id="quality-gate" className="w-64" aria-invalid={Boolean(errors.qualityGateId)}>
-                <SelectValue placeholder="Select a quality gate" />
-              </SelectTrigger>
-              <SelectContent>
-                {gates.data.map(({ id, name }) => (
-                  <SelectItem key={id} value={id}>
-                    {name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="metric">Metric</Label>
             <Select value={metricId} onValueChange={setMetricId}>
@@ -83,9 +57,9 @@ export function ConditionCreateForm() {
                 <SelectValue placeholder="Select a metric" />
               </SelectTrigger>
               <SelectContent>
-                {metrics.data.map(({ id, type }) => (
+                {metrics.data.map(({ id, schema, type }) => (
                   <SelectItem key={id} value={id} disabled={usedMetricIds.has(id)}>
-                    {METRIC_LABEL[type]}
+                    {ANALYSIS_SCHEMA_LABEL[schema]} · {METRIC_LABEL[type]}
                     {usedMetricIds.has(id) ? ' (already has a condition)' : ''}
                   </SelectItem>
                 ))}

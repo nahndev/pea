@@ -1,4 +1,4 @@
-import type { RuleType, Severity } from '@tomato/constants';
+import type { AnalysisSchema, RuleType, Severity } from '@tomato/constants';
 import { z } from 'zod';
 import { isRuleConfigField, type RuleConfigField } from './rules.constants';
 
@@ -22,6 +22,7 @@ export interface RuleUpdateInput extends RuleConfigInput {
 }
 
 export interface CreateRuleInput {
+  schema: AnalysisSchema;
   type: RuleType;
   description: string;
   severity: Severity;

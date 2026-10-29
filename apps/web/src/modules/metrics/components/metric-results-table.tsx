@@ -26,7 +26,7 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
             <TableHead>Endpoint</TableHead>
             <TableHead className="text-right">Value</TableHead>
             <TableHead>Unit</TableHead>
-            <TableHead>Quality gate</TableHead>
+            <TableHead>Conditions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -58,10 +58,10 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
                   ) : (
                     <ul className="flex flex-col gap-1">
                       {evaluations.map((evaluation) => (
-                        <li key={`${evaluation.qualityGate}-${evaluation.operator}-${evaluation.threshold}`} className="flex items-center gap-2 whitespace-nowrap">
+                        <li key={`${evaluation.operator}-${evaluation.threshold}`} className="flex items-center gap-2 whitespace-nowrap">
                           <GateStatusBadge status={evaluation.status} />
                           <span className="text-xs text-muted-foreground">
-                            {evaluation.qualityGate}: fails {VIOLATION_PHRASE[evaluation.operator]} {formatMetricValue(metric.unit, evaluation.threshold)}
+                            Fails {VIOLATION_PHRASE[evaluation.operator]} {formatMetricValue(metric.unit, evaluation.threshold)}
                           </span>
                         </li>
                       ))}

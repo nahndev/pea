@@ -5,11 +5,18 @@ Rules are rows of the `rules` table (`type`, `description`, `config`) and are se
 
 An analysis has one log file, the NDJSON request log described in [api_metric.md](api_metric.md); `file` and `path` are stored on the analysis.
 
+## Schemas
+
+Every analysis, rule and metric has a `schema` (`API`, `QUERY` or `BUG`, constant `AnalysisSchema`). A condition has no column of its own: its schema is the schema of its metric.
+An analysis only runs the rules, measures the metrics and evaluates the conditions of its own schema, so an analysis of a schema with no rules or metrics completes with no issue.
+`POST /analyses` takes a `schema` field next to `branch` and the log file; the list and trend endpoints of a branch (`GET /branches/:id/analyses`, `GET /branches/:id/metrics/trend`) take a `schema` query (default `API`),
+and `GET /rules` and `GET /metrics` accept it as a filter. A branch has many analyses; its page shows one tab per schema, each with its own trend chart.
+
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
 
 ## Creating rules
 
-`Create rule` on `/rules` opens a two-step form: pick a base rule, then set the title, severity and settings.
+`Create rule` on `/rules` opens a two-step form: pick a base rule, then set the title, severity and settings. The new rule keeps the schema of its base rule (`schema` in `POST /rules`).
 `POST /rules` takes `{ type, description, severity, config }`. The new rule keeps the type of its base, so it uses the
 same handler; `config` must contain exactly the fields of that type. Nothing links the new rule to the base after creation.
 A second rule with the same type and title is rejected (`RULE_ALREADY_EXISTS`), which also keeps the seed from overwriting it.
@@ -31,15 +38,15 @@ so changing a rule never rewrites past results. Issues can be filtered by severi
 
 Each severity has a metric (`BLOCKER_ISSUE_COUNT`, `HIGH_ISSUE_COUNT`, `MEDIUM_ISSUE_COUNT`, `LOW_ISSUE_COUNT`,
 `INFO_ISSUE_COUNT`, handler `IssueCountHandler`) that counts the issues of the analysis result.
-Quality gate conditions can use them like any metric. The `Default` gate fails on more than 0 blocker or high issues.
+Conditions can use them like any metric. The seeded conditions fail on more than 0 blocker or high issues.
 
 ### Metric results
 
 A metric handler (`MetricHandler.handle`) returns a list of measurements, `{ value, subject? }`. Each one is stored as its own
-`MetricResult` (unique per result, metric and `subject`) and is evaluated against every quality gate condition of that metric.
+`MetricResult` (unique per result, metric and `subject`) and is evaluated against the condition of that metric.
 `subject` is `''` for a value of the whole log and, for example, `GET /api/cart` for a per-endpoint value.
 `PercentileHandler` and `IssueCountHandler` return one measurement; `EndpointPercentileHandler` (`ENDPOINT_P95`) returns one per endpoint.
-The `Default` gate fails when an endpoint P95 is above 3000 ms.
+The seeded condition fails when an endpoint P95 is above 3000 ms.
 
 Every metric has a `unit` (`MILLISECOND` or `COUNT`, column `metrics.unit`) that decides how its values are formatted
 and which metrics can share a chart.
@@ -53,21 +60,21 @@ Results measured before it was disabled stay visible. The seed never changes `is
 
 ### Conditions
 
-A quality gate condition (`MetricCondition`) fails a metric result when `value <operator> threshold` holds
+A condition (`MetricCondition`) fails a metric result when `value <operator> threshold` holds
 (`GT`, `GTE`, `LT`, `LTE`; the threshold is in the unit of the metric). The `Conditions` menu lists them and `/conditions/{id}`
 edits the operator, threshold and `isActive` (`GET /conditions`, `GET /conditions/:id`, `PATCH /conditions/:id`).
-A disabled condition (`isActive: false`) is skipped when a result is evaluated, so it creates no evaluation and cannot fail the gate;
+A disabled condition (`isActive: false`) is skipped when a result is evaluated, so it creates no evaluation and cannot fail the analysis;
 the seed never changes `isActive` of an existing condition.
 Changes apply to analyses run afterwards; stored evaluations keep the operator and threshold they were checked against.
-`Create condition` on `/conditions` (`POST /conditions` with `{ qualityGateId, metricId, operator, threshold }`) adds a condition
-to a quality gate. It is created active, and a gate has at most one condition per metric (unique `qualityGateId + metricId`,
-`METRIC_CONDITION_ALREADY_EXISTS`). The form is fed by `GET /quality-gates` and `GET /metrics`.
+`Create condition` on `/conditions` (`POST /conditions` with `{ metricId, operator, threshold }`) adds a condition
+to a metric. It is created active, and a metric has at most one condition (unique `metricId`,
+`METRIC_CONDITION_ALREADY_EXISTS`). The form is fed by `GET /metrics`.
 
 ### Trend chart
 
 `GET /branches/:branchId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:
 one series per picked `metric id + subject`, and per analysis (latest result) the value of that series.
-Without `pick` it returns the whole-file P50, P90 and P95. On the Metrics tab, tick rows of "Results" to pick series. Metrics with different units cannot be mixed in one chart,
+`schema` is required in practice (default `API`) and limits the analyses to that schema. Without `pick` it returns the whole-file P50, P90 and P95 of that schema. On the Metrics tab, tick rows of "Results" to pick series. Metrics with different units cannot be mixed in one chart,
 so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
 
 ## Config fields

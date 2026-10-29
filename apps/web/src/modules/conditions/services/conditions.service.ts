@@ -1,4 +1,4 @@
-import type { MetricConditionView, MetricView, QualityGateView } from '@tomato/types';
+import type { MetricConditionView, MetricView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import type { CreateConditionInput, UpdateConditionInput } from '../conditions.schemas';
 
@@ -10,11 +10,6 @@ export const conditionsService = {
 
   async get(id: string) {
     const { data } = await apiClient.get<MetricConditionView>(`/conditions/${id}`);
-    return data;
-  },
-
-  async listGates() {
-    const { data } = await apiClient.get<QualityGateView[]>('/quality-gates');
     return data;
   },
 

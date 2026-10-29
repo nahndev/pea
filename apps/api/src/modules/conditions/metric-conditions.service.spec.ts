@@ -1,35 +1,40 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { ErrorCode, MetricConditionOperator, MetricType, MetricUnit } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode, MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { MetricsService } from '../metrics/metrics.service';
 import { MetricConditionsRepository } from './metric-conditions.repository';
 import { MetricConditionsService } from './metric-conditions.service';
-import { QualityGatesRepository } from './quality-gates.repository';
-import type { MetricConditionWithRelations } from './quality-gates.types';
+import { MetricEvaluationsRepository } from './metric-evaluations.repository';
+import type { MetricConditionWithRelations } from './conditions.types';
 
 describe('MetricConditionsService', () => {
   let metricConditionsRepository: jest.Mocked<
-    Pick<MetricConditionsRepository, 'findAll' | 'findById' | 'findByGateAndMetric' | 'create' | 'update'>
+    Pick<MetricConditionsRepository, 'findAll' | 'findById' | 'findByMetric' | 'findActiveBySchema' | 'create' | 'update'>
   >;
-  let qualityGatesRepository: jest.Mocked<Pick<QualityGatesRepository, 'findById'>>;
-  let metricsService: jest.Mocked<Pick<MetricsService, 'findOne'>>;
+  let metricEvaluationsRepository: jest.Mocked<Pick<MetricEvaluationsRepository, 'createMany'>>;
+  let metricsService: jest.Mocked<Pick<MetricsService, 'findOne' | 'findResults'>>;
   let metricConditionsService: MetricConditionsService;
 
   const condition: MetricConditionWithRelations = {
     id: 'c-1',
-    qualityGateId: 'g-1',
     metricId: 'm-1',
     operator: MetricConditionOperator.GT,
     threshold: 1000,
     isActive: true,
     createdAt: new Date('2026-10-01T00:00:00.000Z'),
     updatedAt: new Date('2026-10-01T00:00:00.000Z'),
-    qualityGate: { id: 'g-1', name: 'Default' },
-    metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration', isActive: true },
+    metric: {
+      id: 'm-1',
+      schema: AnalysisSchema.API,
+      type: MetricType.P90,
+      unit: MetricUnit.MILLISECOND,
+      description: 'P90 duration',
+      isActive: true,
+    },
   };
   const view = {
     id: 'c-1',
-    qualityGate: { id: 'g-1', name: 'Default' },
+    schema: AnalysisSchema.API,
     metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration', isActive: true },
     operator: MetricConditionOperator.GT,
     threshold: 1000,
@@ -40,21 +45,22 @@ describe('MetricConditionsService', () => {
     metricConditionsRepository = {
       findAll: jest.fn(),
       findById: jest.fn(),
-      findByGateAndMetric: jest.fn().mockResolvedValue(null),
+      findByMetric: jest.fn().mockResolvedValue(null),
+      findActiveBySchema: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
     };
-    qualityGatesRepository = { findById: jest.fn().mockResolvedValue({ id: 'g-1', name: 'Default' }) };
-    metricsService = { findOne: jest.fn().mockResolvedValue(view.metric) };
+    metricEvaluationsRepository = { createMany: jest.fn().mockResolvedValue(0) };
+    metricsService = { findOne: jest.fn().mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API }), findResults: jest.fn() };
     metricConditionsService = new MetricConditionsService(
       metricConditionsRepository as unknown as MetricConditionsRepository,
-      qualityGatesRepository as unknown as QualityGatesRepository,
+      metricEvaluationsRepository as unknown as MetricEvaluationsRepository,
       metricsService as unknown as MetricsService,
     );
   });
 
   describe('create', () => {
-    const input = { qualityGateId: 'g-1', metricId: 'm-1', operator: MetricConditionOperator.GT, threshold: 1000 };
+    const input = { metricId: 'm-1', operator: MetricConditionOperator.GT, threshold: 1000 };
 
     it('creates an active condition', async () => {
       metricConditionsRepository.create.mockResolvedValue(condition);
@@ -62,15 +68,6 @@ describe('MetricConditionsService', () => {
       await expect(metricConditionsService.create(input)).resolves.toEqual(view);
       expect(metricConditionsRepository.create).toHaveBeenCalledWith(input);
       expect(view.isActive).toBe(true);
-    });
-
-    it('throws QUALITY_GATE_NOT_FOUND for an unknown gate', async () => {
-      qualityGatesRepository.findById.mockResolvedValue(null);
-
-      const error = await metricConditionsService.create(input).catch((e: NotFoundException) => e);
-
-      expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.QUALITY_GATE_NOT_FOUND });
-      expect(metricConditionsRepository.create).not.toHaveBeenCalled();
     });
 
     it('throws METRIC_NOT_FOUND for an unknown metric', async () => {
@@ -82,7 +79,7 @@ describe('MetricConditionsService', () => {
     });
 
     it('throws METRIC_DISABLED for a disabled metric', async () => {
-      metricsService.findOne.mockResolvedValue({ ...view.metric, isActive: false });
+      metricsService.findOne.mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API, isActive: false });
 
       const error = await metricConditionsService.create(input).catch((e: BadRequestException) => e);
 
@@ -91,8 +88,8 @@ describe('MetricConditionsService', () => {
       expect(metricConditionsRepository.create).not.toHaveBeenCalled();
     });
 
-    it('throws METRIC_CONDITION_ALREADY_EXISTS when the gate already has the metric', async () => {
-      metricConditionsRepository.findByGateAndMetric.mockResolvedValue(condition);
+    it('throws METRIC_CONDITION_ALREADY_EXISTS when the metric already has a condition', async () => {
+      metricConditionsRepository.findByMetric.mockResolvedValue(condition);
 
       const error = await metricConditionsService.create(input).catch((e: ConflictException) => e);
 
@@ -118,7 +115,7 @@ describe('MetricConditionsService', () => {
     });
   });
 
-  it('lists the conditions with their gate and metric', async () => {
+  it('lists the conditions with their schema and metric', async () => {
     metricConditionsRepository.findAll.mockResolvedValue([condition]);
     await expect(metricConditionsService.findAll()).resolves.toEqual([view]);
   });
@@ -193,5 +190,54 @@ describe('MetricConditionsService', () => {
 
     await expect(metricConditionsService.update('c-1', {})).resolves.toEqual(view);
     expect(metricConditionsRepository.update).not.toHaveBeenCalled();
+  });
+
+  describe('evaluate', () => {
+    const results = [
+      { id: 'r-1', metricId: 'm-1', value: 1500 },
+      { id: 'r-2', metricId: 'm-1', value: 500 },
+      { id: 'r-3', metricId: 'm-other', value: 9999 },
+    ];
+
+    beforeEach(() => {
+      metricsService.findResults.mockResolvedValue(results as never);
+      metricConditionsRepository.findActiveBySchema.mockResolvedValue([condition]);
+      metricEvaluationsRepository.createMany.mockResolvedValue(2);
+    });
+
+    it('evaluates only the conditions of the given schema', async () => {
+      await metricConditionsService.evaluate('ar-1', AnalysisSchema.API);
+
+      expect(metricConditionsRepository.findActiveBySchema).toHaveBeenCalledWith(AnalysisSchema.API);
+    });
+
+    it('creates a PASSED or FAILED evaluation for each result of the condition metric', async () => {
+      await expect(metricConditionsService.evaluate('ar-1', AnalysisSchema.API)).resolves.toBe(2);
+
+      expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+        {
+          metricResultId: 'r-1',
+          metricConditionId: 'c-1',
+          status: MetricEvaluationStatus.FAILED,
+          operator: MetricConditionOperator.GT,
+          threshold: 1000,
+        },
+        {
+          metricResultId: 'r-2',
+          metricConditionId: 'c-1',
+          status: MetricEvaluationStatus.PASSED,
+          operator: MetricConditionOperator.GT,
+          threshold: 1000,
+        },
+      ]);
+    });
+
+    it('creates nothing when the schema has no conditions', async () => {
+      metricConditionsRepository.findActiveBySchema.mockResolvedValue([]);
+
+      await metricConditionsService.evaluate('ar-1', AnalysisSchema.QUERY);
+
+      expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([]);
+    });
   });
 });

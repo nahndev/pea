@@ -1,9 +1,12 @@
-import { RuleType, Severity } from '@tomato/constants';
+import { AnalysisSchema, RuleType, Severity } from '@tomato/constants';
 import { Transform, Type } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsObject, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { RuleConfigDto } from './rule-config.dto';
 
 export class CreateRuleDto {
+  @IsIn(Object.values(AnalysisSchema))
+  schema: AnalysisSchema;
+
   @IsIn(Object.values(RuleType))
   type: RuleType;
 

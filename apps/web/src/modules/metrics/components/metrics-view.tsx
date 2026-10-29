@@ -11,7 +11,7 @@ import { metricSeriesKey } from '../metric-series';
 import { summarizeMetrics } from '../summarize-metrics';
 import { MetricResultsTable } from './metric-results-table';
 import { MetricSummaryCards } from './metric-summary-cards';
-import { MetricTrendChart } from './metric-trend-chart';
+import { TrendChartBySchema } from './trend-chart.factory';
 
 interface MetricsViewProps {
   analysisId: string;
@@ -48,7 +48,9 @@ export function MetricsView({ analysisId }: MetricsViewProps) {
   return (
     <div className="flex flex-col gap-6">
       <MetricSummaryCards summaries={summaries} />
-      <MetricTrendChart branchId={analysis?.branch.id} picks={picked} limits={limits} onClear={() => setPicked([])} />
+      {analysis ? (
+        <TrendChartBySchema schema={analysis.schema} branchId={analysis.branch.id} picks={picked} limits={limits} onClear={() => setPicked([])} />
+      ) : null}
       <section className="flex flex-col gap-3" aria-labelledby="metric-results-heading">
         <h2 id="metric-results-heading" className="text-lg font-semibold">
           Results
