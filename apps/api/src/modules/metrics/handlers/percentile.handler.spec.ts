@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Metric } from '../../../generated/client';
+import { otlpApiMetricLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { PercentileHandler } from './percentile.handler';
 
@@ -17,7 +18,7 @@ describe('PercentileHandler', () => {
   const writeLog = (durations: number[]) =>
     writeFile(
       join(dir, 'api_metric.log'),
-      durations.map((duration_ms) => JSON.stringify({ duration_ms })).join('\n'),
+      durations.map((duration) => otlpApiMetricLine(duration)).join('\n'),
     );
 
   beforeEach(async () => {
@@ -40,6 +41,14 @@ describe('PercentileHandler', () => {
   it('returns null for an empty log', async () => {
     await writeLog([]);
     await expect(percentileHandler.handle(metric(), context())).resolves.toBeNull();
+  });
+
+  it('ignores metrics other than the request duration', async () => {
+    await writeFile(
+      join(dir, 'api_metric.log'),
+      [otlpApiMetricLine(10), otlpApiMetricLine(5000, 'http.server.active_requests')].join('\n'),
+    );
+    await expect(percentileHandler.handle(metric(MetricType.P90), context())).resolves.toBeCloseTo(10);
   });
 
   it('returns null for contexts that are not api metrics', async () => {

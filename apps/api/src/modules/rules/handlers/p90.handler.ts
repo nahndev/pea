@@ -2,8 +2,11 @@ import { DuckDBInstance } from "@duckdb/node-api";
 import { Injectable } from "@nestjs/common";
 import { AnalysisContextType } from "@tomato/constants";
 import type { AnalysisContext, Rule } from "../../../generated/client";
+import {
+  API_METRIC_DURATION_COLUMN,
+  apiMetricDurations,
+} from "../../files/api-metric-durations";
 import { StorageService } from "../../files/storage.service";
-import { API_METRIC_DURATION_COLUMN } from "../rules.constants";
 import type { RuleHandler, RuleIssue } from "./rule-handler.types";
 
 const PERCENTILE = 0.9;
@@ -36,9 +39,8 @@ export class P90Handler implements RuleHandler {
     const instance = await DuckDBInstance.create(":memory:");
     const connection = await instance.connect();
     try {
-      const source = `read_json('${path.replaceAll("'", "''")}', format = 'newline_delimited', columns = {${API_METRIC_DURATION_COLUMN}: 'DOUBLE'})`;
       const reader = await connection.runAndReadAll(
-        `SELECT quantile_cont(${API_METRIC_DURATION_COLUMN}, ${PERCENTILE}) AS value FROM ${source}`,
+        `SELECT quantile_cont(${API_METRIC_DURATION_COLUMN}, ${PERCENTILE}) AS value FROM ${apiMetricDurations(path)}`,
       );
       const [row] = reader.getRowObjects();
       return row?.value === null || row?.value === undefined

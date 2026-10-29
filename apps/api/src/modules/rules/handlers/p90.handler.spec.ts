@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Rule } from '../../../generated/client';
+import { otlpApiMetricLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { P90Handler } from './p90.handler';
 
@@ -18,7 +19,7 @@ describe('P90Handler', () => {
   const writeLog = (durations: number[]) =>
     writeFile(
       join(dir, 'api_metric.log'),
-      durations.map((duration_ms) => JSON.stringify({ duration_ms })).join('\n'),
+      durations.map((duration) => otlpApiMetricLine(duration)).join('\n'),
     );
 
   beforeEach(async () => {
