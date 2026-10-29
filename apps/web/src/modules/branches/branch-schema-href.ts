@@ -1,4 +1,4 @@
 import type { AnalysisSchema } from '@tomato/constants';
 
 export const branchSchemaHref = (branchId: string, schema: AnalysisSchema) =>
-  `/branches/${branchId}/schemas/${schema.toLowerCase()}`;
+  `/branches/${branchId}/${schema.toLowerCase()}`;

@@ -39,7 +39,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           <Breadcrumbs
             entries={[
               { label: 'Branches', href: '/branches' },
-              { label: branch.name, href: `/branches/${branch.id}/schemas/${schema.toLowerCase()}` },
+              { label: branch.name, href: `/branches/${branch.id}/${schema.toLowerCase()}` },
               { label: title },
             ]}
           />

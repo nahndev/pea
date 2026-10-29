@@ -22,7 +22,7 @@ const linkClass = 'text-sm underline-offset-4 hover:underline focus-ring rounded
 
 export function AnalysisListView({ branchId, schema, page }: AnalysisListViewProps) {
   const { data, error, isPending } = useBranchAnalyses(branchId, schema, page);
-  const pathname = `/branches/${branchId}/schemas/${schema.toLowerCase()}`;
+  const pathname = `/branches/${branchId}/${schema.toLowerCase()}`;
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="analyses-heading">
