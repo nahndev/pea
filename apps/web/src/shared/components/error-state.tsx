@@ -5,14 +5,15 @@ import { getErrorMessage } from '../lib/error-messages';
 
 interface ErrorStateProps {
   error: unknown;
+  title?: string;
 }
 
-export function ErrorState({ error }: ErrorStateProps) {
+export function ErrorState({ error, title = 'Unable to load data' }: ErrorStateProps) {
   const { code } = getApiError(error);
   return (
     <Alert variant="destructive">
       <AlertCircleIcon />
-      <AlertTitle>Unable to load data</AlertTitle>
+      <AlertTitle>{title}</AlertTitle>
       <AlertDescription>{getErrorMessage(code)}</AlertDescription>
     </Alert>
   );

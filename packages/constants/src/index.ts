@@ -8,3 +8,4 @@ export * from './metric-type.constants';
 export * from './metric-condition-operator.constants';
 export * from './metric-evaluation-status.constants';
 export * from './theme.constants';
+export * from './add-on-header.constants';

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppConfigModule } from '@tomato/config';
 import { HealthController } from './health/health.controller';
+import { AddOnsModule } from './modules/add-ons/add-ons.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { AnalysisResultModule } from './modules/analysis-result/analysis-result.module';
 import { AnalysesModule } from './modules/analyses/analyses.module';
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma/prisma.module';
     MetricsModule,
     QualityGatesModule,
     AnalysisResultModule,
+    AddOnsModule,
   ],
   controllers: [HealthController],
 })

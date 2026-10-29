@@ -12,6 +12,9 @@ export function AppHeader() {
           <Link href="/branches" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
             Branches
           </Link>
+          <Link href="/add-ons" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
+            Add-ons
+          </Link>
         </nav>
         <ThemeToggle />
       </div>
