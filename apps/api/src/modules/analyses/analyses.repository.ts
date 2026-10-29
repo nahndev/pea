@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DEFAULT_TREND_METRIC_TYPES } from './analyses.constants';
 import {
   LATEST_RESULT_INCLUDE,
   LATEST_RESULT_ORDER_BY,
   type AnalysisContextFile,
   type AnalysisDetailRecord,
   type AnalysisTrendRecord,
+  type MetricTrendPick,
   type AnalysisWithContexts,
   type AnalysisWithLatestResult,
 } from './analyses.types';
@@ -61,7 +64,10 @@ export class AnalysesRepository {
     return { items, total };
   }
 
-  findRecentByBranch(branchId: string, limit: number): Promise<AnalysisTrendRecord[]> {
+  findRecentByBranch(branchId: string, limit: number, picks: MetricTrendPick[]): Promise<AnalysisTrendRecord[]> {
+    const where: Prisma.MetricResultWhereInput = picks.length
+      ? { OR: picks }
+      : { subject: '', metric: { type: { in: [...DEFAULT_TREND_METRIC_TYPES] } } };
     return this.prismaService.analysis.findMany({
       where: { branchId },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -73,7 +79,12 @@ export class AnalysesRepository {
         results: {
           orderBy: LATEST_RESULT_ORDER_BY,
           take: 1,
-          select: { metricResults: { select: { value: true, metric: { select: { type: true } } } } },
+          select: {
+            metricResults: {
+              where,
+              select: { value: true, subject: true, metric: { select: { id: true, type: true, unit: true, description: true } } },
+            },
+          },
         },
       },
     });

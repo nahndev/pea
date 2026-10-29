@@ -4,6 +4,7 @@ export const PERCENTILE_BY_METRIC_TYPE: ReadonlyMap<string, number> = new Map([
   [MetricType.P50, 0.5],
   [MetricType.P90, 0.9],
   [MetricType.P95, 0.95],
+  [MetricType.ENDPOINT_P95, 0.95],
 ]);
 
 export const SEVERITY_BY_METRIC_TYPE: ReadonlyMap<string, Severity> = new Map([

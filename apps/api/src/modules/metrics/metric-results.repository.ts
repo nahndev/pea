@@ -13,6 +13,7 @@ export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
 export interface MetricResultSource {
   metricId: string;
   analysisContextId: string;
+  subject: string;
   value: number;
 }
 
@@ -34,7 +35,7 @@ export class MetricResultsRepository {
   findDetailedByAnalysisResult(analysisResultId: string): Promise<MetricResultWithDetails[]> {
     return this.prismaService.metricResult.findMany({
       where: { analysisResultId },
-      orderBy: [{ analysisContext: { file: 'asc' } }, { metric: { type: 'asc' } }],
+      orderBy: [{ analysisContext: { file: 'asc' } }, { metric: { type: 'asc' } }, { subject: 'asc' }],
       include: {
         metric: true,
         analysisContext: true,

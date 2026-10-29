@@ -99,6 +99,7 @@ model AnalysisResult {
 model Metric {
   id          String            @id @default(uuid(7)) @db.Uuid
   type        String            @db.VarChar(50)
+  unit        String            @default("MILLISECOND") @db.VarChar(20)
   description String
   config      Json              @default("{}") @db.JsonB
   results     MetricResult[]
@@ -113,6 +114,7 @@ model MetricResult {
   metricId          String             @map("metric_id") @db.Uuid
   analysisResultId  String             @map("analysis_result_id") @db.Uuid
   analysisContextId String             @map("analysis_context_id") @db.Uuid
+  subject           String             @default("") @db.VarChar(255)
   value             Float
   createdAt         DateTime           @default(now()) @map("created_at")
   metric            Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
@@ -120,7 +122,7 @@ model MetricResult {
   analysisContext   AnalysisContext    @relation(fields: [analysisContextId], references: [id], onDelete: Cascade)
   evaluations       MetricEvaluation[]
 
-  @@unique([analysisResultId, analysisContextId, metricId])
+  @@unique([analysisResultId, analysisContextId, metricId, subject])
   @@index([metricId, createdAt(sort: Desc)])
   @@index([analysisContextId])
   @@map("metric_results")

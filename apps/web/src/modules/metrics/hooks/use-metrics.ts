@@ -12,9 +12,10 @@ export const useMetricResults = (analysisId: string) => {
   });
 };
 
-export const useMetricTrend = (branchId: string | undefined) =>
+export const useMetricTrend = (branchId: string | undefined, picks: string[]) =>
   useQuery({
-    queryKey: ['metrics', 'trend', branchId],
-    queryFn: () => metricsService.getTrend(branchId as string),
+    queryKey: ['metrics', 'trend', branchId, picks],
+    queryFn: () => metricsService.getTrend(branchId as string, picks),
     enabled: Boolean(branchId),
+    placeholderData: keepPreviousData,
   });

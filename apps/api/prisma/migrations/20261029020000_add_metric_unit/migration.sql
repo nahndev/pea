@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "metrics" ADD COLUMN "unit" VARCHAR(20) NOT NULL DEFAULT 'MILLISECOND';
+
+-- Issue count metrics are counts
+UPDATE "metrics" SET "unit" = 'COUNT' WHERE "type" IN ('BLOCKER_ISSUE_COUNT', 'HIGH_ISSUE_COUNT', 'MEDIUM_ISSUE_COUNT', 'LOW_ISSUE_COUNT', 'INFO_ISSUE_COUNT');

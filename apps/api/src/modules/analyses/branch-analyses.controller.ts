@@ -19,7 +19,7 @@ export class BranchAnalysesController {
   @Get('metrics/trend')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  getMetricTrend(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() { limit }: MetricTrendQueryDto) {
-    return this.analysesService.getMetricTrend(branchId, limit);
+  getMetricTrend(@Param('branchId', ParseUUIDPipe) branchId: string, @Query() { limit, pick }: MetricTrendQueryDto) {
+    return this.analysesService.getMetricTrend(branchId, limit, pick);
   }
 }

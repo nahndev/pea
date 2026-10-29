@@ -28,7 +28,7 @@ export function summarizeMetrics(results: MetricResultView[]): MetricSummary[] {
       {
         type,
         worstValue: Math.max(...ofType.map(({ value }) => value)),
-        contextCount: ofType.length,
+        contextCount: new Set(ofType.map(({ context }) => context.file)).size,
         gateStatus,
         limit: first ? { operator: first.operator, threshold: first.threshold } : null,
       },

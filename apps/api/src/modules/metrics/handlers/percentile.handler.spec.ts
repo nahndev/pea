@@ -35,12 +35,13 @@ describe('PercentileHandler', () => {
     [MetricType.P95, 95.5],
   ])('returns the %s of the durations', async (type, expected) => {
     await writeLog([10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
-    await expect(percentileHandler.handle(metric(type), context())).resolves.toBeCloseTo(expected);
+    const [measurement] = await percentileHandler.handle(metric(type), context());
+    expect(measurement.value).toBeCloseTo(expected);
   });
 
-  it('returns null for an empty log', async () => {
+  it('returns no measurement for an empty log', async () => {
     await writeLog([]);
-    await expect(percentileHandler.handle(metric(), context())).resolves.toBeNull();
+    await expect(percentileHandler.handle(metric(), context())).resolves.toEqual([]);
   });
 
   it('ignores metrics other than the request duration', async () => {
@@ -48,16 +49,17 @@ describe('PercentileHandler', () => {
       join(dir, 'api_metric.log'),
       [otlpApiMetricLine(10), otlpApiMetricLine(5000, 'http.server.active_requests')].join('\n'),
     );
-    await expect(percentileHandler.handle(metric(MetricType.P90), context())).resolves.toBeCloseTo(10);
+    const [measurement] = await percentileHandler.handle(metric(MetricType.P90), context());
+    expect(measurement.value).toBeCloseTo(10);
   });
 
-  it('returns null for contexts that are not api metrics', async () => {
+  it('returns no measurement for contexts that are not api metrics', async () => {
     await writeLog([1000]);
-    await expect(percentileHandler.handle(metric(), context(AnalysisContextType.QUERY))).resolves.toBeNull();
+    await expect(percentileHandler.handle(metric(), context(AnalysisContextType.QUERY))).resolves.toEqual([]);
   });
 
-  it('returns null for a metric type without a percentile', async () => {
+  it('returns no measurement for a metric type without a percentile', async () => {
     await writeLog([1000]);
-    await expect(percentileHandler.handle(metric('UNKNOWN'), context())).resolves.toBeNull();
+    await expect(percentileHandler.handle(metric('UNKNOWN'), context())).resolves.toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import type { MetricResultView, MetricTrendPoint } from '@tomato/types';
+import type { MetricResultView, MetricTrend } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { TREND_LIMIT } from '../metrics.constants';
 
@@ -8,8 +8,11 @@ export const metricsService = {
     return data;
   },
 
-  async getTrend(branchId: string) {
-    const { data } = await apiClient.get<MetricTrendPoint[]>(`/branches/${branchId}/metrics/trend`, { params: { limit: TREND_LIMIT } });
+  async getTrend(branchId: string, picks: string[]) {
+    const { data } = await apiClient.get<MetricTrend>(`/branches/${branchId}/metrics/trend`, {
+      params: { limit: TREND_LIMIT, pick: picks },
+      paramsSerializer: { indexes: null },
+    });
     return data;
   },
 };

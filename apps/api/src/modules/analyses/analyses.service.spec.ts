@@ -171,24 +171,68 @@ describe('AnalysesService reads', () => {
     expect(analysesRepository.findPageByBranch).not.toHaveBeenCalled();
   });
 
-  it('averages metric values per type over contexts and orders the trend oldest first', async () => {
-    const metricResults = (values: [string, number][]) => ({
-      metricResults: values.map(([type, value]) => ({ value, metric: { type } })),
+  describe('getMetricTrend', () => {
+    const metric = (id: string, type: string) => ({
+      id,
+      type,
+      unit: type.endsWith('COUNT') ? 'COUNT' : 'MILLISECOND',
+      description: type,
     });
-    analysesRepository.findRecentByBranch.mockResolvedValue([
-      { id: 'an-2', createdAt, mergeRequestIid: null, results: [metricResults([['P90', 400]])] },
-      {
-        id: 'an-1',
-        createdAt,
-        mergeRequestIid: 5,
-        results: [metricResults([['P90', 100], ['P90', 300], ['P50', 50]])],
-      },
-    ] as never);
+    const result = (rows: [string, string, string, number][]) => ({
+      metricResults: rows.map(([id, type, subject, value]) => ({ value, subject, metric: metric(id, type) })),
+    });
 
-    const trend = await analysesService.getMetricTrend('br-1', 20);
+    it('averages values per metric and subject over contexts and orders the trend oldest first', async () => {
+      analysesRepository.findRecentByBranch.mockResolvedValue([
+        { id: 'an-2', createdAt, mergeRequestIid: null, results: [result([['m-90', 'P90', '', 400]])] },
+        {
+          id: 'an-1',
+          createdAt,
+          mergeRequestIid: 5,
+          results: [result([['m-90', 'P90', '', 100], ['m-90', 'P90', '', 300], ['m-50', 'P50', '', 50]])],
+        },
+      ] as never);
 
-    expect(trend.map(({ analysisId }) => analysisId)).toEqual(['an-1', 'an-2']);
-    expect(trend[0].values).toEqual({ P90: 200, P50: 50 });
-    expect(trend[1].values).toEqual({ P90: 400 });
+      const trend = await analysesService.getMetricTrend('br-1', 20);
+
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, []);
+      expect(trend.points.map(({ analysisId }) => analysisId)).toEqual(['an-1', 'an-2']);
+      expect(trend.points[0].values).toEqual({ 'm-90:': 200, 'm-50:': 50 });
+      expect(trend.points[1].values).toEqual({ 'm-90:': 400 });
+      expect(trend.series.map(({ key }) => key)).toEqual(['m-50:', 'm-90:']);
+      expect(trend.series[0].metric).toEqual({ id: 'm-50', type: 'P50', unit: 'MILLISECOND', description: 'P50' });
+    });
+
+    it('keeps endpoint results apart and orders the series like the picks', async () => {
+      const m1 = '11111111-1111-1111-1111-111111111111';
+      const m2 = '22222222-2222-2222-2222-222222222222';
+      analysesRepository.findRecentByBranch.mockResolvedValue([
+        {
+          id: 'an-1',
+          createdAt,
+          mergeRequestIid: null,
+          results: [result([[m1, 'ENDPOINT_P95', 'GET /api/cart', 900], [m2, 'P50', '', 10], [m1, 'ENDPOINT_P95', 'GET /api/orders', 300]])],
+        },
+      ] as never);
+
+      const trend = await analysesService.getMetricTrend('br-1', 20, [`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
+
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, [
+        { metricId: m2, subject: '' },
+        { metricId: m1, subject: 'GET /api/cart' },
+        { metricId: m1, subject: 'GET /api/orders' },
+      ]);
+      expect(trend.series.map(({ key }) => key)).toEqual([`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
+      expect(trend.points[0].values[`${m1}:GET /api/cart`]).toBe(900);
+    });
+
+    it('keeps colons inside the subject', async () => {
+      analysesRepository.findRecentByBranch.mockResolvedValue([] as never);
+      const metricId = '11111111-1111-1111-1111-111111111111';
+
+      await analysesService.getMetricTrend('br-1', 20, [`${metricId}:GET /a:b`]);
+
+      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', 20, [{ metricId, subject: 'GET /a:b' }]);
+    });
   });
 });

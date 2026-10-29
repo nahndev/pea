@@ -16,17 +16,21 @@ describe('IssueCountHandler', () => {
   });
 
   it('counts the issues of the context with the severity of the metric', async () => {
-    await expect(issueCountHandler.handle(metric(MetricType.BLOCKER_ISSUE_COUNT), context, 'res-1')).resolves.toBe(3);
+    await expect(issueCountHandler.handle(metric(MetricType.BLOCKER_ISSUE_COUNT), context, 'res-1')).resolves.toEqual([
+      { value: 3 },
+    ]);
     expect(issuesService.countByContext).toHaveBeenCalledWith('res-1', 'c-1', 'BLOCKER');
   });
 
   it('returns zero when no issue matches', async () => {
     issuesService.countByContext.mockResolvedValue(0);
-    await expect(issueCountHandler.handle(metric(MetricType.LOW_ISSUE_COUNT), context, 'res-1')).resolves.toBe(0);
+    await expect(issueCountHandler.handle(metric(MetricType.LOW_ISSUE_COUNT), context, 'res-1')).resolves.toEqual([
+      { value: 0 },
+    ]);
   });
 
   it('ignores metrics that are not issue counts', async () => {
-    await expect(issueCountHandler.handle(metric(MetricType.P90), context, 'res-1')).resolves.toBeNull();
+    await expect(issueCountHandler.handle(metric(MetricType.P90), context, 'res-1')).resolves.toEqual([]);
     expect(issuesService.countByContext).not.toHaveBeenCalled();
   });
 });

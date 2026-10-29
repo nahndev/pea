@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { MetricConditionOperator, MetricType, RuleType, Severity } from '@tomato/constants';
+import { MetricConditionOperator, MetricType, MetricUnit, RuleType, Severity } from '@tomato/constants';
 import { PrismaClient } from '../src/generated/client';
 
 const RULES = [
@@ -19,14 +19,15 @@ const RULES = [
 ];
 
 const METRICS = [
-  { type: MetricType.P50, description: 'P50 duration' },
-  { type: MetricType.P90, description: 'P90 duration' },
-  { type: MetricType.P95, description: 'P95 duration' },
-  { type: MetricType.BLOCKER_ISSUE_COUNT, description: 'Blocker issues' },
-  { type: MetricType.HIGH_ISSUE_COUNT, description: 'High issues' },
-  { type: MetricType.MEDIUM_ISSUE_COUNT, description: 'Medium issues' },
-  { type: MetricType.LOW_ISSUE_COUNT, description: 'Low issues' },
-  { type: MetricType.INFO_ISSUE_COUNT, description: 'Info issues' },
+  { type: MetricType.P50, unit: MetricUnit.MILLISECOND, description: 'P50 duration' },
+  { type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration' },
+  { type: MetricType.P95, unit: MetricUnit.MILLISECOND, description: 'P95 duration' },
+  { type: MetricType.ENDPOINT_P95, unit: MetricUnit.MILLISECOND, description: 'P95 duration per endpoint' },
+  { type: MetricType.BLOCKER_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Blocker issues' },
+  { type: MetricType.HIGH_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'High issues' },
+  { type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
+  { type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
+  { type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
 ];
 
 const QUALITY_GATE = {
@@ -36,6 +37,7 @@ const QUALITY_GATE = {
     { metricType: MetricType.P50, operator: MetricConditionOperator.GT, threshold: 500 },
     { metricType: MetricType.P90, operator: MetricConditionOperator.GT, threshold: 1000 },
     { metricType: MetricType.P95, operator: MetricConditionOperator.GT, threshold: 2000 },
+    { metricType: MetricType.ENDPOINT_P95, operator: MetricConditionOperator.GT, threshold: 3000 },
     { metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
     { metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   ],
@@ -56,7 +58,8 @@ async function main() {
 
     for (const metric of METRICS) {
       const existing = await prismaClient.metric.findFirst({ where: { type: metric.type }, select: { id: true } });
-      if (!existing) await prismaClient.metric.create({ data: metric });
+      if (existing) await prismaClient.metric.update({ where: { id: existing.id }, data: { unit: metric.unit } });
+      else await prismaClient.metric.create({ data: metric });
     }
 
     const { name, description, conditions } = QUALITY_GATE;

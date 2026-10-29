@@ -29,6 +29,17 @@ export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{
     id: true;
     createdAt: true;
     mergeRequestIid: true;
-    results: { select: { metricResults: { select: { value: true; metric: { select: { type: true } } } } } };
+    results: {
+      select: {
+        metricResults: {
+          select: { value: true; subject: true; metric: { select: { id: true; type: true; unit: true; description: true } } };
+        };
+      };
+    };
   };
 }>;
+
+export interface MetricTrendPick {
+  metricId: string;
+  subject: string;
+}

@@ -10,20 +10,23 @@ import {
   ErrorCode,
   MetricEvaluationStatus,
   type MetricType,
+  type MetricUnit,
 } from "@tomato/constants";
 import type {
   AnalysisDetail,
   AnalysisResultSummary,
   AnalysisSummary,
+  MetricTrend,
   MetricTrendPoint,
+  MetricTrendSeries,
   Paginated,
 } from "@tomato/types";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { BranchesService } from "../branches/branches.service";
 import { StorageService } from "../files/storage.service";
-import { CONTEXT_TYPE_BY_FIELD } from "./analyses.constants";
+import { CONTEXT_TYPE_BY_FIELD, DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
-import type { AnalysisWithContexts, AnalysisWithLatestResult } from "./analyses.types";
+import type { AnalysisWithContexts, AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 import { PaginationQueryDto } from "../../common/dto/pagination-query.dto";
 
@@ -92,20 +95,45 @@ export class AnalysesService {
     return { items: items.map((analysis) => this.toSummary(analysis)), total };
   }
 
-  async getMetricTrend(branchId: string, limit: number): Promise<MetricTrendPoint[]> {
+  async getMetricTrend(branchId: string, limit: number, picks: string[] = []): Promise<MetricTrend> {
     await this.branchesService.findOne(branchId);
-    const analyses = await this.analysesRepository.findRecentByBranch(branchId, limit);
-    return analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
-      const sums = new Map<MetricType, { total: number; count: number }>();
-      for (const { value, metric } of results[0]?.metricResults ?? []) {
-        const type = metric.type as MetricType;
-        const sum = sums.get(type) ?? { total: 0, count: 0 };
-        sums.set(type, { total: sum.total + value, count: sum.count + 1 });
+    const pickList = picks.map((pick) => this.parsePick(pick));
+    const analyses = await this.analysesRepository.findRecentByBranch(branchId, limit, pickList);
+
+    const seriesByKey = new Map<string, MetricTrendSeries>();
+    const points = analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
+      const sums = new Map<string, { total: number; count: number }>();
+      for (const { value, subject, metric } of results[0]?.metricResults ?? []) {
+        const key = `${metric.id}:${subject}`;
+        if (!seriesByKey.has(key)) {
+          seriesByKey.set(key, {
+            key,
+            metric: { ...metric, type: metric.type as MetricType, unit: metric.unit as MetricUnit },
+            subject,
+          });
+        }
+        const sum = sums.get(key) ?? { total: 0, count: 0 };
+        sums.set(key, { total: sum.total + value, count: sum.count + 1 });
       }
       const values: MetricTrendPoint["values"] = {};
-      for (const [type, { total, count }] of sums) values[type] = total / count;
+      for (const [key, { total, count }] of sums) values[key] = total / count;
       return { analysisId: id, createdAt: createdAt.toISOString(), mergeRequestIid, values };
     });
+
+    return { series: this.sortSeries([...seriesByKey.values()], picks), points };
+  }
+
+  private parsePick(pick: string): MetricTrendPick {
+    const separator = pick.indexOf(":");
+    return { metricId: pick.slice(0, separator), subject: pick.slice(separator + 1) };
+  }
+
+  private sortSeries(series: MetricTrendSeries[], picks: string[]): MetricTrendSeries[] {
+    const rank = (item: MetricTrendSeries) => {
+      const index = picks.length ? picks.indexOf(item.key) : DEFAULT_TREND_METRIC_TYPES.indexOf(item.metric.type);
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+    };
+    return series.sort((a, b) => rank(a) - rank(b));
   }
 
   private toSummary(analysis: AnalysisWithLatestResult): AnalysisSummary {

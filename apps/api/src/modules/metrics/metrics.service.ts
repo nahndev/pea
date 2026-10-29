@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { MetricConditionOperator, MetricEvaluationStatus, MetricType } from '@tomato/constants';
+import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
 import type { MetricResultView } from '@tomato/types';
 import type { AnalysisContext, MetricResult } from '../../generated/client';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
@@ -20,8 +20,12 @@ export class MetricsService {
     for (const context of contexts) {
       for (const metric of metrics) {
         if (!this.metricHandlerFactory.supports(metric.type)) continue;
-        const value = await this.metricHandlerFactory.create(metric.type).handle(metric, context, analysisResultId);
-        if (value !== null) items.push({ metricId: metric.id, analysisContextId: context.id, value });
+        const measurements = await this.metricHandlerFactory
+          .create(metric.type)
+          .handle(metric, context, analysisResultId);
+        for (const { value, subject = '' } of measurements) {
+          items.push({ metricId: metric.id, analysisContextId: context.id, subject, value });
+        }
       }
     }
     return this.metricResultsRepository.createMany(analysisResultId, items);
@@ -33,10 +37,16 @@ export class MetricsService {
 
   async findResultViews(analysisResultId: string): Promise<MetricResultView[]> {
     const results = await this.metricResultsRepository.findDetailedByAnalysisResult(analysisResultId);
-    return results.map(({ id, value, metric, analysisContext, evaluations }) => ({
+    return results.map(({ id, value, subject, metric, analysisContext, evaluations }) => ({
       id,
       value,
-      metric: { type: metric.type as MetricType, description: metric.description },
+      subject,
+      metric: {
+        id: metric.id,
+        type: metric.type as MetricType,
+        unit: metric.unit as MetricUnit,
+        description: metric.description,
+      },
       context: { file: analysisContext.file },
       evaluations: evaluations.map((evaluation) => ({
         status: evaluation.status as MetricEvaluationStatus,

@@ -1,16 +1,22 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, MetricType } from '@tomato/constants';
-import { MetricHandlerFactory } from './metric-handler.factory';
+import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 import { IssueCountHandler } from './issue-count.handler';
+import { MetricHandlerFactory } from './metric-handler.factory';
 import { PercentileHandler } from './percentile.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
   const issueCountHandler = {} as IssueCountHandler;
-  const metricHandlerFactory = new MetricHandlerFactory(percentileHandler, issueCountHandler);
+  const endpointPercentileHandler = {} as EndpointPercentileHandler;
+  const metricHandlerFactory = new MetricHandlerFactory(percentileHandler, issueCountHandler, endpointPercentileHandler);
 
   it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
     expect(metricHandlerFactory.create(type)).toBe(percentileHandler);
+  });
+
+  it('returns the endpoint percentile handler for ENDPOINT_P95', () => {
+    expect(metricHandlerFactory.create(MetricType.ENDPOINT_P95)).toBe(endpointPercentileHandler);
   });
 
   it.each([

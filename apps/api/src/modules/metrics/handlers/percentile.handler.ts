@@ -5,19 +5,20 @@ import type { AnalysisContext, Metric } from '../../../generated/client';
 import { API_METRIC_DURATION_COLUMN, apiMetricDurations } from '../../files/api-metric-durations';
 import { StorageService } from '../../files/storage.service';
 import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
-import type { MetricHandler } from './metric-handler.types';
+import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
 
 @Injectable()
 export class PercentileHandler implements MetricHandler {
   constructor(private readonly storageService: StorageService) {}
 
-  async handle(metric: Metric, context: AnalysisContext): Promise<number | null> {
-    if (context.type !== AnalysisContextType.API_METRIC) return null;
+  async handle(metric: Metric, context: AnalysisContext): Promise<MetricMeasurement[]> {
+    if (context.type !== AnalysisContextType.API_METRIC) return [];
 
     const percentile = PERCENTILE_BY_METRIC_TYPE.get(metric.type);
-    if (percentile === undefined) return null;
+    if (percentile === undefined) return [];
 
-    return this.percentile(this.storageService.resolve(context.path), percentile);
+    const value = await this.percentile(this.storageService.resolve(context.path), percentile);
+    return value === null ? [] : [{ value }];
   }
 
   private async percentile(path: string, percentile: number): Promise<number | null> {

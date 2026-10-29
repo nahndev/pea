@@ -1,4 +1,4 @@
-import type { MetricConditionOperator, MetricEvaluationStatus, MetricType } from '@tomato/constants';
+import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
 
 export interface MetricEvaluationView {
   status: MetricEvaluationStatus;
@@ -10,14 +10,27 @@ export interface MetricEvaluationView {
 export interface MetricResultView {
   id: string;
   value: number;
-  metric: { type: MetricType; description: string };
+  subject: string;
+  metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
   context: { file: string };
   evaluations: MetricEvaluationView[];
+}
+
+export interface MetricTrendSeries {
+  /** `<metric id>:<subject>`; the key used in `MetricTrendPoint.values` */
+  key: string;
+  metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
+  subject: string;
 }
 
 export interface MetricTrendPoint {
   analysisId: string;
   createdAt: string;
   mergeRequestIid: number | null;
-  values: Partial<Record<MetricType, number>>;
+  values: Record<string, number>;
+}
+
+export interface MetricTrend {
+  series: MetricTrendSeries[];
+  points: MetricTrendPoint[];
 }

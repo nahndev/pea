@@ -34,6 +34,25 @@ Each severity has a metric (`BLOCKER_ISSUE_COUNT`, `HIGH_ISSUE_COUNT`, `MEDIUM_I
 `INFO_ISSUE_COUNT`, handler `IssueCountHandler`) that counts the issues of a file in the analysis result.
 Quality gate conditions can use them like any metric. The `Default` gate fails on more than 0 blocker or high issues.
 
+### Metric results
+
+A metric handler (`MetricHandler.handle`) returns a list of measurements, `{ value, subject? }`. Each one is stored as its own
+`MetricResult` (unique per result, file, metric and `subject`) and is evaluated against every quality gate condition of that metric.
+`subject` is `''` for a value of the whole file and, for example, `GET /api/cart` for a per-endpoint value.
+`PercentileHandler` and `IssueCountHandler` return one measurement; `EndpointPercentileHandler` (`ENDPOINT_P95`) returns one per endpoint.
+The `Default` gate fails when an endpoint P95 is above 3000 ms.
+
+Every metric has a `unit` (`MILLISECOND` or `COUNT`, column `metrics.unit`) that decides how its values are formatted
+and which metrics can share a chart.
+
+### Trend chart
+
+`GET /branches/:branchId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:
+one series per picked `metric id + subject`, and per analysis (latest result) the average of that series over the files.
+Without `pick` it returns the whole-file P50, P90 and P95. On the Metrics tab, tick rows of "Results by file" to pick series;
+rows of the same metric and endpoint in different files share one pick. Metrics with different units cannot be mixed in one chart,
+so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
+
 ## Config fields
 
 | Field         | Meaning                                                      |
