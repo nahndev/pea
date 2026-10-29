@@ -15,6 +15,9 @@ export function AppHeader() {
           <Link href="/add-ons" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
             Add-ons
           </Link>
+          <Link href="/rules" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
+            Rules
+          </Link>
         </nav>
         <ThemeToggle />
       </div>

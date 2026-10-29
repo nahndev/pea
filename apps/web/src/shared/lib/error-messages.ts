@@ -12,6 +12,8 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.ANALYSIS_NOT_FOUND]: 'This analysis does not exist.',
   [ErrorCode.BRANCH_NOT_FOUND]: 'This branch does not exist.',
   [ErrorCode.BRANCH_ALREADY_EXISTS]: 'A branch with this name already exists.',
+  [ErrorCode.RULE_NOT_FOUND]: 'This rule does not exist.',
+  [ErrorCode.RULE_CONFIG_INVALID]: 'This setting is not valid for the rule.',
   [ErrorCode.RULE_TYPE_UNSUPPORTED]: 'This rule type is not supported.',
   [ErrorCode.METRIC_TYPE_UNSUPPORTED]: 'This metric type is not supported.',
   [ErrorCode.LOG_FILE_REQUIRED]: 'A log file is required.',

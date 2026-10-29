@@ -6,6 +6,8 @@ Rules are rows of the `rules` table (`type`, `description`, `config`) and are se
 All rules currently apply to `API_METRIC` contexts (OTLP/JSON `http.server.request.duration` logs).
 Other context types are skipped.
 
+Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
+
 ## Config fields
 
 | Field         | Meaning                                                      |
@@ -82,3 +84,5 @@ With the default config, the files in `seed/` trigger:
 3. Reuse a handler (add an entry to `rules.constants.ts`) or create one implementing `RuleHandler`,
    and register it in `RuleHandlerFactory` and `RulesModule`.
 4. Add the default row to `RULES` in `apps/api/prisma/seed.ts` and a section to this file.
+5. Map the type to a `<Name>RuleConfig` component in `apps/web/src/modules/rules/components/rule-config/rule-config.factory.tsx`;
+   a type without a component shows no config on `/rules/{id}`.
