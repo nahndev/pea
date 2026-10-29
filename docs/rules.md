@@ -1,10 +1,9 @@
 # Analysis rules
 
-A rule inspects one analysis context and creates an issue when its condition is violated.
+A rule inspects the log file of an analysis and creates an issue when its condition is violated.
 Rules are rows of the `rules` table (`type`, `description`, `config`) and are seeded by `apps/api/prisma/seed.ts`.
 
-All rules currently apply to `API_METRIC` contexts (NDJSON request logs, see [api_metric.md](api_metric.md)).
-Other context types are skipped.
+An analysis has one log file, the NDJSON request log described in [api_metric.md](api_metric.md); `file` and `path` are stored on the analysis.
 
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
 
@@ -31,14 +30,14 @@ so changing a rule never rewrites past results. Issues can be filtered by severi
 ### Issue count metrics
 
 Each severity has a metric (`BLOCKER_ISSUE_COUNT`, `HIGH_ISSUE_COUNT`, `MEDIUM_ISSUE_COUNT`, `LOW_ISSUE_COUNT`,
-`INFO_ISSUE_COUNT`, handler `IssueCountHandler`) that counts the issues of a file in the analysis result.
+`INFO_ISSUE_COUNT`, handler `IssueCountHandler`) that counts the issues of the analysis result.
 Quality gate conditions can use them like any metric. The `Default` gate fails on more than 0 blocker or high issues.
 
 ### Metric results
 
 A metric handler (`MetricHandler.handle`) returns a list of measurements, `{ value, subject? }`. Each one is stored as its own
-`MetricResult` (unique per result, file, metric and `subject`) and is evaluated against every quality gate condition of that metric.
-`subject` is `''` for a value of the whole file and, for example, `GET /api/cart` for a per-endpoint value.
+`MetricResult` (unique per result, metric and `subject`) and is evaluated against every quality gate condition of that metric.
+`subject` is `''` for a value of the whole log and, for example, `GET /api/cart` for a per-endpoint value.
 `PercentileHandler` and `IssueCountHandler` return one measurement; `EndpointPercentileHandler` (`ENDPOINT_P95`) returns one per endpoint.
 The `Default` gate fails when an endpoint P95 is above 3000 ms.
 
@@ -67,9 +66,8 @@ to a quality gate. It is created active, and a gate has at most one condition pe
 ### Trend chart
 
 `GET /branches/:branchId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:
-one series per picked `metric id + subject`, and per analysis (latest result) the average of that series over the files.
-Without `pick` it returns the whole-file P50, P90 and P95. On the Metrics tab, tick rows of "Results by file" to pick series;
-rows of the same metric and endpoint in different files share one pick. Metrics with different units cannot be mixed in one chart,
+one series per picked `metric id + subject`, and per analysis (latest result) the value of that series.
+Without `pick` it returns the whole-file P50, P90 and P95. On the Metrics tab, tick rows of "Results" to pick series. Metrics with different units cannot be mixed in one chart,
 so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
 
 ## Config fields
@@ -84,7 +82,7 @@ A rule with a missing or non-numeric required field produces no issue.
 
 ## Overall latency
 
-One issue per context. Handler: `LatencyHandler`. Config: `thresholdMs`.
+One issue per analysis. Handler: `LatencyHandler`. Config: `thresholdMs`.
 
 | Type           | Violation when                     | Default `thresholdMs` |
 | -------------- | ---------------------------------- | --------------------- |
@@ -99,7 +97,7 @@ Issue example: `P90 1367.1ms exceeds threshold 1000ms`
 
 ## Request rates
 
-One issue per context. Handler: `RateHandler`.
+One issue per analysis. Handler: `RateHandler`.
 
 | Type                | Violation when                                  | Config                       | Default                           |
 | ------------------- | ----------------------------------------------- | ---------------------------- | --------------------------------- |

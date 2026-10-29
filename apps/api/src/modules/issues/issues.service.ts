@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AnalysisContextType, IssueStatus, RuleType, Severity } from '@tomato/constants';
+import type { IssueStatus, RuleType, Severity } from '@tomato/constants';
 import type { IssueView, Paginated } from '@tomato/types';
 import { ListIssuesQueryDto } from './dto/list-issues-query.dto';
 import { IssuesRepository, type IssueSource } from './issues.repository';
@@ -13,8 +13,8 @@ export class IssuesService {
     return this.issuesRepository.createMany(analysisResultId, items);
   }
 
-  countByContext(analysisResultId: string, analysisContextId: string, severity: Severity): Promise<number> {
-    return this.issuesRepository.countByContext(analysisResultId, analysisContextId, severity);
+  countBySeverity(analysisResultId: string, severity: Severity): Promise<number> {
+    return this.issuesRepository.countBySeverity(analysisResultId, severity);
   }
 
   async findPage(
@@ -30,7 +30,6 @@ export class IssuesService {
         description: issue.description,
         createdAt: issue.createdAt.toISOString(),
         rule: { type: issue.rule.type as RuleType, description: issue.rule.description },
-        context: { file: issue.analysisContext.file, type: issue.analysisContext.type as AnalysisContextType },
       })),
       total,
     };

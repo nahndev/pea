@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricResultView, MetricView } from '@tomato/types';
-import type { AnalysisContext, Metric, MetricResult } from '../../generated/client';
+import type { Analysis, Metric, MetricResult } from '../../generated/client';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
@@ -15,18 +15,14 @@ export class MetricsService {
     private readonly metricHandlerFactory: MetricHandlerFactory,
   ) {}
 
-  async measure(analysisResultId: string, contexts: AnalysisContext[]): Promise<number> {
+  async measure(analysisResultId: string, analysis: Analysis): Promise<number> {
     const metrics = await this.metricsRepository.findAll({ isActive: true });
     const items: MetricResultSource[] = [];
-    for (const context of contexts) {
-      for (const metric of metrics) {
-        if (!this.metricHandlerFactory.supports(metric.type)) continue;
-        const measurements = await this.metricHandlerFactory
-          .create(metric.type)
-          .handle(metric, context, analysisResultId);
-        for (const { value, subject = '' } of measurements) {
-          items.push({ metricId: metric.id, analysisContextId: context.id, subject, value });
-        }
+    for (const metric of metrics) {
+      if (!this.metricHandlerFactory.supports(metric.type)) continue;
+      const measurements = await this.metricHandlerFactory.create(metric.type).handle(metric, analysis, analysisResultId);
+      for (const { value, subject = '' } of measurements) {
+        items.push({ metricId: metric.id, subject, value });
       }
     }
     return this.metricResultsRepository.createMany(analysisResultId, items);
@@ -61,7 +57,7 @@ export class MetricsService {
 
   async findResultViews(analysisResultId: string): Promise<MetricResultView[]> {
     const results = await this.metricResultsRepository.findDetailedByAnalysisResult(analysisResultId);
-    return results.map(({ id, value, subject, metric, analysisContext, evaluations }) => ({
+    return results.map(({ id, value, subject, metric, evaluations }) => ({
       id,
       value,
       subject,
@@ -71,7 +67,6 @@ export class MetricsService {
         unit: metric.unit as MetricUnit,
         description: metric.description,
       },
-      context: { file: analysisContext.file },
       evaluations: evaluations.map((evaluation) => ({
         status: evaluation.status as MetricEvaluationStatus,
         operator: evaluation.operator as MetricConditionOperator,

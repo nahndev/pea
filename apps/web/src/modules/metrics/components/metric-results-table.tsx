@@ -23,14 +23,14 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
               <span className="sr-only">Show in trend chart</span>
             </TableHead>
             <TableHead>Metric</TableHead>
-            <TableHead>File / endpoint</TableHead>
+            <TableHead>Endpoint</TableHead>
             <TableHead className="text-right">Value</TableHead>
             <TableHead>Unit</TableHead>
             <TableHead>Quality gate</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {results.map(({ id, metric, context, subject, value, evaluations }) => {
+          {results.map(({ id, metric, subject, value, evaluations }) => {
             const key = metricSeriesKey(metric.id, subject);
             const isPicked = picked.includes(key);
             const isOtherUnit = pickedUnit !== undefined && pickedUnit !== metric.unit;
@@ -48,8 +48,7 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-medium">{METRIC_LABEL[metric.type]}</TableCell>
                 <TableCell className="max-w-56 break-all font-mono text-xs">
-                  {context.file}
-                  {subject ? <span className="block font-sans text-muted-foreground">{subject}</span> : null}
+                  {subject || <span className="font-sans text-muted-foreground">All requests</span>}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{formatMetricValue(metric.unit, value)}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">{METRIC_UNIT_LABEL[metric.unit]}</TableCell>

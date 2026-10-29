@@ -51,7 +51,7 @@ export function MetricsView({ analysisId }: MetricsViewProps) {
       <MetricTrendChart branchId={analysis?.branch.id} picks={picked} limits={limits} onClear={() => setPicked([])} />
       <section className="flex flex-col gap-3" aria-labelledby="metric-results-heading">
         <h2 id="metric-results-heading" className="text-lg font-semibold">
-          Results by file
+          Results
         </h2>
         <MetricResultsTable results={results} picked={picked} onToggle={toggle} />
       </section>

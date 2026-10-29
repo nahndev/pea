@@ -6,7 +6,7 @@ import { useState, type FormEvent } from 'react';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
-import { LOG_FILE_FIELDS, MAX_LOG_FILE_SIZE } from '../analyses.constants';
+import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
 
@@ -20,7 +20,7 @@ const FIELD_ERRORS: Record<string, string> = {
   invalid: 'Enter a positive whole number.',
   empty: 'The file is empty.',
   too_large: `The file must be at most ${MAX_LOG_FILE_SIZE / 1024 / 1024} MB.`,
-  file_required: 'Attach at least one log file.',
+  file_required: 'Attach the log file.',
 };
 
 export function NewAnalysisForm({ branch = '' }: NewAnalysisFormProps) {
@@ -45,7 +45,7 @@ export function NewAnalysisForm({ branch = '' }: NewAnalysisFormProps) {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="New analysis" description="Upload log files to analyse a branch. Results appear once processing finishes.">
+      <PageHeader title="New analysis" description="Upload a log file to analyse a branch. Results appear once processing finishes.">
         <Breadcrumbs entries={[{ label: 'Branches', href: '/branches' }, { label: 'New analysis' }]} />
       </PageHeader>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
@@ -59,16 +59,14 @@ export function NewAnalysisForm({ branch = '' }: NewAnalysisFormProps) {
           <Input id="mergeRequestIid" name="mergeRequestIid" type="number" inputMode="numeric" min={1} step={1} className="max-w-40" aria-invalid={Boolean(fieldErrors.mergeRequestIid)} aria-describedby="mergeRequestIid-error" />
           <FieldError id="mergeRequestIid-error" message={fieldErrors.mergeRequestIid} />
         </div>
-        {LOG_FILE_FIELDS.map(({ name, label, hint }) => (
-          <div key={name} className="flex flex-col gap-2">
-            <Label htmlFor={name}>{label}</Label>
-            <Input id={name} name={name} type="file" accept=".json,.jsonl,.ndjson,.log,.txt" aria-invalid={Boolean(fieldErrors[name])} aria-describedby={`${name}-hint ${name}-error`} />
-            <p id={`${name}-hint`} className="text-xs text-muted-foreground">
-              {hint}
-            </p>
-            <FieldError id={`${name}-error`} message={fieldErrors[name]} />
-          </div>
-        ))}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={LOG_FILE_FIELD.name}>{LOG_FILE_FIELD.label}</Label>
+          <Input id={LOG_FILE_FIELD.name} name={LOG_FILE_FIELD.name} type="file" accept=".json,.jsonl,.ndjson,.log,.txt" aria-invalid={Boolean(fieldErrors[LOG_FILE_FIELD.name])} aria-describedby={`${LOG_FILE_FIELD.name}-hint ${LOG_FILE_FIELD.name}-error`} />
+          <p id={`${LOG_FILE_FIELD.name}-hint`} className="text-xs text-muted-foreground">
+            {LOG_FILE_FIELD.hint}
+          </p>
+          <FieldError id={`${LOG_FILE_FIELD.name}-error`} message={fieldErrors[LOG_FILE_FIELD.name]} />
+        </div>
         {requestError ? <ErrorState error={requestError} /> : null}
         <div className="flex gap-3">
           <Button type="submit" disabled={isPending}>

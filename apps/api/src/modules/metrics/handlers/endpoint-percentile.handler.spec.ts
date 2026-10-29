@@ -1,8 +1,8 @@
-import { AnalysisContextType, MetricType } from '@tomato/constants';
+import { MetricType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { AnalysisContext, Metric } from '../../../generated/client';
+import type { Analysis, Metric } from '../../../generated/client';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { EndpointPercentileHandler } from './endpoint-percentile.handler';
@@ -12,8 +12,7 @@ describe('EndpointPercentileHandler', () => {
   let endpointPercentileHandler: EndpointPercentileHandler;
 
   const metric = (type: string = MetricType.ENDPOINT_P95) => ({ id: 'm-1', type, description: '', config: {} }) as Metric;
-  const context = (type: string = AnalysisContextType.API_METRIC) =>
-    ({ id: 'c-1', analysisId: 'an-1', file: 'api_metric.log', path: 'api_metric.log', type }) as AnalysisContext;
+  const analysis = { id: 'an-1', file: 'api_metric.log', path: 'api_metric.log' } as Analysis;
 
   const writeLog = (requests: ApiRequestFixture[]) =>
     writeFile(join(dir, 'api_metric.log'), requests.map(apiRequestLine).join('\n'));
@@ -35,7 +34,7 @@ describe('EndpointPercentileHandler', () => {
       { durationMs: 10, route: '/api/orders' },
     ]);
 
-    const measurements = await endpointPercentileHandler.handle(metric(), context());
+    const measurements = await endpointPercentileHandler.handle(metric(), analysis);
 
     expect(measurements.map(({ subject }) => subject)).toEqual(['POST /api/checkout', 'GET /api/cart', 'GET /api/orders']);
     expect(measurements[0].value).toBeCloseTo(995);
@@ -45,16 +44,12 @@ describe('EndpointPercentileHandler', () => {
 
   it('returns no measurement for an empty log', async () => {
     await writeLog([]);
-    await expect(endpointPercentileHandler.handle(metric(), context())).resolves.toEqual([]);
+    await expect(endpointPercentileHandler.handle(metric(), analysis)).resolves.toEqual([]);
   });
 
-  it('ignores contexts that are not api metrics', async () => {
-    await writeLog([{ durationMs: 1000 }]);
-    await expect(endpointPercentileHandler.handle(metric(), context(AnalysisContextType.QUERY))).resolves.toEqual([]);
-  });
 
   it('ignores a metric type without a percentile', async () => {
     await writeLog([{ durationMs: 1000 }]);
-    await expect(endpointPercentileHandler.handle(metric('UNKNOWN'), context())).resolves.toEqual([]);
+    await expect(endpointPercentileHandler.handle(metric('UNKNOWN'), analysis)).resolves.toEqual([]);
   });
 });

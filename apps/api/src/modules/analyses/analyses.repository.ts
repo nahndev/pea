@@ -1,47 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '../../generated/client';
+import type { Analysis, Prisma } from '../../generated/client';
+import type { StoredFile } from '../files/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DEFAULT_TREND_METRIC_TYPES } from './analyses.constants';
 import {
   LATEST_RESULT_INCLUDE,
   LATEST_RESULT_ORDER_BY,
-  type AnalysisContextFile,
   type AnalysisDetailRecord,
   type AnalysisTrendRecord,
   type MetricTrendPick,
-  type AnalysisWithContexts,
   type AnalysisWithLatestResult,
 } from './analyses.types';
 
 interface CreateAnalysisData {
   branchId: string;
   mergeRequestIid?: number;
-  files: AnalysisContextFile[];
+  file: StoredFile;
 }
 
 @Injectable()
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, mergeRequestIid, files }: CreateAnalysisData): Promise<AnalysisWithContexts> {
-    return this.prismaService.analysis.create({
-      data: {
-        branchId,
-        mergeRequestIid,
-        contexts: { create: files },
-      },
-      include: { contexts: true },
-    });
+  create({ branchId, mergeRequestIid, file }: CreateAnalysisData): Promise<Analysis> {
+    return this.prismaService.analysis.create({ data: { branchId, mergeRequestIid, ...file } });
   }
 
-  findById(id: string): Promise<AnalysisWithContexts | null> {
-    return this.prismaService.analysis.findUnique({ where: { id }, include: { contexts: true } });
+  findById(id: string): Promise<Analysis | null> {
+    return this.prismaService.analysis.findUnique({ where: { id } });
   }
 
   findDetailById(id: string): Promise<AnalysisDetailRecord | null> {
     return this.prismaService.analysis.findUnique({
       where: { id },
-      include: { ...LATEST_RESULT_INCLUDE, branch: true, contexts: { orderBy: { id: 'asc' } } },
+      include: { ...LATEST_RESULT_INCLUDE, branch: true },
     });
   }
 

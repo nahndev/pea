@@ -11,7 +11,7 @@ interface MetricSummaryCardsProps {
 export function MetricSummaryCards({ summaries }: MetricSummaryCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {summaries.map(({ type, worstValue, contextCount, gateStatus, limit }) => (
+      {summaries.map(({ type, worstValue, gateStatus, limit }) => (
         <Card key={type}>
           <CardHeader>
             <CardDescription>{METRIC_LABEL[type]}</CardDescription>
@@ -24,7 +24,6 @@ export function MetricSummaryCards({ summaries }: MetricSummaryCardsProps) {
             </div>
             <p className="text-muted-foreground">
               {limit ? `Fails when ${VIOLATION_PHRASE[limit.operator]} ${formatDuration(limit.threshold)}.` : 'No gate condition applies.'}
-              {contextCount > 1 ? ` Worst of ${contextCount} files.` : ''}
             </p>
           </CardContent>
         </Card>

@@ -6,7 +6,6 @@ import { METRIC_TYPES } from './metrics.constants';
 export interface MetricSummary {
   type: MetricType;
   worstValue: number;
-  contextCount: number;
   gateStatus: MetricEvaluationStatus | null;
   limit: { operator: MetricConditionOperator; threshold: number } | null;
 }
@@ -28,7 +27,6 @@ export function summarizeMetrics(results: MetricResultView[]): MetricSummary[] {
       {
         type,
         worstValue: Math.max(...ofType.map(({ value }) => value)),
-        contextCount: new Set(ofType.map(({ context }) => context.file)).size,
         gateStatus,
         limit: first ? { operator: first.operator, threshold: first.threshold } : null,
       },

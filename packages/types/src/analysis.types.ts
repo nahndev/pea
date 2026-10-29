@@ -1,4 +1,4 @@
-import type { AnalysisContextType, AnalysisResultStatus, MetricEvaluationStatus } from '@tomato/constants';
+import type { AnalysisResultStatus, MetricEvaluationStatus } from '@tomato/constants';
 import type { Branch } from './branch.types';
 
 export interface AnalysisResultSummary {
@@ -15,13 +15,7 @@ export interface AnalysisSummary {
   latestResult: AnalysisResultSummary | null;
 }
 
-export interface AnalysisContextView {
-  id: string;
-  file: string;
-  type: AnalysisContextType;
-}
-
 export interface AnalysisDetail extends AnalysisSummary {
   branch: Branch;
-  contexts: AnalysisContextView[];
+  file: string;
 }

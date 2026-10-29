@@ -1,27 +1,19 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
-import { AnalysisContextType, AnalysisEvent, ErrorCode } from '@tomato/constants';
+import { AnalysisEvent, ErrorCode } from '@tomato/constants';
 import { StorageService } from '../files/storage.service';
 import type { StoredFile } from '../files/storage.service';
 import { BranchesService } from '../branches/branches.service';
 import { AnalysesRepository } from './analyses.repository';
 import { AnalysesService } from './analyses.service';
 
-const multerFile = (fieldname: string, originalname: string) =>
-  ({ fieldname, originalname }) as Express.Multer.File;
-const FILES_BY_FIELD = {
-  api_metric: [multerFile('api_metric', 'a.jsonl')],
-  query: [multerFile('query', 'b.jsonl')],
-};
-const STORED_FILES: StoredFile[] = [
-  { file: 'a.jsonl', path: 'p-1' },
-  { file: 'b.jsonl', path: 'p-2' },
-];
+const UPLOAD = { fieldname: 'api_metric', originalname: 'a.jsonl' } as Express.Multer.File;
+const STORED_FILE: StoredFile = { file: 'a.jsonl', path: 'p-1' };
 
 describe('AnalysesService', () => {
   let analysesRepository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
   let branchesService: jest.Mocked<Pick<BranchesService, 'findOrCreateByName'>>;
-  let storageService: jest.Mocked<Pick<StorageService, 'saveMany' | 'remove'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'save' | 'remove'>>;
   let eventEmitter2: jest.Mocked<Pick<EventEmitter2, 'emit'>>;
   let analysesService: AnalysesService;
 
@@ -29,7 +21,7 @@ describe('AnalysesService', () => {
     analysesRepository = { create: jest.fn(), findById: jest.fn() };
     branchesService = { findOrCreateByName: jest.fn().mockResolvedValue({ id: 'br-1', name: 'feat/x' }) };
     storageService = {
-      saveMany: jest.fn().mockResolvedValue(STORED_FILES),
+      save: jest.fn().mockResolvedValue(STORED_FILE),
       remove: jest.fn().mockResolvedValue(undefined),
     };
     eventEmitter2 = { emit: jest.fn() };
@@ -47,45 +39,37 @@ describe('AnalysesService', () => {
   };
 
   it('creates the branch and the analysis from the uploaded files', async () => {
-    const analysis = { id: 'an-1', branchId: 'br-1', contexts: [] };
+    const analysis = { id: 'an-1', branchId: 'br-1', ...STORED_FILE };
     analysesRepository.create.mockResolvedValue(analysis as never);
 
-    const result = await analysesService.create({ branch: 'feat/x', mergeRequestIid: 7 }, FILES_BY_FIELD);
+    const result = await analysesService.create({ branch: 'feat/x', mergeRequestIid: 7 }, UPLOAD);
 
-    expect(storageService.saveMany).toHaveBeenCalledWith([
-      FILES_BY_FIELD.api_metric[0],
-      FILES_BY_FIELD.query[0],
-    ]);
+    expect(storageService.save).toHaveBeenCalledWith(UPLOAD);
     expect(branchesService.findOrCreateByName).toHaveBeenCalledWith('feat/x');
     expect(analysesRepository.create).toHaveBeenCalledWith({
       branchId: 'br-1',
       mergeRequestIid: 7,
-      files: [
-        { file: 'a.jsonl', path: 'p-1', type: AnalysisContextType.API_METRIC },
-        { file: 'b.jsonl', path: 'p-2', type: AnalysisContextType.QUERY },
-      ],
+      file: STORED_FILE,
     });
     expect(storageService.remove).not.toHaveBeenCalled();
     expect(eventEmitter2.emit).toHaveBeenCalledWith(AnalysisEvent.CREATED, analysis);
     expect(result).toBe(analysis);
   });
 
-  it('rejects a file from an unknown field before touching the database or the disk', async () => {
-    const filesByField = { other: [multerFile('other', 'c.jsonl')] };
-
-    await expect(codeOf(analysesService.create({ branch: 'feat/x' }, filesByField))).resolves.toEqual({
-      code: ErrorCode.LOG_FILE_INVALID,
+  it('rejects a missing file before touching the database or the disk', async () => {
+    await expect(codeOf(analysesService.create({ branch: 'feat/x' }))).resolves.toEqual({
+      code: ErrorCode.LOG_FILE_REQUIRED,
     });
     expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
-    expect(storageService.saveMany).not.toHaveBeenCalled();
+    expect(storageService.save).not.toHaveBeenCalled();
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
 
   it('removes the stored files when creating the analysis fails', async () => {
     analysesRepository.create.mockRejectedValue(new Error('db down'));
 
-    await expect(analysesService.create({ branch: 'feat/x' }, FILES_BY_FIELD)).rejects.toThrow('db down');
-    expect(storageService.remove).toHaveBeenCalledWith(STORED_FILES);
+    await expect(analysesService.create({ branch: 'feat/x' }, UPLOAD)).rejects.toThrow('db down');
+    expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
 
@@ -182,14 +166,14 @@ describe('AnalysesService reads', () => {
       metricResults: rows.map(([id, type, subject, value]) => ({ value, subject, metric: metric(id, type) })),
     });
 
-    it('averages values per metric and subject over contexts and orders the trend oldest first', async () => {
+    it('keys values by metric and subject and orders the trend oldest first', async () => {
       analysesRepository.findRecentByBranch.mockResolvedValue([
         { id: 'an-2', createdAt, mergeRequestIid: null, results: [result([['m-90', 'P90', '', 400]])] },
         {
           id: 'an-1',
           createdAt,
           mergeRequestIid: 5,
-          results: [result([['m-90', 'P90', '', 100], ['m-90', 'P90', '', 300], ['m-50', 'P50', '', 50]])],
+          results: [result([['m-90', 'P90', '', 200], ['m-50', 'P50', '', 50]])],
         },
       ] as never);
 

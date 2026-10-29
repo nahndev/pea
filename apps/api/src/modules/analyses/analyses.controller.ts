@@ -5,10 +5,10 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  UploadedFiles,
+  UploadedFile,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileFieldsInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor } from "@nestjs/platform-express";
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -19,7 +19,7 @@ import {
   ApiTags,
 } from "@nestjs/swagger";
 import { memoryStorage } from "multer";
-import { LOG_FILE_FIELDS, MAX_LOG_FILE_SIZE } from "./analyses.constants";
+import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from "./analyses.constants";
 import { AnalysesService } from "./analyses.service";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 
@@ -33,32 +33,27 @@ export class AnalysesController {
   @ApiBody({
     schema: {
       type: "object",
-      required: ["branch"],
+      required: ["branch", LOG_FILE_FIELD],
       properties: {
         branch: { type: "string", minLength: 1, maxLength: 255 },
         mergeRequestIid: { type: "integer", minimum: 1 },
-        ...Object.fromEntries(
-          LOG_FILE_FIELDS.map(({ name }) => [
-            name,
-            { type: "string", format: "binary" },
-          ]),
-        ),
+        [LOG_FILE_FIELD]: { type: "string", format: "binary" },
       },
     },
   })
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @UseInterceptors(
-    FileFieldsInterceptor(LOG_FILE_FIELDS, {
+    FileInterceptor(LOG_FILE_FIELD, {
       storage: memoryStorage(),
       limits: { fileSize: MAX_LOG_FILE_SIZE },
     }),
   )
   create(
     @Body() dto: CreateAnalysisDto,
-    @UploadedFiles() filesByField: Record<string, Express.Multer.File[]>,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.analysesService.create(dto, filesByField);
+    return this.analysesService.create(dto, file);
   }
 
   @Get(":id")

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AnalysisContextType } from '@tomato/constants';
-import type { AnalysisContext, Rule } from '../../../generated/client';
+import type { Analysis, Rule } from '../../../generated/client';
 import {
   API_METRIC_DURATION_COLUMN,
   API_METRIC_ENDPOINT_COLUMN,
@@ -16,16 +15,14 @@ import type { RuleHandler, RuleIssue } from './rule-handler.types';
 export class SlowRouteHandler implements RuleHandler {
   constructor(private readonly storageService: StorageService) {}
 
-  async handle(rule: Rule, context: AnalysisContext): Promise<RuleIssue[]> {
-    if (context.type !== AnalysisContextType.API_METRIC) return [];
-
+  async handle(rule: Rule, analysis: Analysis): Promise<RuleIssue[]> {
     const { thresholdMs, minRequests = DEFAULT_MIN_REQUESTS } = rule.config as RuleConfig;
     if (typeof thresholdMs !== 'number' || typeof minRequests !== 'number') return [];
 
     const rows = await queryRows(`
       SELECT * FROM (
         SELECT ${API_METRIC_ENDPOINT_COLUMN} AS endpoint, count(*) AS total, quantile_cont(${API_METRIC_DURATION_COLUMN}, ${ROUTE_PERCENTILE}) AS value
-        FROM ${apiMetricRequests(this.storageService.resolve(context.path))}
+        FROM ${apiMetricRequests(this.storageService.resolve(analysis.path))}
         GROUP BY ${API_METRIC_ENDPOINT_COLUMN}
       )
       WHERE total >= ${minRequests} AND value > ${thresholdMs}
@@ -34,7 +31,6 @@ export class SlowRouteHandler implements RuleHandler {
 
     return rows.map((row) => ({
       ruleId: rule.id,
-      analysisContextId: context.id,
       description: `${String(row.endpoint)} P95 ${Number(row.value).toFixed(1)}ms exceeds threshold ${thresholdMs}ms`,
     }));
   }

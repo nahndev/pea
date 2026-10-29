@@ -21,7 +21,7 @@ describe('AnalysisResultService', () => {
   let handler: jest.Mocked<RuleHandler>;
   let analysisResultService: AnalysisResultService;
 
-  const contexts = [{ id: 'c-1' }, { id: 'c-2' }];
+  const analysis = { id: 'an-1', file: 'a.jsonl', path: 'p-1' };
   const ruleList = [
     { id: 'r-1', type: 'P90_FAILURE', severity: 'HIGH' },
     { id: 'r-2', type: 'P95_FAILURE', severity: 'LOW' },
@@ -32,7 +32,7 @@ describe('AnalysisResultService', () => {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
     };
-    analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1', contexts }) };
+    analysesService = { findOne: jest.fn().mockResolvedValue(analysis) };
     rulesService = { listAll: jest.fn().mockResolvedValue(ruleList) };
     issuesService = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
     metricsService = { measure: jest.fn().mockResolvedValue(0) };
@@ -53,27 +53,23 @@ describe('AnalysisResultService', () => {
     );
   });
 
-  it('runs every supported rule on every context and links issues to the result', async () => {
-    handler.handle.mockImplementation((rule, context) =>
-      Promise.resolve([{ ruleId: rule.id, analysisContextId: context.id, description: 'failed' }]),
-    );
+  it('runs every supported rule on the analysis and links issues to the result', async () => {
+    handler.handle.mockImplementation((rule) => Promise.resolve([{ ruleId: rule.id, description: 'failed' }]));
 
     const result = await analysisResultService.run({ analysisId: 'an-1' });
 
-    expect(handler.handle).toHaveBeenCalledTimes(2);
+    expect(handler.handle).toHaveBeenCalledTimes(1);
+    expect(handler.handle).toHaveBeenCalledWith(ruleList[0], analysis);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed', severity: 'HIGH' },
+      { ruleId: 'r-1', description: 'failed', severity: 'HIGH' },
     ]);
-    expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-2', description: 'failed', severity: 'HIGH' },
-    ]);
-    expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 2 });
+    expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 1 });
   });
 
   it('measures metrics then evaluates quality gates for the result', async () => {
     await analysisResultService.run({ analysisId: 'an-1' });
 
-    expect(metricsService.measure).toHaveBeenCalledWith('res-1', contexts);
+    expect(metricsService.measure).toHaveBeenCalledWith('res-1', analysis);
     expect(qualityGatesService.evaluate).toHaveBeenCalledWith('res-1');
     expect(metricsService.measure.mock.invocationCallOrder[0]).toBeLessThan(
       qualityGatesService.evaluate.mock.invocationCallOrder[0],
@@ -104,8 +100,9 @@ describe('AnalysisResultService', () => {
   });
 
   it('marks the result FAILED with the issues so far and rethrows', async () => {
+    ruleHandlerFactory.supports.mockReturnValue(true);
     handler.handle
-      .mockResolvedValueOnce([{ ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed' }])
+      .mockResolvedValueOnce([{ ruleId: 'r-1', description: 'failed' }])
       .mockRejectedValueOnce(new Error('duckdb'));
 
     await expect(analysisResultService.run({ analysisId: 'an-1' })).rejects.toThrow('duckdb');

@@ -29,7 +29,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-24 w-full max-w-md" />;
 
-  const { branch, latestResult, mergeRequestIid, createdAt, contexts } = data;
+  const { branch, latestResult, mergeRequestIid, createdAt, file } = data;
   const title = `Analysis of ${formatDateTime(createdAt)}`;
 
   return (
@@ -72,8 +72,8 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           </dd>
         </div>
         <div className="flex items-center gap-2">
-          <dt className="text-muted-foreground">Files</dt>
-          <dd className="font-medium">{contexts.length}</dd>
+          <dt className="text-muted-foreground">File</dt>
+          <dd className="break-all font-mono text-xs font-medium">{file}</dd>
         </div>
       </dl>
       <Tabs value={activeTab}>

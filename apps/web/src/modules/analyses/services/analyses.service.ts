@@ -2,7 +2,7 @@ import type { AnalysisDetail, AnalysisSummary, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
-import { LOG_FILE_FIELDS } from '../analyses.constants';
+import { LOG_FILE_FIELD } from '../analyses.constants';
 import type { CreateAnalysisInput } from '../analyses.schemas';
 
 export const analysesService = {
@@ -22,10 +22,7 @@ export const analysesService = {
     const body = new FormData();
     body.set('branch', input.branch);
     if (input.mergeRequestIid) body.set('mergeRequestIid', String(input.mergeRequestIid));
-    for (const { name } of LOG_FILE_FIELDS) {
-      const file = input[name];
-      if (file) body.set(name, file);
-    }
+    body.set(LOG_FILE_FIELD.name, input.api_metric);
     const { data } = await apiClient.post<{ id: string }>('/analyses', body);
     return data;
   },

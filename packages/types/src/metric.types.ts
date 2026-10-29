@@ -20,7 +20,6 @@ export interface MetricResultView {
   value: number;
   subject: string;
   metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
-  context: { file: string };
   evaluations: MetricEvaluationView[];
 }
 

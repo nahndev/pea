@@ -15,7 +15,7 @@ describe('MetricsService', () => {
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
 
-  const contexts = [{ id: 'c-1' }, { id: 'c-2' }] as never[];
+  const analysis = { id: 'an-1', file: 'a.jsonl', path: 'p-1' } as never;
   const metricList = [
     { id: 'm-1', type: 'P90' },
     { id: 'm-2', type: 'UNKNOWN' },
@@ -41,15 +41,14 @@ describe('MetricsService', () => {
   });
 
   it('only measures active metrics', async () => {
-    await metricsService.measure('res-1', contexts);
+    await metricsService.measure('res-1', analysis);
     expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: true });
   });
 
-  it('stores a result for every context and supported metric', async () => {
-    await expect(metricsService.measure('res-1', contexts)).resolves.toBe(2);
+  it('stores a result for every supported metric', async () => {
+    await expect(metricsService.measure('res-1', analysis)).resolves.toBe(1);
     expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', analysisContextId: 'c-1', subject: '', value: 10 },
-      { metricId: 'm-1', analysisContextId: 'c-2', subject: '', value: 10 },
+      { metricId: 'm-1', subject: '', value: 10 },
     ]);
   });
 
@@ -58,31 +57,28 @@ describe('MetricsService', () => {
       { subject: 'GET /api/cart', value: 30 },
       { subject: 'POST /api/checkout', value: 20 },
     ]);
-    handler.handle.mockResolvedValueOnce([]);
 
-    await expect(metricsService.measure('res-1', contexts)).resolves.toBe(2);
+    await expect(metricsService.measure('res-1', analysis)).resolves.toBe(2);
     expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', analysisContextId: 'c-1', subject: 'GET /api/cart', value: 30 },
-      { metricId: 'm-1', analysisContextId: 'c-1', subject: 'POST /api/checkout', value: 20 },
+      { metricId: 'm-1', subject: 'GET /api/cart', value: 30 },
+      { metricId: 'm-1', subject: 'POST /api/checkout', value: 20 },
     ]);
   });
 
   it('passes the analysis result to the handler', async () => {
-    await metricsService.measure('res-1', contexts);
-    expect(handler.handle).toHaveBeenCalledWith(metricList[0], contexts[0], 'res-1');
+    await metricsService.measure('res-1', analysis);
+    expect(handler.handle).toHaveBeenCalledWith(metricList[0], analysis, 'res-1');
   });
 
   it('skips metrics whose type has no handler', async () => {
-    await metricsService.measure('res-1', contexts);
+    await metricsService.measure('res-1', analysis);
     expect(metricHandlerFactory.create).not.toHaveBeenCalledWith('UNKNOWN');
   });
 
   it('skips metrics the handler did not measure', async () => {
-    handler.handle.mockResolvedValueOnce([]).mockResolvedValueOnce([{ value: 20 }]);
-    await metricsService.measure('res-1', contexts);
-    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', analysisContextId: 'c-2', subject: '', value: 20 },
-    ]);
+    handler.handle.mockResolvedValueOnce([]);
+    await metricsService.measure('res-1', analysis);
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', []);
   });
 
   it('returns the results of an analysis result', async () => {
@@ -97,7 +93,6 @@ describe('MetricsService', () => {
         value: 3,
         subject: '',
         metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
-        analysisContext: { file: 'a.log' },
         evaluations: [],
       },
     ] as never);
@@ -108,7 +103,6 @@ describe('MetricsService', () => {
         value: 3,
         subject: '',
         metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
-        context: { file: 'a.log' },
         evaluations: [],
       },
     ]);

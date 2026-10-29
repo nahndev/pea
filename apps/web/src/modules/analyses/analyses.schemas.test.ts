@@ -9,7 +9,7 @@ const messages = (input: unknown) => {
 };
 
 describe('createAnalysisSchema', () => {
-  it('accepts a branch with one file and trims the branch', () => {
+  it('accepts a branch with a file and trims the branch', () => {
     const parsed = createAnalysisSchema.parse({ branch: '  feat/x ', mergeRequestIid: '', api_metric: file() });
 
     expect(parsed.branch).toBe('feat/x');
@@ -17,7 +17,7 @@ describe('createAnalysisSchema', () => {
   });
 
   it('coerces the merge request number', () => {
-    expect(createAnalysisSchema.parse({ branch: 'a', mergeRequestIid: '12', query: file() }).mergeRequestIid).toBe(12);
+    expect(createAnalysisSchema.parse({ branch: 'a', mergeRequestIid: '12', api_metric: file() }).mergeRequestIid).toBe(12);
   });
 
   it('requires a branch', () => {
@@ -29,7 +29,7 @@ describe('createAnalysisSchema', () => {
     expect(messages({ branch: 'a', mergeRequestIid: '1.5', api_metric: file() })).toContain('mergeRequestIid:invalid');
   });
 
-  it('requires at least one file', () => {
+  it('requires a file', () => {
     expect(messages({ branch: 'a' })).toContain('api_metric:file_required');
   });
 
@@ -37,6 +37,6 @@ describe('createAnalysisSchema', () => {
     expect(messages({ branch: 'a', api_metric: file('') })).toContain('api_metric:empty');
     const big = file();
     Object.defineProperty(big, 'size', { value: MAX_LOG_FILE_SIZE + 1 });
-    expect(messages({ branch: 'a', query: big })).toContain('query:too_large');
+    expect(messages({ branch: 'a', api_metric: big })).toContain('api_metric:too_large');
   });
 });

@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
-export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true; analysisContext: true } }>;
+export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true } }>;
 
 export interface IssueSource {
   ruleId: string;
-  analysisContextId: string;
   description?: string;
   severity: string;
 }
@@ -22,8 +21,8 @@ export class IssuesRepository {
     return count;
   }
 
-  countByContext(analysisResultId: string, analysisContextId: string, severity: string): Promise<number> {
-    return this.prismaService.issue.count({ where: { analysisResultId, analysisContextId, severity } });
+  countBySeverity(analysisResultId: string, severity: string): Promise<number> {
+    return this.prismaService.issue.count({ where: { analysisResultId, severity } });
   }
 
   async findPage(
@@ -41,7 +40,7 @@ export class IssuesRepository {
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.issue.findMany({
         where,
-        include: { rule: true, analysisContext: true },
+        include: { rule: true },
         orderBy: { id: 'desc' },
         take: limit,
         skip: offset,

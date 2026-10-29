@@ -1,4 +1,4 @@
-import type { AnalysisContextType, IssueStatus, RuleType, Severity } from '@tomato/constants';
+import type { IssueStatus, RuleType, Severity } from '@tomato/constants';
 
 export interface IssueView {
   id: string;
@@ -7,5 +7,4 @@ export interface IssueView {
   description: string | null;
   createdAt: string;
   rule: { type: RuleType; description: string };
-  context: { file: string; type: AnalysisContextType };
 }

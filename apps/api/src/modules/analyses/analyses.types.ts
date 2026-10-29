@@ -1,10 +1,4 @@
-import type { AnalysisContextType } from '@tomato/constants';
 import type { Prisma } from '../../generated/client';
-import type { StoredFile } from '../files/storage.service';
-
-export type AnalysisWithContexts = Prisma.AnalysisGetPayload<{ include: { contexts: true } }>;
-
-export type AnalysisContextFile = StoredFile & { type: AnalysisContextType };
 
 const LATEST_RESULT_ORDER = [{ createdAt: 'desc' }, { id: 'desc' }] satisfies Prisma.AnalysisResultOrderByWithRelationInput[];
 
@@ -21,7 +15,7 @@ export const LATEST_RESULT_ORDER_BY = LATEST_RESULT_ORDER;
 export type AnalysisWithLatestResult = Prisma.AnalysisGetPayload<{ include: typeof LATEST_RESULT_INCLUDE }>;
 
 export type AnalysisDetailRecord = Prisma.AnalysisGetPayload<{
-  include: typeof LATEST_RESULT_INCLUDE & { branch: true; contexts: true };
+  include: typeof LATEST_RESULT_INCLUDE & { branch: true };
 }>;
 
 export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{

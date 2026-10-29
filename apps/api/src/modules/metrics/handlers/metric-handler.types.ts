@@ -1,4 +1,4 @@
-import type { AnalysisContext, Metric } from '../../../generated/client';
+import type { Analysis, Metric } from '../../../generated/client';
 
 export interface MetricMeasurement {
   value: number;
@@ -6,5 +6,5 @@ export interface MetricMeasurement {
 }
 
 export interface MetricHandler {
-  handle(metric: Metric, context: AnalysisContext, analysisResultId: string): Promise<MetricMeasurement[]>;
+  handle(metric: Metric, analysis: Analysis, analysisResultId: string): Promise<MetricMeasurement[]>;
 }

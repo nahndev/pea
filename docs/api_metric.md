@@ -1,6 +1,6 @@
 # api_metric format
 
-The **API metric log** of an analysis (upload field `api_metric`, context type `API_METRIC`, max 50 MB).
+The **API metric log** of an analysis (upload field `api_metric`, required, max 50 MB).
 It is NDJSON: one JSON object per line, one line per HTTP request.
 
 ```json

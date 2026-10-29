@@ -3,15 +3,15 @@ import { IssuesRepository } from './issues.repository';
 import { IssuesService } from './issues.service';
 
 describe('IssuesService', () => {
-  let issuesRepository: jest.Mocked<Pick<IssuesRepository, 'createMany' | 'countByContext' | 'findPage'>>;
+  let issuesRepository: jest.Mocked<Pick<IssuesRepository, 'createMany' | 'countBySeverity' | 'findPage'>>;
   let issuesService: IssuesService;
 
-  const items = [{ ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed', severity: 'HIGH' }];
+  const items = [{ ruleId: 'r-1', description: 'failed', severity: 'HIGH' }];
 
   beforeEach(() => {
     issuesRepository = {
       createMany: jest.fn().mockResolvedValue(1),
-      countByContext: jest.fn().mockResolvedValue(4),
+      countBySeverity: jest.fn().mockResolvedValue(4),
       findPage: jest.fn().mockResolvedValue({ items: [], total: 0 }),
     };
     issuesService = new IssuesService(issuesRepository as unknown as IssuesRepository);
@@ -22,9 +22,9 @@ describe('IssuesService', () => {
     expect(issuesRepository.createMany).toHaveBeenCalledWith('res-1', items);
   });
 
-  it('counts the issues of a context by severity', async () => {
-    await expect(issuesService.countByContext('res-1', 'c-1', Severity.HIGH)).resolves.toBe(4);
-    expect(issuesRepository.countByContext).toHaveBeenCalledWith('res-1', 'c-1', Severity.HIGH);
+  it('counts the issues of an analysis result by severity', async () => {
+    await expect(issuesService.countBySeverity('res-1', Severity.HIGH)).resolves.toBe(4);
+    expect(issuesRepository.countBySeverity).toHaveBeenCalledWith('res-1', Severity.HIGH);
   });
 
   it('forwards the severity filter and exposes the severity of each issue', async () => {
@@ -37,7 +37,6 @@ describe('IssuesService', () => {
           description: 'slow',
           createdAt: new Date('2026-10-02T10:00:00.000Z'),
           rule: { type: 'P90_FAILURE', description: 'P90 failure' },
-          analysisContext: { file: 'a.log', type: 'API_METRIC' },
         },
       ] as never,
       total: 1,

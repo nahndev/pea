@@ -5,7 +5,6 @@ import {
 } from "@nestjs/common";
 import {
   AnalysisEvent,
-  type AnalysisContextType,
   type AnalysisResultStatus,
   ErrorCode,
   MetricEvaluationStatus,
@@ -21,12 +20,13 @@ import type {
   MetricTrendSeries,
   Paginated,
 } from "@tomato/types";
+import type { Analysis } from "../../generated/client";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { BranchesService } from "../branches/branches.service";
 import { StorageService } from "../files/storage.service";
-import { CONTEXT_TYPE_BY_FIELD, DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
+import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
-import type { AnalysisWithContexts, AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
+import type { AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 import { PaginationQueryDto } from "../../common/dto/pagination-query.dto";
 
@@ -41,29 +41,21 @@ export class AnalysesService {
   @EmitEvent(AnalysisEvent.CREATED)
   async create(
     { branch, mergeRequestIid }: CreateAnalysisDto,
-    filesByField: Record<string, Express.Multer.File[]> = {},
-  ): Promise<AnalysisWithContexts> {
-    const contextUploads = this.toContextUploads(filesByField);
+    upload?: Express.Multer.File,
+  ): Promise<Analysis> {
+    if (!upload)
+      throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
     const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
-    const storedFiles = await this.storageService.saveMany(
-      contextUploads.map(({ file }) => file),
-    );
+    const file = await this.storageService.save(upload);
     try {
-      return await this.analysesRepository.create({
-        branchId,
-        mergeRequestIid,
-        files: storedFiles.map((storedFile, index) => ({
-          ...storedFile,
-          type: contextUploads[index].type,
-        })),
-      });
+      return await this.analysesRepository.create({ branchId, mergeRequestIid, file });
     } catch (error) {
-      await this.storageService.remove(storedFiles).catch(() => undefined);
+      await this.storageService.remove([file]).catch(() => undefined);
       throw error;
     }
   }
 
-  async findOne(id: string): Promise<AnalysisWithContexts> {
+  async findOne(id: string): Promise<Analysis> {
     const analysis = await this.analysesRepository.findById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
@@ -74,15 +66,11 @@ export class AnalysesService {
     const analysis = await this.analysesRepository.findDetailById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
-    const { branch, contexts } = analysis;
+    const { branch, file } = analysis;
     return {
       ...this.toSummary(analysis),
       branch: { id: branch.id, name: branch.name },
-      contexts: contexts.map(({ id: contextId, file, type }) => ({
-        id: contextId,
-        file,
-        type: type as AnalysisContextType,
-      })),
+      file,
     };
   }
 
@@ -102,7 +90,7 @@ export class AnalysesService {
 
     const seriesByKey = new Map<string, MetricTrendSeries>();
     const points = analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
-      const sums = new Map<string, { total: number; count: number }>();
+      const values: MetricTrendPoint["values"] = {};
       for (const { value, subject, metric } of results[0]?.metricResults ?? []) {
         const key = `${metric.id}:${subject}`;
         if (!seriesByKey.has(key)) {
@@ -112,11 +100,8 @@ export class AnalysesService {
             subject,
           });
         }
-        const sum = sums.get(key) ?? { total: 0, count: 0 };
-        sums.set(key, { total: sum.total + value, count: sum.count + 1 });
+        values[key] = value;
       }
-      const values: MetricTrendPoint["values"] = {};
-      for (const [key, { total, count }] of sums) values[key] = total / count;
       return { analysisId: id, createdAt: createdAt.toISOString(), mergeRequestIid, values };
     });
 
@@ -159,14 +144,5 @@ export class AnalysesService {
       issueCount: result.issueCount,
       gateStatus,
     };
-  }
-
-  private toContextUploads(filesByField: Record<string, Express.Multer.File[]>) {
-    return Object.entries(filesByField).flatMap(([field, files]) => {
-      const type = CONTEXT_TYPE_BY_FIELD.get(field);
-      if (!type)
-        throw new BadRequestException({ code: ErrorCode.LOG_FILE_INVALID });
-      return files.map((file) => ({ type, file }));
-    });
   }
 }
