@@ -5,21 +5,22 @@ import { QualityGatesRepository } from './quality-gates.repository';
 import { QualityGatesService } from './quality-gates.service';
 
 describe('QualityGatesService', () => {
-  let qualityGatesRepository: jest.Mocked<Pick<QualityGatesRepository, 'findAllWithConditions'>>;
+  let qualityGatesRepository: jest.Mocked<Pick<QualityGatesRepository, 'findAllWithConditions' | 'findAll'>>;
   let metricEvaluationsRepository: jest.Mocked<Pick<MetricEvaluationsRepository, 'createMany'>>;
   let metricsService: jest.Mocked<Pick<MetricsService, 'findResults'>>;
   let qualityGatesService: QualityGatesService;
 
-  const condition = (id: string, operator: string, threshold: number, metricId = 'm-1') => ({
+  const condition = (id: string, operator: string, threshold: number, metricId = 'm-1', isActive = true) => ({
     id,
     metricId,
     operator,
     threshold,
+    isActive,
   });
   const gates = (...conditions: ReturnType<typeof condition>[]) => [{ id: 'g-1', conditions }];
 
   beforeEach(() => {
-    qualityGatesRepository = { findAllWithConditions: jest.fn() };
+    qualityGatesRepository = { findAllWithConditions: jest.fn(), findAll: jest.fn() };
     metricEvaluationsRepository = { createMany: jest.fn().mockImplementation((items: unknown[]) => items.length) };
     metricsService = {
       findResults: jest.fn().mockResolvedValue([
@@ -75,6 +76,38 @@ describe('QualityGatesService', () => {
     await qualityGatesService.evaluate('res-1');
 
     expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([expect.objectContaining({ status })]);
+  });
+
+  it('lists the quality gates', async () => {
+    qualityGatesRepository.findAll.mockResolvedValue([
+      { id: 'g-1', name: 'Default', description: null, createdAt: new Date(), updatedAt: new Date() },
+    ]);
+    await expect(qualityGatesService.findAll()).resolves.toEqual([{ id: 'g-1', name: 'Default', description: null }]);
+  });
+
+  it('skips disabled conditions', async () => {
+    qualityGatesRepository.findAllWithConditions.mockResolvedValue(
+      gates(
+        condition('c-1', MetricConditionOperator.GT, 200, 'm-1', false),
+        condition('c-2', MetricConditionOperator.GT, 50, 'm-3'),
+      ) as never,
+    );
+    await qualityGatesService.evaluate('res-1');
+    expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([]);
+  });
+
+  it('still evaluates the active conditions next to a disabled one', async () => {
+    qualityGatesRepository.findAllWithConditions.mockResolvedValue(
+      gates(
+        condition('c-1', MetricConditionOperator.GT, 200, 'm-1', false),
+        condition('c-2', MetricConditionOperator.GT, 50, 'm-1'),
+      ) as never,
+    );
+    await qualityGatesService.evaluate('res-1');
+    expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+      expect.objectContaining({ metricConditionId: 'c-2' }),
+      expect.objectContaining({ metricConditionId: 'c-2' }),
+    ]);
   });
 
   it('skips conditions with an unknown operator', async () => {

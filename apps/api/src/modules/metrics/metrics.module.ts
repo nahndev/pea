@@ -6,11 +6,13 @@ import { IssueCountHandler } from './handlers/issue-count.handler';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { PercentileHandler } from './handlers/percentile.handler';
 import { MetricResultsRepository } from './metric-results.repository';
+import { MetricsController } from './metrics.controller';
 import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
 
 @Module({
   imports: [FilesModule, IssuesModule],
+  controllers: [MetricsController],
   providers: [
     MetricsService,
     MetricsRepository,

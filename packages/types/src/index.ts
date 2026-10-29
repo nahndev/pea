@@ -5,3 +5,4 @@ export * from './analysis.types';
 export * from './issue.types';
 export * from './metric.types';
 export * from './rule.types';
+export * from './quality-gate.types';

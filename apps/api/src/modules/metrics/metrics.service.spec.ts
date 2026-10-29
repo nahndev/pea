@@ -5,7 +5,7 @@ import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
 
 describe('MetricsService', () => {
-  let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll'>>;
+  let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById'>>;
   let metricResultsRepository: jest.Mocked<
     Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
   >;
@@ -20,7 +20,7 @@ describe('MetricsService', () => {
   ];
 
   beforeEach(() => {
-    metricsRepository = { findAll: jest.fn().mockResolvedValue(metricList) };
+    metricsRepository = { findAll: jest.fn().mockResolvedValue(metricList), findById: jest.fn() };
     metricResultsRepository = {
       createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length),
       findByAnalysisResult: jest.fn(),
@@ -105,5 +105,23 @@ describe('MetricsService', () => {
         evaluations: [],
       },
     ]);
+  });
+
+  it('lists the metrics with their unit', async () => {
+    metricsRepository.findAll.mockResolvedValue([
+      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', config: {} },
+    ] as never);
+
+    await expect(metricsService.findAll()).resolves.toEqual([
+      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration' },
+    ]);
+  });
+
+  it('returns one metric, or null when it does not exist', async () => {
+    metricsRepository.findById.mockResolvedValueOnce({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd' } as never);
+    metricsRepository.findById.mockResolvedValueOnce(null);
+
+    await expect(metricsService.findOne('m-1')).resolves.toEqual({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd' });
+    await expect(metricsService.findOne('missing')).resolves.toBeNull();
   });
 });

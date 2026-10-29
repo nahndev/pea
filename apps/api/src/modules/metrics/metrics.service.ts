@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
-import type { MetricResultView } from '@tomato/types';
-import type { AnalysisContext, MetricResult } from '../../generated/client';
+import type { MetricResultView, MetricView } from '@tomato/types';
+import type { AnalysisContext, Metric, MetricResult } from '../../generated/client';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
 import { MetricsRepository } from './metrics.repository';
@@ -31,6 +31,16 @@ export class MetricsService {
     return this.metricResultsRepository.createMany(analysisResultId, items);
   }
 
+  async findAll(): Promise<MetricView[]> {
+    const metrics = await this.metricsRepository.findAll();
+    return metrics.map((metric) => this.toView(metric));
+  }
+
+  async findOne(id: string): Promise<MetricView | null> {
+    const metric = await this.metricsRepository.findById(id);
+    return metric ? this.toView(metric) : null;
+  }
+
   findResults(analysisResultId: string): Promise<MetricResult[]> {
     return this.metricResultsRepository.findByAnalysisResult(analysisResultId);
   }
@@ -55,5 +65,9 @@ export class MetricsService {
         qualityGate: evaluation.metricCondition.qualityGate.name,
       })),
     }));
+  }
+
+  private toView({ id, type, unit, description }: Metric): MetricView {
+    return { id, type: type as MetricType, unit: unit as MetricUnit, description };
   }
 }

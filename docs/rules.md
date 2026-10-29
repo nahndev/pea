@@ -45,6 +45,18 @@ The `Default` gate fails when an endpoint P95 is above 3000 ms.
 Every metric has a `unit` (`MILLISECOND` or `COUNT`, column `metrics.unit`) that decides how its values are formatted
 and which metrics can share a chart.
 
+### Conditions
+
+A quality gate condition (`MetricCondition`) fails a metric result when `value <operator> threshold` holds
+(`GT`, `GTE`, `LT`, `LTE`; the threshold is in the unit of the metric). The `Conditions` menu lists them and `/conditions/{id}`
+edits the operator, threshold and `isActive` (`GET /conditions`, `GET /conditions/:id`, `PATCH /conditions/:id`).
+A disabled condition (`isActive: false`) is skipped when a result is evaluated, so it creates no evaluation and cannot fail the gate;
+the seed never changes `isActive` of an existing condition.
+Changes apply to analyses run afterwards; stored evaluations keep the operator and threshold they were checked against.
+`Create condition` on `/conditions` (`POST /conditions` with `{ qualityGateId, metricId, operator, threshold }`) adds a condition
+to a quality gate. It is created active, and a gate has at most one condition per metric (unique `qualityGateId + metricId`,
+`METRIC_CONDITION_ALREADY_EXISTS`). The form is fed by `GET /quality-gates` and `GET /metrics`.
+
 ### Trend chart
 
 `GET /branches/:branchId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:

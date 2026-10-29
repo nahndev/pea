@@ -1,5 +1,12 @@
 import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
 
+export interface MetricView {
+  id: string;
+  type: MetricType;
+  unit: MetricUnit;
+  description: string;
+}
+
 export interface MetricEvaluationView {
   status: MetricEvaluationStatus;
   operator: MetricConditionOperator;
