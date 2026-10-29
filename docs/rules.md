@@ -8,6 +8,25 @@ Other context types are skipped.
 
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
 
+## Severity
+
+Every rule has a `severity` (`BLOCKER`, `HIGH`, `MEDIUM`, `LOW`, `INFO`, default `MEDIUM`), editable on `/rules/{id}`
+(`PATCH /rules/:id` with `{ "severity": "HIGH" }`). An issue copies the severity of its rule when it is created,
+so changing a rule never rewrites past results. Issues can be filtered by severity.
+
+| Severity  | Rules (seed default)                                          |
+| --------- | ------------------------------------------------------------- |
+| `BLOCKER` | `ERROR_RATE`                                                  |
+| `HIGH`    | `P90_FAILURE`, `P95_FAILURE`, `P99_FAILURE`, `ROUTE_ERROR_RATE` |
+| `MEDIUM`  | `P50_FAILURE`, `AVG_LATENCY`, `SLOW_REQUEST_RATE`, `SLOW_ROUTE` |
+| `LOW`     | `MAX_LATENCY`, `CLIENT_ERROR_RATE`, `SLOW_API`                |
+
+### Issue count metrics
+
+Each severity has a metric (`BLOCKER_ISSUE_COUNT`, `HIGH_ISSUE_COUNT`, `MEDIUM_ISSUE_COUNT`, `LOW_ISSUE_COUNT`,
+`INFO_ISSUE_COUNT`, handler `IssueCountHandler`) that counts the issues of a file in the analysis result.
+Quality gate conditions can use them like any metric. The `Default` gate fails on more than 0 blocker or high issues.
+
 ## Config fields
 
 | Field         | Meaning                                                      |

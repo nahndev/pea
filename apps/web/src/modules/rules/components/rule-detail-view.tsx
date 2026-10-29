@@ -6,6 +6,7 @@ import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
 import { useRule } from '../hooks/use-rules';
 import { RuleConfig } from './rule-config/rule-config';
+import { RuleSeverityForm } from './rule-severity-form';
 
 interface RuleDetailViewProps {
   ruleId: string;
@@ -22,6 +23,7 @@ export function RuleDetailView({ ruleId }: RuleDetailViewProps) {
       <PageHeader title={data.description} description={`${data.type} · Changes apply to analyses run from now on.`}>
         <Breadcrumbs entries={[{ label: 'Rules', href: '/rules' }, { label: data.description }]} />
       </PageHeader>
+      <RuleSeverityForm rule={data} />
       <RuleConfig key={JSON.stringify(data.config)} rule={data} />
     </div>
   );

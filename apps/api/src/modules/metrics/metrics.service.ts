@@ -20,7 +20,7 @@ export class MetricsService {
     for (const context of contexts) {
       for (const metric of metrics) {
         if (!this.metricHandlerFactory.supports(metric.type)) continue;
-        const value = await this.metricHandlerFactory.create(metric.type).handle(metric, context);
+        const value = await this.metricHandlerFactory.create(metric.type).handle(metric, context, analysisResultId);
         if (value !== null) items.push({ metricId: metric.id, analysisContextId: context.id, value });
       }
     }

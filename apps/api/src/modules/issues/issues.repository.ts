@@ -8,6 +8,7 @@ export interface IssueSource {
   ruleId: string;
   analysisContextId: string;
   description?: string;
+  severity: string;
 }
 
 @Injectable()
@@ -21,15 +22,20 @@ export class IssuesRepository {
     return count;
   }
 
+  countByContext(analysisResultId: string, analysisContextId: string, severity: string): Promise<number> {
+    return this.prismaService.issue.count({ where: { analysisResultId, analysisContextId, severity } });
+  }
+
   async findPage(
     analysisResultId: string,
-    filters: { status?: string; ruleType?: string },
+    filters: { status?: string; severity?: string; ruleType?: string },
     limit: number,
     offset: number,
   ): Promise<{ items: IssueWithRelations[]; total: number }> {
     const where: Prisma.IssueWhereInput = {
       analysisResultId,
       status: filters.status,
+      severity: filters.severity,
       rule: filters.ruleType ? { type: filters.ruleType } : undefined,
     };
     const [items, total] = await this.prismaService.$transaction([

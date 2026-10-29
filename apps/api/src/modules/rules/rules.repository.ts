@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Severity } from '@tomato/constants';
 import type { Prisma, Rule } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -14,7 +15,7 @@ export class RulesRepository {
     return this.prismaService.rule.findUnique({ where: { id } });
   }
 
-  updateConfig(id: string, config: Prisma.InputJsonObject): Promise<Rule> {
-    return this.prismaService.rule.update({ where: { id }, data: { config } });
+  update(id: string, data: { config?: Prisma.InputJsonObject; severity?: Severity }): Promise<Rule> {
+    return this.prismaService.rule.update({ where: { id }, data });
   }
 }

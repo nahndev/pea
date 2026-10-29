@@ -1,3 +1,4 @@
+import type { Severity } from '@tomato/constants';
 import { z } from 'zod';
 import { isRuleConfigField, type RuleConfigField } from './rules.constants';
 
@@ -13,3 +14,7 @@ export const buildRuleConfigSchema = (fields: string[]) =>
   z.object(Object.fromEntries(fields.filter(isRuleConfigField).map((field) => [field, FIELD_SCHEMAS[field]])));
 
 export type RuleConfigInput = Partial<Record<RuleConfigField, number>>;
+
+export interface RuleUpdateInput extends RuleConfigInput {
+  severity?: Severity;
+}

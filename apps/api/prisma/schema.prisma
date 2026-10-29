@@ -49,6 +49,7 @@ model Rule {
   id          String   @id @default(uuid(7)) @db.Uuid
   type        String   @db.VarChar(50)
   description String
+  severity    String   @default("MEDIUM") @db.VarChar(20)
   config      Json     @default("{}") @db.JsonB
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -65,6 +66,7 @@ model Issue {
   analysisResultId  String?         @map("analysis_result_id") @db.Uuid
   description       String?
   status            String          @default("OPEN") @db.VarChar(20)
+  severity          String          @default("MEDIUM") @db.VarChar(20)
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
   rule              Rule            @relation(fields: [ruleId], references: [id], onDelete: Cascade)
@@ -75,6 +77,7 @@ model Issue {
   @@index([analysisContextId])
   @@index([analysisResultId])
   @@index([status])
+  @@index([severity])
   @@map("issues")
 }
 

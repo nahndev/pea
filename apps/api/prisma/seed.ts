@@ -1,36 +1,43 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { MetricConditionOperator, MetricType, RuleType } from '@tomato/constants';
+import { MetricConditionOperator, MetricType, RuleType, Severity } from '@tomato/constants';
 import { PrismaClient } from '../src/generated/client';
 
 const RULES = [
-  { type: RuleType.P90_FAILURE, description: 'P90 failure', config: { thresholdMs: 1000 } },
-  { type: RuleType.P95_FAILURE, description: 'P95 failure', config: { thresholdMs: 2000 } },
-  { type: RuleType.P50_FAILURE, description: 'P50 failure', config: { thresholdMs: 500 } },
-  { type: RuleType.P99_FAILURE, description: 'P99 failure', config: { thresholdMs: 3000 } },
-  { type: RuleType.AVG_LATENCY, description: 'Average latency', config: { thresholdMs: 400 } },
-  { type: RuleType.MAX_LATENCY, description: 'Max latency', config: { thresholdMs: 3000 } },
-  { type: RuleType.SLOW_REQUEST_RATE, description: 'Slow request rate', config: { thresholdMs: 1000, maxPercent: 5 } },
-  { type: RuleType.ERROR_RATE, description: '5xx error rate', config: { maxPercent: 1 } },
-  { type: RuleType.CLIENT_ERROR_RATE, description: '4xx error rate', config: { maxPercent: 5 } },
-  { type: RuleType.SLOW_ROUTE, description: 'Slow route', config: { thresholdMs: 1500, minRequests: 10 } },
-  { type: RuleType.SLOW_API, description: 'Slow API', config: { thresholdMs: 2000 } },
-  { type: RuleType.ROUTE_ERROR_RATE, description: 'Route 5xx error rate', config: { maxPercent: 5, minRequests: 10 } },
+  { type: RuleType.P90_FAILURE, description: 'P90 failure', severity: Severity.HIGH, config: { thresholdMs: 1000 } },
+  { type: RuleType.P95_FAILURE, description: 'P95 failure', severity: Severity.HIGH, config: { thresholdMs: 2000 } },
+  { type: RuleType.P50_FAILURE, description: 'P50 failure', severity: Severity.MEDIUM, config: { thresholdMs: 500 } },
+  { type: RuleType.P99_FAILURE, description: 'P99 failure', severity: Severity.HIGH, config: { thresholdMs: 3000 } },
+  { type: RuleType.AVG_LATENCY, description: 'Average latency', severity: Severity.MEDIUM, config: { thresholdMs: 400 } },
+  { type: RuleType.MAX_LATENCY, description: 'Max latency', severity: Severity.LOW, config: { thresholdMs: 3000 } },
+  { type: RuleType.SLOW_REQUEST_RATE, description: 'Slow request rate', severity: Severity.MEDIUM, config: { thresholdMs: 1000, maxPercent: 5 } },
+  { type: RuleType.ERROR_RATE, description: '5xx error rate', severity: Severity.BLOCKER, config: { maxPercent: 1 } },
+  { type: RuleType.CLIENT_ERROR_RATE, description: '4xx error rate', severity: Severity.LOW, config: { maxPercent: 5 } },
+  { type: RuleType.SLOW_ROUTE, description: 'Slow route', severity: Severity.MEDIUM, config: { thresholdMs: 1500, minRequests: 10 } },
+  { type: RuleType.SLOW_API, description: 'Slow API', severity: Severity.LOW, config: { thresholdMs: 2000 } },
+  { type: RuleType.ROUTE_ERROR_RATE, description: 'Route 5xx error rate', severity: Severity.HIGH, config: { maxPercent: 5, minRequests: 10 } },
 ];
 
 const METRICS = [
   { type: MetricType.P50, description: 'P50 duration' },
   { type: MetricType.P90, description: 'P90 duration' },
   { type: MetricType.P95, description: 'P95 duration' },
+  { type: MetricType.BLOCKER_ISSUE_COUNT, description: 'Blocker issues' },
+  { type: MetricType.HIGH_ISSUE_COUNT, description: 'High issues' },
+  { type: MetricType.MEDIUM_ISSUE_COUNT, description: 'Medium issues' },
+  { type: MetricType.LOW_ISSUE_COUNT, description: 'Low issues' },
+  { type: MetricType.INFO_ISSUE_COUNT, description: 'Info issues' },
 ];
 
 const QUALITY_GATE = {
   name: 'Default',
-  description: 'Default response time limits',
+  description: 'Default response time and issue limits',
   conditions: [
     { metricType: MetricType.P50, operator: MetricConditionOperator.GT, threshold: 500 },
     { metricType: MetricType.P90, operator: MetricConditionOperator.GT, threshold: 1000 },
     { metricType: MetricType.P95, operator: MetricConditionOperator.GT, threshold: 2000 },
+    { metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
+    { metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   ],
 };
 

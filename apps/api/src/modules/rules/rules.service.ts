@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ErrorCode, type RuleType } from '@tomato/constants';
+import { ErrorCode, type RuleType, type Severity } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import type { Rule } from '../../generated/client';
 import { UpdateRuleDto } from './dto/update-rule.dto';
@@ -24,7 +24,7 @@ export class RulesService {
     return this.toView(rule);
   }
 
-  async updateConfig(id: string, changes: UpdateRuleDto): Promise<RuleView> {
+  async update(id: string, { severity, ...changes }: UpdateRuleDto): Promise<RuleView> {
     const rule = await this.rulesRepository.findById(id);
     if (!rule) throw new NotFoundException({ code: ErrorCode.RULE_NOT_FOUND });
 
@@ -33,9 +33,12 @@ export class RulesService {
     if (entries.some(([field]) => !(field in config))) {
       throw new BadRequestException({ code: ErrorCode.RULE_CONFIG_INVALID });
     }
-    if (!entries.length) return this.toView(rule);
+    if (!entries.length && !severity) return this.toView(rule);
 
-    const updated = await this.rulesRepository.updateConfig(id, { ...config, ...Object.fromEntries(entries) });
+    const updated = await this.rulesRepository.update(id, {
+      severity,
+      config: entries.length ? { ...config, ...Object.fromEntries(entries) } : undefined,
+    });
     return this.toView(updated);
   }
 
@@ -44,6 +47,7 @@ export class RulesService {
       id: rule.id,
       type: rule.type as RuleType,
       description: rule.description,
+      severity: rule.severity as Severity,
       config: this.numericConfig(rule),
     };
   }

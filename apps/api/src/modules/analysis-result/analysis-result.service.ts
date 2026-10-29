@@ -67,7 +67,10 @@ export class AnalysisResultService {
         for (const rule of rules) {
           if (!this.ruleHandlerFactory.supports(rule.type)) continue;
           const issues = await this.ruleHandlerFactory.create(rule.type).handle(rule, context);
-          issueCount += await this.issuesService.createMany(result.id, issues);
+          issueCount += await this.issuesService.createMany(
+            result.id,
+            issues.map((issue) => ({ ...issue, severity: rule.severity })),
+          );
         }
       }
       await this.metricsService.measure(result.id, analysis.contexts);

@@ -43,6 +43,11 @@ describe('MetricsService', () => {
     ]);
   });
 
+  it('passes the analysis result to the handler', async () => {
+    await metricsService.measure('res-1', contexts);
+    expect(handler.handle).toHaveBeenCalledWith(metricList[0], contexts[0], 'res-1');
+  });
+
   it('skips metrics whose type has no handler', async () => {
     await metricsService.measure('res-1', contexts);
     expect(metricHandlerFactory.create).not.toHaveBeenCalledWith('UNKNOWN');

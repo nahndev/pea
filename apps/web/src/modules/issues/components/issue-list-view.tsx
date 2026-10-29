@@ -8,6 +8,7 @@ import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
+import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssues } from '../hooks/use-issues';
 import { ISSUE_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
@@ -21,7 +22,7 @@ interface IssueListViewProps {
 export function IssueListView({ analysisId, params }: IssueListViewProps) {
   const { data, error, isPending } = useIssues(analysisId, params);
   const pathname = `/analyses/${analysisId}/issues`;
-  const hasFilters = Boolean(params.status || params.ruleType);
+  const hasFilters = Boolean(params.status || params.severity || params.ruleType);
 
   return (
     <section className="flex flex-col gap-4">
@@ -39,6 +40,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Severity</TableHead>
                   <TableHead>Rule</TableHead>
                   <TableHead>File</TableHead>
                   <TableHead>Details</TableHead>
@@ -49,6 +51,9 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
               <TableBody>
                 {data.items.map((issue) => (
                   <TableRow key={issue.id}>
+                    <TableCell>
+                      <StatusBadge style={SEVERITY_STYLE[issue.severity]} />
+                    </TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{RULE_TYPE_LABEL[issue.rule.type]}</TableCell>
                     <TableCell className="max-w-56 break-all font-mono text-xs">{issue.context.file}</TableCell>
                     <TableCell className="min-w-64 max-w-96 whitespace-normal text-muted-foreground">{issue.description ?? issue.rule.description}</TableCell>
@@ -64,7 +69,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
           <PaginationBar
             page={params.page}
             total={data.total}
-            buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined, status: params.status, ruleType: params.ruleType })}
+            buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined, status: params.status, severity: params.severity, ruleType: params.ruleType })}
           />
         </>
       ) : null}

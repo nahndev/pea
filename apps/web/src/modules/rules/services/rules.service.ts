@@ -1,6 +1,6 @@
 import type { RuleView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
-import type { RuleConfigInput } from '../rules.schemas';
+import type { RuleUpdateInput } from '../rules.schemas';
 
 export const rulesService = {
   async list() {
@@ -13,7 +13,7 @@ export const rulesService = {
     return data;
   },
 
-  async update(id: string, input: RuleConfigInput) {
+  async update(id: string, input: RuleUpdateInput) {
     const { data } = await apiClient.patch<RuleView>(`/rules/${id}`, input);
     return data;
   },

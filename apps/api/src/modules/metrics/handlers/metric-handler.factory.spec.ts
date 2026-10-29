@@ -1,15 +1,30 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, MetricType } from '@tomato/constants';
 import { MetricHandlerFactory } from './metric-handler.factory';
+import { IssueCountHandler } from './issue-count.handler';
 import { PercentileHandler } from './percentile.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
-  const metricHandlerFactory = new MetricHandlerFactory(percentileHandler);
+  const issueCountHandler = {} as IssueCountHandler;
+  const metricHandlerFactory = new MetricHandlerFactory(percentileHandler, issueCountHandler);
 
-  it.each(Object.values(MetricType))('returns the percentile handler for %s', (type) => {
-    expect(metricHandlerFactory.supports(type)).toBe(true);
+  it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
     expect(metricHandlerFactory.create(type)).toBe(percentileHandler);
+  });
+
+  it.each([
+    MetricType.BLOCKER_ISSUE_COUNT,
+    MetricType.HIGH_ISSUE_COUNT,
+    MetricType.MEDIUM_ISSUE_COUNT,
+    MetricType.LOW_ISSUE_COUNT,
+    MetricType.INFO_ISSUE_COUNT,
+  ])('returns the issue count handler for %s', (type) => {
+    expect(metricHandlerFactory.create(type)).toBe(issueCountHandler);
+  });
+
+  it('supports every metric type', () => {
+    for (const type of Object.values(MetricType)) expect(metricHandlerFactory.supports(type)).toBe(true);
   });
 
   it('throws METRIC_TYPE_UNSUPPORTED when no handler exists', () => {

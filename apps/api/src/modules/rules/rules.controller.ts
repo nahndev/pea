@@ -26,6 +26,6 @@ export class RulesController {
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateRuleDto) {
-    return this.rulesService.updateConfig(id, dto);
+    return this.rulesService.update(id, dto);
   }
 }

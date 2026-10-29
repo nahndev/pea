@@ -23,8 +23,8 @@ describe('AnalysisResultService', () => {
 
   const contexts = [{ id: 'c-1' }, { id: 'c-2' }];
   const ruleList = [
-    { id: 'r-1', type: 'P90_FAILURE' },
-    { id: 'r-2', type: 'P95_FAILURE' },
+    { id: 'r-1', type: 'P90_FAILURE', severity: 'HIGH' },
+    { id: 'r-2', type: 'P95_FAILURE', severity: 'LOW' },
   ];
 
   beforeEach(() => {
@@ -62,10 +62,10 @@ describe('AnalysisResultService', () => {
 
     expect(handler.handle).toHaveBeenCalledTimes(2);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed' },
+      { ruleId: 'r-1', analysisContextId: 'c-1', description: 'failed', severity: 'HIGH' },
     ]);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
-      { ruleId: 'r-1', analysisContextId: 'c-2', description: 'failed' },
+      { ruleId: 'r-1', analysisContextId: 'c-2', description: 'failed', severity: 'HIGH' },
     ]);
     expect(result).toMatchObject({ status: AnalysisResultStatus.COMPLETED, issueCount: 2 });
   });
