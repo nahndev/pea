@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Rule } from '../../../generated/client';
-import { type ApiRequestFixture, otlpApiRequestLine } from '../../files/api-metric.fixtures';
+import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { SlowApiHandler } from './slow-api.handler';
 
@@ -16,7 +16,7 @@ describe('SlowApiHandler', () => {
     ({ id: 'c-1', analysisId: 'an-1', file: 'api_metric.log', path: 'api_metric.log', type }) as AnalysisContext;
 
   const writeLog = (requests: ApiRequestFixture[]) =>
-    writeFile(join(dir, 'api_metric.log'), requests.map(otlpApiRequestLine).join('\n'));
+    writeFile(join(dir, 'api_metric.log'), requests.map(apiRequestLine).join('\n'));
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'slow-api-'));

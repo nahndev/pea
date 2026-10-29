@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'LeaneoSlowApiConvert' };
 export default function LeaneoSlowApiConvertPage() {
   return (
     <>
-      <PageHeader title="LeaneoSlowApiConvert" description="Convert a slow_api.log file to the OTLP api_metric format used by analyses.">
+      <PageHeader title="LeaneoSlowApiConvert" description="Convert a slow_api.log file to the api_metric format used by analyses.">
         <Breadcrumbs entries={[{ label: 'Add-ons', href: '/add-ons' }, { label: 'LeaneoSlowApiConvert' }]} />
       </PageHeader>
       <LeaneoSlowApiConvertForm />

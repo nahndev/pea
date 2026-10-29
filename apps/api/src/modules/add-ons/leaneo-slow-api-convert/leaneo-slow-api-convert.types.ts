@@ -2,7 +2,6 @@ export interface SlowApiRecord {
   url: string;
   method: string;
   durationMs: number;
-  startSeconds: number;
   endSeconds: number;
 }
 

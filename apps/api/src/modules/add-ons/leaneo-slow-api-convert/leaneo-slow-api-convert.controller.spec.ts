@@ -41,7 +41,7 @@ describe('LeaneoSlowApiConvertController', () => {
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="api_metric.log"');
     expect(response.headers.get(AddOnHeader.CONVERTED_COUNT)).toBe('1');
     expect(response.headers.get(AddOnHeader.SKIPPED_COUNT)).toBe('1');
-    expect(await response.text()).toContain('http.server.request.duration');
+    expect(JSON.parse(await response.text())).toMatchObject({ method: 'GET', route: '/api/activite_equipement/gets', ms: 7257 });
   });
 
   it('responds LOG_FILE_REQUIRED without a file', async () => {

@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Metric } from '../../../generated/client';
-import { otlpApiMetricLine } from '../../files/api-metric.fixtures';
+import { apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { PercentileHandler } from './percentile.handler';
 
@@ -18,7 +18,7 @@ describe('PercentileHandler', () => {
   const writeLog = (durations: number[]) =>
     writeFile(
       join(dir, 'api_metric.log'),
-      durations.map((duration) => otlpApiMetricLine(duration)).join('\n'),
+      durations.map((duration) => apiRequestLine({ durationMs: duration })).join('\n'),
     );
 
   beforeEach(async () => {
@@ -44,10 +44,10 @@ describe('PercentileHandler', () => {
     await expect(percentileHandler.handle(metric(), context())).resolves.toEqual([]);
   });
 
-  it('ignores metrics other than the request duration', async () => {
+  it('ignores lines without a duration', async () => {
     await writeFile(
       join(dir, 'api_metric.log'),
-      [otlpApiMetricLine(10), otlpApiMetricLine(5000, 'http.server.active_requests')].join('\n'),
+      [apiRequestLine({ durationMs: 10 }), JSON.stringify({ method: 'GET', route: '/api/cart' })].join('\n'),
     );
     const [measurement] = await percentileHandler.handle(metric(MetricType.P90), context());
     expect(measurement.value).toBeCloseTo(10);

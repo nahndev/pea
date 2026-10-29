@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AnalysisContext, Rule } from '../../../generated/client';
-import { otlpApiMetricLine } from '../../files/api-metric.fixtures';
+import { apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { LatencyHandler } from './latency.handler';
 
@@ -19,7 +19,7 @@ describe('LatencyHandler', () => {
   const writeLog = (durations: number[]) =>
     writeFile(
       join(dir, 'api_metric.log'),
-      durations.map((duration) => otlpApiMetricLine(duration)).join('\n'),
+      durations.map((duration) => apiRequestLine({ durationMs: duration })).join('\n'),
     );
 
   beforeEach(async () => {

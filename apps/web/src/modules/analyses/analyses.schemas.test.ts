@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_LOG_FILE_SIZE } from './analyses.constants';
 import { createAnalysisSchema } from './analyses.schemas';
 
-const file = (content = '{"resourceMetrics":[]}\n', name = 'a.jsonl') => new File([content], name);
+const file = (content = '{"method":"GET","route":"/api/cart","ms":120}\n', name = 'a.jsonl') => new File([content], name);
 const messages = (input: unknown) => {
   const result = createAnalysisSchema.safeParse(input);
   return result.success ? [] : result.error.issues.map(({ path, message }) => `${path.join('.')}:${message}`);

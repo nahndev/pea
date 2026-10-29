@@ -3,7 +3,7 @@
 A rule inspects one analysis context and creates an issue when its condition is violated.
 Rules are rows of the `rules` table (`type`, `description`, `config`) and are seeded by `apps/api/prisma/seed.ts`.
 
-All rules currently apply to `API_METRIC` contexts (OTLP/JSON `http.server.request.duration` logs).
+All rules currently apply to `API_METRIC` contexts (NDJSON request logs, see [api_metric.md](api_metric.md)).
 Other context types are skipped.
 
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.

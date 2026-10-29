@@ -1,17 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
-import { DURATION_METRIC_NAME, SECONDS_TO_MS } from '../../files/api-metric-durations';
-import {
-  DURATION_UNIT,
-  EXPLICIT_BOUNDS,
-  ID_PLACEHOLDER,
-  ID_SEGMENT,
-  MICROS_PER_SECOND,
-  NANOS_PER_MICRO,
-  REQUEST_TIME_KEYS,
-  SCOPE_NAME,
-  SERVICE_NAME,
-} from './leaneo-slow-api-convert.constants';
+import { ID_PLACEHOLDER, ID_SEGMENT, MS_PER_SECOND } from './leaneo-slow-api-convert.constants';
 import type { ConvertResult, SlowApiRecord } from './leaneo-slow-api-convert.types';
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
@@ -30,7 +19,7 @@ export class LeaneoSlowApiConvertService {
     for (const raw of file.buffer.toString('utf8').split('\n')) {
       if (!raw.trim()) continue;
       const record = this.parse(raw);
-      if (record) lines.push(this.toOtlpLine(record));
+      if (record) lines.push(this.toApiMetricLine(record));
       else skipped += 1;
     }
     if (lines.length === 0) throw new BadRequestException({ code: ErrorCode.LOG_FILE_INVALID });
@@ -53,59 +42,19 @@ export class LeaneoSlowApiConvertService {
     if (typeof request?.url !== 'string' || typeof request.method !== 'string') return null;
     if (durationMs === undefined || durationMs < 0) return null;
 
-    const datetimeSeconds = typeof entry?.datetime === 'string' ? Date.parse(entry.datetime) / 1000 : NaN;
+    const datetimeSeconds = typeof entry?.datetime === 'string' ? Date.parse(entry.datetime) / MS_PER_SECOND : NaN;
     const endSeconds = asNumber(context?.responseTime) ?? (Number.isNaN(datetimeSeconds) ? undefined : datetimeSeconds);
     if (endSeconds === undefined) return null;
 
-    const startSeconds =
-      REQUEST_TIME_KEYS.map((key) => asNumber(context?.[key])).find((value) => value !== undefined) ??
-      endSeconds - durationMs / SECONDS_TO_MS;
-
-    return { url: request.url, method: request.method, durationMs, startSeconds, endSeconds };
+    return { url: request.url, method: request.method, durationMs, endSeconds };
   }
 
-  private toOtlpLine({ url, method, durationMs, startSeconds, endSeconds }: SlowApiRecord): string {
-    const seconds = durationMs / SECONDS_TO_MS;
-    const bucketCounts = EXPLICIT_BOUNDS.map(() => '0').concat('0');
-    const bucket = EXPLICIT_BOUNDS.findIndex((bound) => seconds <= bound);
-    bucketCounts[bucket === -1 ? EXPLICIT_BOUNDS.length : bucket] = '1';
-
+  private toApiMetricLine({ url, method, durationMs, endSeconds }: SlowApiRecord): string {
     return JSON.stringify({
-      resourceMetrics: [
-        {
-          resource: { attributes: [{ key: 'service.name', value: { stringValue: SERVICE_NAME } }] },
-          scopeMetrics: [
-            {
-              scope: { name: SCOPE_NAME },
-              metrics: [
-                {
-                  name: DURATION_METRIC_NAME,
-                  unit: DURATION_UNIT,
-                  histogram: {
-                    aggregationTemporality: 1,
-                    dataPoints: [
-                      {
-                        attributes: [
-                          { key: 'http.request.method', value: { stringValue: method.toUpperCase() } },
-                          { key: 'http.route', value: { stringValue: this.toRoute(url) } },
-                        ],
-                        startTimeUnixNano: this.toNanos(startSeconds),
-                        timeUnixNano: this.toNanos(endSeconds),
-                        count: '1',
-                        sum: seconds,
-                        min: seconds,
-                        max: seconds,
-                        bucketCounts,
-                        explicitBounds: EXPLICIT_BOUNDS,
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      ts: Math.round(endSeconds * MS_PER_SECOND),
+      method: method.toUpperCase(),
+      route: this.toRoute(url),
+      ms: durationMs,
     });
   }
 
@@ -116,9 +65,5 @@ export class LeaneoSlowApiConvertService {
       .map((segment) => (ID_SEGMENT.test(segment) ? ID_PLACEHOLDER : segment))
       .join('/');
     return route || '/';
-  }
-
-  private toNanos(seconds: number): string {
-    return (BigInt(Math.round(seconds * MICROS_PER_SECOND)) * NANOS_PER_MICRO).toString();
   }
 }

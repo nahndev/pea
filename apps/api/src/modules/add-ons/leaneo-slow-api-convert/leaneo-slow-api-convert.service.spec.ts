@@ -3,7 +3,6 @@ import { ErrorCode } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { apiMetricDurations } from '../../files/api-metric-durations';
 import { apiMetricRequests } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { LeaneoSlowApiConvertService } from './leaneo-slow-api-convert.service';
@@ -27,51 +26,36 @@ const slowLine = (overrides: Record<string, unknown> = {}, request: Record<strin
 
 const file = (lines: string[]) => ({ buffer: Buffer.from(lines.join('\n')) }) as Express.Multer.File;
 
-const dataPointOf = (content: string, index = 0) => {
-  const [line] = content.trim().split('\n').slice(index);
-  const { resourceMetrics } = JSON.parse(line);
-  return resourceMetrics[0].scopeMetrics[0].metrics[0].histogram.dataPoints[0];
-};
+const lineOf = (content: string, index = 0) => JSON.parse(content.trim().split('\n')[index]);
 
 describe('LeaneoSlowApiConvertService', () => {
   const service = new LeaneoSlowApiConvertService();
 
-  it('converts a slow api line to an OTLP duration histogram', () => {
+  it('converts a slow api line to an api_metric line', () => {
     const { content, converted, skipped } = service.convert(file([slowLine()]));
-    const { resourceMetrics } = JSON.parse(content);
-    const metric = resourceMetrics[0].scopeMetrics[0].metrics[0];
-    const point = metric.histogram.dataPoints[0];
 
     expect({ converted, skipped }).toEqual({ converted: 1, skipped: 0 });
-    expect(metric.name).toBe('http.server.request.duration');
-    expect(metric.unit).toBe('s');
-    expect(point.sum).toBe(5.378);
-    expect(point.count).toBe('1');
-    expect(point.attributes).toEqual([
-      { key: 'http.request.method', value: { stringValue: 'GET' } },
-      { key: 'http.route', value: { stringValue: '/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}' } },
-    ]);
+    expect(lineOf(content)).toEqual({
+      ts: 1793137671494,
+      method: 'GET',
+      route: '/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}',
+      ms: 5378,
+    });
   });
 
-  it('puts the duration into the matching explicit bucket', () => {
-    const { content } = service.convert(file([slowLine({ elapsedMilleSecond: 5378 }), slowLine({ elapsedMilleSecond: 12000 }), slowLine({ elapsedMilleSecond: 4 })]));
-    const buckets = [0, 1, 2].map((index) => dataPointOf(content, index).bucketCounts.indexOf('1'));
-    expect(buckets).toEqual([12, 14, 0]);
-    expect(dataPointOf(content).bucketCounts).toHaveLength(dataPointOf(content).explicitBounds.length + 1);
+  it('keeps the duration in milliseconds as given', () => {
+    const { content } = service.convert(file([slowLine({ elapsedMilleSecond: 12000 }), slowLine({ elapsedMilleSecond: 4 })]));
+    expect([lineOf(content, 0).ms, lineOf(content, 1).ms]).toEqual([12000, 4]);
   });
 
-  it('converts timestamps to unix nanoseconds', () => {
+  it('uses the response time as epoch milliseconds', () => {
     const { content } = service.convert(file([slowLine()]));
-    const point = dataPointOf(content);
-    expect(point.startTimeUnixNano).toBe('1793137666115035000');
-    expect(point.timeUnixNano).toBe('1793137671493620000');
+    expect(lineOf(content).ts).toBe(Math.round(1793137671.49362 * 1000));
   });
 
-  it('falls back to datetime and duration when request and response times are missing', () => {
-    const { content } = service.convert(file([slowLine({ 'requestTime: ': undefined, responseTime: undefined, elapsedMilleSecond: 1000 })]));
-    const point = dataPointOf(content);
-    expect(point.timeUnixNano).toBe('1793137671493000000');
-    expect(point.startTimeUnixNano).toBe('1793137670493000000');
+  it('falls back to datetime when the response time is missing', () => {
+    const { content } = service.convert(file([slowLine({ responseTime: undefined })]));
+    expect(lineOf(content).ts).toBe(Date.parse('2026-10-27T21:47:51.493638+00:00'));
   });
 
   it('keeps static routes and normalises uuid segments, query strings and method case', () => {
@@ -82,13 +66,16 @@ describe('LeaneoSlowApiConvertService', () => {
         slowLine({}, { url: '/api/wopi/12/-1/3' }),
       ]),
     );
-    const [first, second, third] = [0, 1, 2].map((index) => dataPointOf(content, index).attributes);
-    expect(first).toEqual([
-      { key: 'http.request.method', value: { stringValue: 'POST' } },
-      { key: 'http.route', value: { stringValue: '/api/activite_equipement/gets' } },
+    expect([0, 1, 2].map((index) => lineOf(content, index))).toMatchObject([
+      { method: 'POST', route: '/api/activite_equipement/gets' },
+      { method: 'GET', route: '/api/orders/{id}' },
+      { method: 'GET', route: '/api/wopi/{id}/{id}/{id}' },
     ]);
-    expect(second[1].value.stringValue).toBe('/api/orders/{id}');
-    expect(third[1].value.stringValue).toBe('/api/wopi/{id}/{id}/{id}');
+  });
+
+  it('writes only ts, method, route and ms', () => {
+    const { content } = service.convert(file([slowLine()]));
+    expect(Object.keys(lineOf(content)).sort()).toEqual(['method', 'ms', 'route', 'ts']);
   });
 
   it('does not leak the user or ip addresses', () => {
@@ -139,27 +126,27 @@ describe('LeaneoSlowApiConvertService', () => {
     }
   });
 
-  describe('analysis readers', () => {
+  describe('analysis reader', () => {
     let dir: string;
     beforeEach(async () => {
       dir = await mkdtemp(join(tmpdir(), 'slow-api-'));
     });
     afterEach(() => rm(dir, { recursive: true, force: true }));
 
-    it('reads the converted file as api metric durations and requests', async () => {
+    it('reads the converted file as api metric requests', async () => {
       const { content } = service.convert(
         file([slowLine(), slowLine({ elapsedMilleSecond: 7257 }, { url: '/api/activite_equipement/gets' })]),
       );
       const path = join(dir, 'api_metric.log');
       await writeFile(path, content);
 
-      const durations = await queryRows(`SELECT duration_ms FROM ${apiMetricDurations(path)} ORDER BY duration_ms`);
-      const requests = await queryRows(`SELECT endpoint, status_code FROM ${apiMetricRequests(path)} ORDER BY endpoint`);
+      const requests = await queryRows(
+        `SELECT endpoint, duration_ms, status_code FROM ${apiMetricRequests(path)} ORDER BY endpoint`,
+      );
 
-      expect(durations.map((row) => Number(row.duration_ms))).toEqual([5378, 7257]);
       expect(requests).toEqual([
-        { endpoint: 'GET /api/activite_equipement/gets', status_code: null },
-        { endpoint: 'GET /api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}', status_code: null },
+        { endpoint: 'GET /api/activite_equipement/gets', duration_ms: 7257, status_code: null },
+        { endpoint: 'GET /api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}', duration_ms: 5378, status_code: null },
       ]);
     });
   });

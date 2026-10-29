@@ -2,7 +2,7 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { Injectable } from '@nestjs/common';
 import { AnalysisContextType } from '@tomato/constants';
 import type { AnalysisContext, Metric } from '../../../generated/client';
-import { API_METRIC_DURATION_COLUMN, apiMetricDurations } from '../../files/api-metric-durations';
+import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../files/api-metric-requests';
 import { StorageService } from '../../files/storage.service';
 import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
 import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
@@ -26,7 +26,7 @@ export class PercentileHandler implements MetricHandler {
     const connection = await instance.connect();
     try {
       const reader = await connection.runAndReadAll(
-        `SELECT quantile_cont(${API_METRIC_DURATION_COLUMN}, ${percentile}) AS value FROM ${apiMetricDurations(path)}`,
+        `SELECT quantile_cont(${API_METRIC_DURATION_COLUMN}, ${percentile}) AS value FROM ${apiMetricRequests(path)}`,
       );
       const [row] = reader.getRowObjects();
       return row?.value === null || row?.value === undefined ? null : Number(row.value);

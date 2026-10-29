@@ -1,6 +1,5 @@
 import { RuleType } from '@tomato/constants';
-import { API_METRIC_DURATION_COLUMN } from '../files/api-metric-durations';
-import { API_METRIC_STATUS_CODE_COLUMN } from '../files/api-metric-requests';
+import { API_METRIC_DURATION_COLUMN, API_METRIC_STATUS_CODE_COLUMN } from '../files/api-metric-requests';
 import type { LatencyStat, RateDefinition, RuleConfig } from './rules.types';
 
 export const DEFAULT_MIN_REQUESTS = 10;

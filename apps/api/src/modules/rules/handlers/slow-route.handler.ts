@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { AnalysisContextType } from '@tomato/constants';
 import type { AnalysisContext, Rule } from '../../../generated/client';
-import { API_METRIC_DURATION_COLUMN } from '../../files/api-metric-durations';
-import { API_METRIC_ENDPOINT_COLUMN, apiMetricRequests } from '../../files/api-metric-requests';
+import {
+  API_METRIC_DURATION_COLUMN,
+  API_METRIC_ENDPOINT_COLUMN,
+  apiMetricRequests,
+} from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
 import { DEFAULT_MIN_REQUESTS, ROUTE_PERCENTILE } from '../rules.constants';

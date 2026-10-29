@@ -34,7 +34,7 @@ export class LeaneoSlowApiConvertController {
   @ApiBody({
     schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } },
   })
-  @ApiOkResponse({ description: 'OTLP/JSON Lines file' })
+  @ApiOkResponse({ description: 'api_metric NDJSON file (docs/api_metric.md)' })
   @ApiBadRequestResponse()
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_ADD_ON_FILE_SIZE } }))
   convert(

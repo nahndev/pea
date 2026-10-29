@@ -15,7 +15,7 @@ export const GATE_STATUS_STYLE: Record<MetricEvaluationStatus, StatusStyle> = {
 export const MAX_LOG_FILE_SIZE = 50 * 1024 * 1024;
 
 export const LOG_FILE_FIELDS = [
-  { name: 'api_metric', label: 'API metric log', hint: 'OTLP/JSON Lines with http.server.request.duration histograms. Used for metrics and issues.' },
+  { name: 'api_metric', label: 'API metric log', hint: 'NDJSON, one request per line: {"method","route","status","ms"}. Used for metrics and issues.' },
   { name: 'query', label: 'Query log', hint: 'Newline-delimited JSON of executed queries.' },
 ] as const;
 

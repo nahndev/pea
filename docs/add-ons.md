@@ -15,7 +15,7 @@ apps/web/src/modules/add-ons/<slug>/   components, hooks, services, schemas
 
 ## LeaneoSlowApiConvert
 
-Converts a `slow_api.log` file to the OTLP/JSON Lines format of the `api_metric` log,
+Converts a `slow_api.log` file to the NDJSON format of the `api_metric` log ([api_metric.md](api_metric.md)),
 so it can be uploaded as the **API metric log** of a new analysis.
 
 - Page: `/add-ons/leaneo-slow-api-convert`
@@ -34,28 +34,25 @@ One JSON record per line:
 
 ### Mapping
 
-One line in, one OTLP `http.server.request.duration` histogram (one data point, `count` 1) out.
+One line in, one `api_metric` line out.
 
-| OTLP                          | Source                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------- |
-| `sum`, `min`, `max`           | `context.elapsedMilleSecond` converted to seconds                         |
-| `bucketCounts`                | bucket of the duration in `explicitBounds` (same bounds as the seed logs)  |
-| `http.request.method`         | `context.request.method`, upper-cased                                     |
-| `http.route`                  | `context.request.url` without query string, numeric and UUID segments replaced by `{id}` |
-| `timeUnixNano`                | `context.responseTime`, else `datetime`                                   |
-| `startTimeUnixNano`           | `context.requestTime: ` (also `requestTime`), else end time minus duration |
-| `service.name` / scope        | `leaneo` / `leaneo.api_metric`                                            |
+| api_metric | Source                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| `ms`       | `context.elapsedMilleSecond`                                                                |
+| `method`   | `context.request.method`, upper-cased                                                       |
+| `route`    | `context.request.url` without query string, numeric and UUID segments replaced by `{id}`    |
+| `ts`       | `context.responseTime` in epoch milliseconds, else `datetime`                               |
 
-Not carried over: `user`, `IPs` and the free-form fields, so no personal data ends up in the analysis file.
-`http.response.status_code` is not written because the slow log has no HTTP status (`level` is the log
-severity); the status-based rules (`ERROR_RATE`, `CLIENT_ERROR_RATE`, `ROUTE_ERROR_RATE`) never match on it.
+Not carried over: `user`, `IPs`, the request time and the free-form fields, so no personal data ends up in the analysis file.
+`status` is not written because the slow log has no HTTP status (`level` is the log severity); the status-based rules
+(`ERROR_RATE`, `CLIENT_ERROR_RATE`, `ROUTE_ERROR_RATE`) never match on it.
 
-Lines that are blank, not valid JSON, or missing the url, method, duration or a timestamp are skipped and counted.
+Lines that are blank, not valid JSON, or missing the url, method, duration or a response time are skipped and counted.
 
 ### Example
 
 `GET /api/process/generate-pdf-wopi/87472/1/1/1018?timeZone=-60` taking 5378 ms becomes route
-`/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}`, `sum` 5.378, bucket `(5, 7.5]`.
+`/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}` and `ms` 5378.
 
 ## Adding an add-on
 
