@@ -5,6 +5,7 @@ export interface MetricView {
   type: MetricType;
   unit: MetricUnit;
   description: string;
+  isActive: boolean;
 }
 
 export interface MetricEvaluationView {

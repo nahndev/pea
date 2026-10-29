@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode, type MetricConditionOperator, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricConditionView } from '@tomato/types';
 import { Prisma } from '../../generated/client';
@@ -34,9 +34,9 @@ export class MetricConditionsService {
     if (!(await this.qualityGatesRepository.findById(input.qualityGateId))) {
       throw new NotFoundException({ code: ErrorCode.QUALITY_GATE_NOT_FOUND });
     }
-    if (!(await this.metricsService.findOne(input.metricId))) {
-      throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
-    }
+    const metric = await this.metricsService.findOne(input.metricId);
+    if (!metric) throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
+    if (!metric.isActive) throw new BadRequestException({ code: ErrorCode.METRIC_DISABLED });
     if (await this.metricConditionsRepository.findByGateAndMetric(input.qualityGateId, input.metricId)) {
       throw new ConflictException({ code: ErrorCode.METRIC_CONDITION_ALREADY_EXISTS });
     }

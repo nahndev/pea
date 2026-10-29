@@ -21,6 +21,9 @@ export function AppHeader() {
           <Link href="/conditions" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
             Conditions
           </Link>
+          <Link href="/metrics" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
+            Metrics
+          </Link>
         </nav>
         <ThemeToggle />
       </div>

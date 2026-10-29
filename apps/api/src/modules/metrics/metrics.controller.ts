@@ -1,5 +1,7 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ListMetricsQueryDto } from './dto/list-metrics-query.dto';
+import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricsService } from './metrics.service';
 
 @ApiTags('metrics')
@@ -9,7 +11,22 @@ export class MetricsController {
 
   @Get()
   @ApiOkResponse()
-  findAll() {
-    return this.metricsService.findAll();
+  findAll(@Query() { isActive }: ListMetricsQueryDto) {
+    return this.metricsService.findAll({ isActive });
+  }
+
+  @Get(':id')
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.metricsService.getById(id);
+  }
+
+  @Patch(':id')
+  @ApiOkResponse()
+  @ApiBadRequestResponse()
+  @ApiNotFoundResponse()
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMetricDto) {
+    return this.metricsService.update(id, dto);
   }
 }

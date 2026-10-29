@@ -13,6 +13,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.BRANCH_NOT_FOUND]: 'This branch does not exist.',
   [ErrorCode.BRANCH_ALREADY_EXISTS]: 'A branch with this name already exists.',
   [ErrorCode.METRIC_NOT_FOUND]: 'This metric does not exist.',
+  [ErrorCode.METRIC_DISABLED]: 'This metric is disabled.',
   [ErrorCode.METRIC_CONDITION_NOT_FOUND]: 'This condition does not exist.',
   [ErrorCode.METRIC_CONDITION_ALREADY_EXISTS]: 'This quality gate already has a condition on this metric.',
   [ErrorCode.QUALITY_GATE_NOT_FOUND]: 'This quality gate does not exist.',

@@ -6,11 +6,15 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class MetricsRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAll(): Promise<Metric[]> {
-    return this.prismaService.metric.findMany({ orderBy: { id: 'asc' } });
+  findAll(filter: { isActive?: boolean } = {}): Promise<Metric[]> {
+    return this.prismaService.metric.findMany({ where: filter, orderBy: { id: 'asc' } });
   }
 
   findById(id: string): Promise<Metric | null> {
     return this.prismaService.metric.findUnique({ where: { id } });
+  }
+
+  update(id: string, data: { description?: string; isActive?: boolean }): Promise<Metric> {
+    return this.prismaService.metric.update({ where: { id }, data });
   }
 }

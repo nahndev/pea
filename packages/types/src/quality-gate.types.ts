@@ -3,7 +3,7 @@ import type { MetricConditionOperator, MetricType, MetricUnit } from '@tomato/co
 export interface MetricConditionView {
   id: string;
   qualityGate: { id: string; name: string };
-  metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
+  metric: { id: string; type: MetricType; unit: MetricUnit; description: string; isActive: boolean };
   operator: MetricConditionOperator;
   threshold: number;
   isActive: boolean;

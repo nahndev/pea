@@ -1,3 +1,5 @@
+import { NotFoundException } from '@nestjs/common';
+import { ErrorCode } from '@tomato/constants';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import type { MetricHandler } from './handlers/metric-handler.types';
 import { MetricResultsRepository } from './metric-results.repository';
@@ -5,7 +7,7 @@ import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
 
 describe('MetricsService', () => {
-  let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById'>>;
+  let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById' | 'update'>>;
   let metricResultsRepository: jest.Mocked<
     Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
   >;
@@ -20,7 +22,7 @@ describe('MetricsService', () => {
   ];
 
   beforeEach(() => {
-    metricsRepository = { findAll: jest.fn().mockResolvedValue(metricList), findById: jest.fn() };
+    metricsRepository = { findAll: jest.fn().mockResolvedValue(metricList), findById: jest.fn(), update: jest.fn() };
     metricResultsRepository = {
       createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length),
       findByAnalysisResult: jest.fn(),
@@ -36,6 +38,11 @@ describe('MetricsService', () => {
       metricResultsRepository as unknown as MetricResultsRepository,
       metricHandlerFactory as unknown as MetricHandlerFactory,
     );
+  });
+
+  it('only measures active metrics', async () => {
+    await metricsService.measure('res-1', contexts);
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: true });
   });
 
   it('stores a result for every context and supported metric', async () => {
@@ -109,19 +116,57 @@ describe('MetricsService', () => {
 
   it('lists the metrics with their unit', async () => {
     metricsRepository.findAll.mockResolvedValue([
-      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', config: {} },
+      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, config: {} },
     ] as never);
 
-    await expect(metricsService.findAll()).resolves.toEqual([
-      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration' },
+    await expect(metricsService.findAll({ isActive: false })).resolves.toEqual([
+      { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false },
     ]);
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: false });
   });
 
   it('returns one metric, or null when it does not exist', async () => {
-    metricsRepository.findById.mockResolvedValueOnce({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd' } as never);
+    metricsRepository.findById.mockResolvedValueOnce({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd', isActive: true } as never);
     metricsRepository.findById.mockResolvedValueOnce(null);
 
-    await expect(metricsService.findOne('m-1')).resolves.toEqual({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd' });
+    await expect(metricsService.findOne('m-1')).resolves.toEqual({
+      id: 'm-1',
+      type: 'P90',
+      unit: 'MILLISECOND',
+      description: 'd',
+      isActive: true,
+    });
     await expect(metricsService.findOne('missing')).resolves.toBeNull();
+  });
+
+  describe('update', () => {
+    const row = { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: true, config: {} };
+
+    it('updates the description and the active flag', async () => {
+      metricsRepository.findById.mockResolvedValue(row as never);
+      metricsRepository.update.mockResolvedValue({ ...row, description: 'New', isActive: false } as never);
+
+      await expect(metricsService.update('m-1', { description: 'New', isActive: false })).resolves.toMatchObject({
+        description: 'New',
+        isActive: false,
+      });
+      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', { description: 'New', isActive: false });
+    });
+
+    it('keeps the metric unchanged when nothing is sent', async () => {
+      metricsRepository.findById.mockResolvedValue(row as never);
+
+      await expect(metricsService.update('m-1', {})).resolves.toMatchObject({ id: 'm-1', isActive: true });
+      expect(metricsRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('throws METRIC_NOT_FOUND for an unknown id', async () => {
+      metricsRepository.findById.mockResolvedValue(null);
+
+      const error = await metricsService.update('missing', { isActive: false }).catch((e: NotFoundException) => e);
+
+      expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.METRIC_NOT_FOUND });
+      expect(metricsRepository.update).not.toHaveBeenCalled();
+    });
   });
 });

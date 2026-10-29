@@ -5,6 +5,6 @@ export type QualityGateWithConditions = Prisma.QualityGateGetPayload<{ include: 
 export type MetricConditionWithRelations = Prisma.MetricConditionGetPayload<{
   include: {
     qualityGate: { select: { id: true; name: true } };
-    metric: { select: { id: true; type: true; unit: true; description: true } };
+    metric: { select: { id: true; type: true; unit: true; description: true; isActive: true } };
   };
 }>;

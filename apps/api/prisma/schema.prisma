@@ -101,6 +101,7 @@ model Metric {
   type        String            @db.VarChar(50)
   unit        String            @default("MILLISECOND") @db.VarChar(20)
   description String
+  isActive    Boolean           @default(true) @map("is_active")
   config      Json              @default("{}") @db.JsonB
   results     MetricResult[]
   conditions  MetricCondition[]

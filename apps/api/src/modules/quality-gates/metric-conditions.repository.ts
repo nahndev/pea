@@ -5,7 +5,7 @@ import type { MetricConditionWithRelations } from './quality-gates.types';
 
 const INCLUDE = {
   qualityGate: { select: { id: true, name: true } },
-  metric: { select: { id: true, type: true, unit: true, description: true } },
+  metric: { select: { id: true, type: true, unit: true, description: true, isActive: true } },
 } as const;
 
 @Injectable()

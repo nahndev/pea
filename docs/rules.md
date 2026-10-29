@@ -45,6 +45,13 @@ The `Default` gate fails when an endpoint P95 is above 3000 ms.
 Every metric has a `unit` (`MILLISECOND` or `COUNT`, column `metrics.unit`) that decides how its values are formatted
 and which metrics can share a chart.
 
+### Managing metrics
+
+The `Metrics` menu lists the metrics and `/metrics/{id}` edits the description and `isActive`
+(`GET /metrics?isActive=`, `GET /metrics/:id`, `PATCH /metrics/:id`). A disabled metric (`isActive: false`) is not measured in
+new analyses and cannot get new conditions (`METRIC_DISABLED`); the condition form only offers active metrics.
+Results measured before it was disabled stay visible. The seed never changes `isActive` of an existing metric.
+
 ### Conditions
 
 A quality gate condition (`MetricCondition`) fails a metric result when `value <operator> threshold` holds

@@ -41,7 +41,15 @@ export function ConditionListView() {
                     {VIOLATION_PHRASE[operator]} {formatMetricValue(metric.unit, threshold)}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge style={isActive ? { label: 'Active', intent: 'success' } : { label: 'Disabled', intent: 'neutral' }} />
+                    <StatusBadge
+                      style={
+                        !metric.isActive
+                          ? { label: 'Metric disabled', intent: 'warning' }
+                          : isActive
+                            ? { label: 'Active', intent: 'success' }
+                            : { label: 'Disabled', intent: 'neutral' }
+                      }
+                    />
                   </TableCell>
                 </TableRow>
               ))}

@@ -19,7 +19,7 @@ export const conditionsService = {
   },
 
   async listMetrics() {
-    const { data } = await apiClient.get<MetricView[]>('/metrics');
+    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { isActive: true } });
     return data;
   },
 

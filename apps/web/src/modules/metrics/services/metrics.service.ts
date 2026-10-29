@@ -1,8 +1,24 @@
-import type { MetricResultView, MetricTrend } from '@tomato/types';
+import type { MetricResultView, MetricTrend, MetricView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { TREND_LIMIT } from '../metrics.constants';
+import type { UpdateMetricInput } from '../metrics.schemas';
 
 export const metricsService = {
+  async list() {
+    const { data } = await apiClient.get<MetricView[]>('/metrics');
+    return data;
+  },
+
+  async get(id: string) {
+    const { data } = await apiClient.get<MetricView>(`/metrics/${id}`);
+    return data;
+  },
+
+  async update(id: string, input: UpdateMetricInput) {
+    const { data } = await apiClient.patch<MetricView>(`/metrics/${id}`, input);
+    return data;
+  },
+
   async listResults(analysisId: string) {
     const { data } = await apiClient.get<MetricResultView[]>(`/analyses/${analysisId}/metrics`);
     return data;

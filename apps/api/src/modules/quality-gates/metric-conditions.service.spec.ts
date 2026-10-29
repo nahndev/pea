@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ErrorCode, MetricConditionOperator, MetricType, MetricUnit } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { MetricsService } from '../metrics/metrics.service';
@@ -25,12 +25,12 @@ describe('MetricConditionsService', () => {
     createdAt: new Date('2026-10-01T00:00:00.000Z'),
     updatedAt: new Date('2026-10-01T00:00:00.000Z'),
     qualityGate: { id: 'g-1', name: 'Default' },
-    metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration' },
+    metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration', isActive: true },
   };
   const view = {
     id: 'c-1',
     qualityGate: { id: 'g-1', name: 'Default' },
-    metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration' },
+    metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration', isActive: true },
     operator: MetricConditionOperator.GT,
     threshold: 1000,
     isActive: true,
@@ -79,6 +79,16 @@ describe('MetricConditionsService', () => {
       const error = await metricConditionsService.create(input).catch((e: NotFoundException) => e);
 
       expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.METRIC_NOT_FOUND });
+    });
+
+    it('throws METRIC_DISABLED for a disabled metric', async () => {
+      metricsService.findOne.mockResolvedValue({ ...view.metric, isActive: false });
+
+      const error = await metricConditionsService.create(input).catch((e: BadRequestException) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.METRIC_DISABLED });
+      expect(metricConditionsRepository.create).not.toHaveBeenCalled();
     });
 
     it('throws METRIC_CONDITION_ALREADY_EXISTS when the gate already has the metric', async () => {

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import type { MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ErrorCode, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricResultView, MetricView } from '@tomato/types';
 import type { AnalysisContext, Metric, MetricResult } from '../../generated/client';
+import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
 import { MetricsRepository } from './metrics.repository';
@@ -15,7 +16,7 @@ export class MetricsService {
   ) {}
 
   async measure(analysisResultId: string, contexts: AnalysisContext[]): Promise<number> {
-    const metrics = await this.metricsRepository.findAll();
+    const metrics = await this.metricsRepository.findAll({ isActive: true });
     const items: MetricResultSource[] = [];
     for (const context of contexts) {
       for (const metric of metrics) {
@@ -31,9 +32,22 @@ export class MetricsService {
     return this.metricResultsRepository.createMany(analysisResultId, items);
   }
 
-  async findAll(): Promise<MetricView[]> {
-    const metrics = await this.metricsRepository.findAll();
+  async findAll(filter: { isActive?: boolean } = {}): Promise<MetricView[]> {
+    const metrics = await this.metricsRepository.findAll(filter);
     return metrics.map((metric) => this.toView(metric));
+  }
+
+  async getById(id: string): Promise<MetricView> {
+    const metric = await this.findOne(id);
+    if (!metric) throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
+    return metric;
+  }
+
+  async update(id: string, { description, isActive }: UpdateMetricDto): Promise<MetricView> {
+    const metric = await this.getById(id);
+    if (description === undefined && isActive === undefined) return metric;
+
+    return this.toView(await this.metricsRepository.update(id, { description, isActive }));
   }
 
   async findOne(id: string): Promise<MetricView | null> {
@@ -67,7 +81,7 @@ export class MetricsService {
     }));
   }
 
-  private toView({ id, type, unit, description }: Metric): MetricView {
-    return { id, type: type as MetricType, unit: unit as MetricUnit, description };
+  private toView({ id, type, unit, description, isActive }: Metric): MetricView {
+    return { id, type: type as MetricType, unit: unit as MetricUnit, description, isActive };
   }
 }
