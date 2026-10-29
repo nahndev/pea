@@ -1,5 +1,3 @@
-import { buttonVariants } from '@tomato/ui';
-import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from './theme-toggle';
 
@@ -15,13 +13,7 @@ export function AppHeader() {
             Branches
           </Link>
         </nav>
-        <div className="flex items-center gap-2">
-          <Link href="/analyses/new" className={buttonVariants({ size: 'sm' })}>
-            <PlusIcon />
-            New analysis
-          </Link>
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </div>
     </header>
   );
