@@ -1,11 +1,11 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { ErrorCode, RuleType, Severity } from '@tomato/constants';
 import type { Rule } from '../../generated/client';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
 
 describe('RulesService', () => {
-  let rulesRepository: jest.Mocked<Pick<RulesRepository, 'findAll' | 'findById' | 'update'>>;
+  let rulesRepository: jest.Mocked<Pick<RulesRepository, 'findAll' | 'findById' | 'findByTypeAndDescription' | 'create' | 'update'>>;
   let rulesService: RulesService;
 
   const slowApi: Rule = {
@@ -19,7 +19,13 @@ describe('RulesService', () => {
   };
 
   beforeEach(() => {
-    rulesRepository = { findAll: jest.fn(), findById: jest.fn(), update: jest.fn() };
+    rulesRepository = {
+      findAll: jest.fn(),
+      findById: jest.fn(),
+      findByTypeAndDescription: jest.fn().mockResolvedValue(null),
+      create: jest.fn(),
+      update: jest.fn(),
+    };
     rulesService = new RulesService(rulesRepository as unknown as RulesRepository);
   });
 
@@ -29,6 +35,55 @@ describe('RulesService', () => {
     await expect(rulesService.findAll()).resolves.toEqual([
       { id: 'r-1', type: RuleType.SLOW_API, description: 'Slow API', severity: Severity.LOW, config: { thresholdMs: 2000 } },
     ]);
+  });
+
+  describe('create', () => {
+    const dto = {
+      type: RuleType.SLOW_ROUTE,
+      description: 'Strict slow route',
+      severity: Severity.HIGH,
+      config: { thresholdMs: 800, minRequests: 5 },
+    };
+
+    it('creates a rule of the given type with its own config', async () => {
+      rulesRepository.create.mockResolvedValue({ ...slowApi, id: 'r-2', ...dto });
+
+      await expect(rulesService.create(dto)).resolves.toEqual({ id: 'r-2', ...dto });
+      expect(rulesRepository.create).toHaveBeenCalledWith({
+        type: RuleType.SLOW_ROUTE,
+        description: 'Strict slow route',
+        severity: Severity.HIGH,
+        config: { thresholdMs: 800, minRequests: 5 },
+      });
+    });
+
+    it('throws RULE_CONFIG_INVALID when a setting of the type is missing', async () => {
+      const error = await rulesService
+        .create({ ...dto, config: { thresholdMs: 800 } })
+        .catch((e: BadRequestException) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.RULE_CONFIG_INVALID });
+      expect(rulesRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('throws RULE_CONFIG_INVALID for a setting the type does not have', async () => {
+      const error = await rulesService
+        .create({ ...dto, config: { thresholdMs: 800, minRequests: 5, maxPercent: 5 } })
+        .catch((e: BadRequestException) => e);
+
+      expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.RULE_CONFIG_INVALID });
+    });
+
+    it('throws RULE_ALREADY_EXISTS for a duplicate type and title', async () => {
+      rulesRepository.findByTypeAndDescription.mockResolvedValue(slowApi);
+
+      const error = await rulesService.create(dto).catch((e: ConflictException) => e);
+
+      expect(error).toBeInstanceOf(ConflictException);
+      expect((error as ConflictException).getResponse()).toEqual({ code: ErrorCode.RULE_ALREADY_EXISTS });
+      expect(rulesRepository.create).not.toHaveBeenCalled();
+    });
   });
 
   it('returns one rule', async () => {

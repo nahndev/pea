@@ -8,6 +8,13 @@ Other context types are skipped.
 
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
 
+## Creating rules
+
+`Create rule` on `/rules` opens a two-step form: pick a base rule, then set the title, severity and settings.
+`POST /rules` takes `{ type, description, severity, config }`. The new rule keeps the type of its base, so it uses the
+same handler; `config` must contain exactly the fields of that type. Nothing links the new rule to the base after creation.
+A second rule with the same type and title is rejected (`RULE_ALREADY_EXISTS`), which also keeps the seed from overwriting it.
+
 ## Severity
 
 Every rule has a `severity` (`BLOCKER`, `HIGH`, `MEDIUM`, `LOW`, `INFO`, default `MEDIUM`), editable on `/rules/{id}`

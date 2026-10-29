@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRuleConfigSchema } from './rules.schemas';
+import { buildRuleConfigSchema, ruleDescriptionSchema } from './rules.schemas';
 
 const messages = (fields: string[], input: unknown) => {
   const result = buildRuleConfigSchema(fields).safeParse(input);
@@ -29,5 +29,16 @@ describe('buildRuleConfigSchema', () => {
     expect(messages(['maxPercent'], { maxPercent: '101' })).toEqual(['maxPercent:invalid']);
     expect(messages(['maxPercent'], { maxPercent: '0' })).toEqual([]);
     expect(messages(['minRequests'], { minRequests: '0' })).toEqual(['minRequests:invalid']);
+  });
+});
+
+describe('ruleDescriptionSchema', () => {
+  it('trims the title', () => {
+    expect(ruleDescriptionSchema.parse('  Strict slow route ')).toBe('Strict slow route');
+  });
+
+  it('rejects a blank or too long title', () => {
+    expect(ruleDescriptionSchema.safeParse('   ').success).toBe(false);
+    expect(ruleDescriptionSchema.safeParse('a'.repeat(256)).success).toBe(false);
   });
 });

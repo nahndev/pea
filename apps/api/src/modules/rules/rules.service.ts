@@ -1,8 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode, type RuleType, type Severity } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import type { Rule } from '../../generated/client';
+import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
+import { CONFIG_FIELDS_BY_RULE_TYPE } from './rules.constants';
 import { RulesRepository } from './rules.repository';
 
 @Injectable()
@@ -21,6 +23,20 @@ export class RulesService {
   async findOne(id: string): Promise<RuleView> {
     const rule = await this.rulesRepository.findById(id);
     if (!rule) throw new NotFoundException({ code: ErrorCode.RULE_NOT_FOUND });
+    return this.toView(rule);
+  }
+
+  async create({ type, description, severity, config }: CreateRuleDto): Promise<RuleView> {
+    const required: readonly string[] = CONFIG_FIELDS_BY_RULE_TYPE[type];
+    const entries = Object.entries(config).filter(([, value]) => value !== undefined);
+    if (entries.length !== required.length || entries.some(([field]) => !required.includes(field))) {
+      throw new BadRequestException({ code: ErrorCode.RULE_CONFIG_INVALID });
+    }
+    if (await this.rulesRepository.findByTypeAndDescription(type, description)) {
+      throw new ConflictException({ code: ErrorCode.RULE_ALREADY_EXISTS });
+    }
+
+    const rule = await this.rulesRepository.create({ type, description, severity, config: Object.fromEntries(entries) });
     return this.toView(rule);
   }
 
