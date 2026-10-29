@@ -21,3 +21,44 @@ export const otlpApiMetricLine = (durationMs: number, name = 'http.server.reques
       },
     ],
   });
+
+export interface ApiRequestFixture {
+  durationMs: number;
+  method?: string;
+  route?: string;
+  statusCode?: number;
+}
+
+export const otlpApiRequestLine = ({
+  durationMs,
+  method = 'GET',
+  route = '/api/products',
+  statusCode = 200,
+}: ApiRequestFixture): string =>
+  JSON.stringify({
+    resourceMetrics: [
+      {
+        scopeMetrics: [
+          {
+            metrics: [
+              {
+                name: 'http.server.request.duration',
+                histogram: {
+                  dataPoints: [
+                    {
+                      attributes: [
+                        { key: 'http.request.method', value: { stringValue: method } },
+                        { key: 'http.route', value: { stringValue: route } },
+                        { key: 'http.response.status_code', value: { intValue: String(statusCode) } },
+                      ],
+                      sum: durationMs / 1000,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });

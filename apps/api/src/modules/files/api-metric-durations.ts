@@ -1,5 +1,5 @@
-const DURATION_METRIC_NAME = 'http.server.request.duration';
-const SECONDS_TO_MS = 1000;
+export const DURATION_METRIC_NAME = 'http.server.request.duration';
+export const SECONDS_TO_MS = 1000;
 
 const OTLP_COLUMNS =
   'STRUCT(scopeMetrics STRUCT(metrics STRUCT("name" VARCHAR, histogram STRUCT(dataPoints STRUCT("sum" DOUBLE)[]))[])[])[]';

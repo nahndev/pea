@@ -7,6 +7,14 @@ const RULES = [
   { type: RuleType.P90_FAILURE, description: 'P90 failure', config: { thresholdMs: 1000 } },
   { type: RuleType.P95_FAILURE, description: 'P95 failure', config: { thresholdMs: 2000 } },
   { type: RuleType.P50_FAILURE, description: 'P50 failure', config: { thresholdMs: 500 } },
+  { type: RuleType.P99_FAILURE, description: 'P99 failure', config: { thresholdMs: 3000 } },
+  { type: RuleType.AVG_LATENCY, description: 'Average latency', config: { thresholdMs: 400 } },
+  { type: RuleType.MAX_LATENCY, description: 'Max latency', config: { thresholdMs: 3000 } },
+  { type: RuleType.SLOW_REQUEST_RATE, description: 'Slow request rate', config: { thresholdMs: 1000, maxPercent: 5 } },
+  { type: RuleType.ERROR_RATE, description: '5xx error rate', config: { maxPercent: 1 } },
+  { type: RuleType.CLIENT_ERROR_RATE, description: '4xx error rate', config: { maxPercent: 5 } },
+  { type: RuleType.SLOW_ROUTE, description: 'Slow route', config: { thresholdMs: 1500, minRequests: 10 } },
+  { type: RuleType.ROUTE_ERROR_RATE, description: 'Route 5xx error rate', config: { maxPercent: 5, minRequests: 10 } },
 ];
 
 const METRICS = [

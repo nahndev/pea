@@ -1,14 +1,34 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, RuleType } from '@tomato/constants';
-import { P90Handler } from './p90.handler';
+import { LatencyHandler } from './latency.handler';
+import { RateHandler } from './rate.handler';
+import { RouteErrorRateHandler } from './route-error-rate.handler';
 import type { RuleHandler } from './rule-handler.types';
+import { SlowRouteHandler } from './slow-route.handler';
 
 @Injectable()
 export class RuleHandlerFactory {
   private readonly handlers: ReadonlyMap<string, RuleHandler>;
 
-  constructor(p90Handler: P90Handler) {
-    this.handlers = new Map([[RuleType.P90_FAILURE, p90Handler]]);
+  constructor(
+    latencyHandler: LatencyHandler,
+    rateHandler: RateHandler,
+    slowRouteHandler: SlowRouteHandler,
+    routeErrorRateHandler: RouteErrorRateHandler,
+  ) {
+    this.handlers = new Map<string, RuleHandler>([
+      [RuleType.P50_FAILURE, latencyHandler],
+      [RuleType.P90_FAILURE, latencyHandler],
+      [RuleType.P95_FAILURE, latencyHandler],
+      [RuleType.P99_FAILURE, latencyHandler],
+      [RuleType.AVG_LATENCY, latencyHandler],
+      [RuleType.MAX_LATENCY, latencyHandler],
+      [RuleType.SLOW_REQUEST_RATE, rateHandler],
+      [RuleType.ERROR_RATE, rateHandler],
+      [RuleType.CLIENT_ERROR_RATE, rateHandler],
+      [RuleType.SLOW_ROUTE, slowRouteHandler],
+      [RuleType.ROUTE_ERROR_RATE, routeErrorRateHandler],
+    ]);
   }
 
   supports(type: string): boolean {
