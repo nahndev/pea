@@ -164,18 +164,19 @@ describe('AnalysesService reads', () => {
       unit: type.endsWith('COUNT') ? 'COUNT' : 'MILLISECOND',
       description: type,
     });
-    const result = (rows: [string, string, string, number][]) => ({
+    const subject = (uuid: string, description: string) => ({ uuid, type: 'API', description });
+    const result = (rows: [string, string, ReturnType<typeof subject> | null, number][]) => ({
       metricResults: rows.map(([id, type, subject, value]) => ({ value, subject, metric: metric(id, type) })),
     });
 
     it('keys values by metric and subject and orders the trend oldest first', async () => {
       analysesRepository.findRecentByBranch.mockResolvedValue([
-        { id: 'an-2', createdAt, mergeRequestIid: null, results: [result([['m-90', 'P90', '', 400]])] },
+        { id: 'an-2', createdAt, mergeRequestIid: null, results: [result([['m-90', 'P90', null, 400]])] },
         {
           id: 'an-1',
           createdAt,
           mergeRequestIid: 5,
-          results: [result([['m-90', 'P90', '', 200], ['m-50', 'P50', '', 50]])],
+          results: [result([['m-90', 'P90', null, 200], ['m-50', 'P50', null, 50]])],
         },
       ] as never);
 
@@ -192,33 +193,29 @@ describe('AnalysesService reads', () => {
     it('keeps endpoint results apart and orders the series like the picks', async () => {
       const m1 = '11111111-1111-1111-1111-111111111111';
       const m2 = '22222222-2222-2222-2222-222222222222';
+      const cart = subject('aaaaaaaa-aaaa-5aaa-8aaa-aaaaaaaaaaaa', 'GET /api/cart');
+      const orders = subject('bbbbbbbb-bbbb-5bbb-8bbb-bbbbbbbbbbbb', 'GET /api/orders');
       analysesRepository.findRecentByBranch.mockResolvedValue([
         {
           id: 'an-1',
           createdAt,
           mergeRequestIid: null,
-          results: [result([[m1, 'ENDPOINT_P95', 'GET /api/cart', 900], [m2, 'P50', '', 10], [m1, 'ENDPOINT_P95', 'GET /api/orders', 300]])],
+          results: [result([[m1, 'ENDPOINT_P95', cart, 900], [m2, 'P50', null, 10], [m1, 'ENDPOINT_P95', orders, 300]])],
         },
       ] as never);
 
-      const trend = await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20, [`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
+      const picks = [`${m2}:`, `${m1}:${cart.uuid}`, `${m1}:${orders.uuid}`];
+      const trend = await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20, picks);
 
       expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', AnalysisSchema.API, 20, [
-        { metricId: m2, subject: '' },
-        { metricId: m1, subject: 'GET /api/cart' },
-        { metricId: m1, subject: 'GET /api/orders' },
+        { metricId: m2, subjectUuid: null },
+        { metricId: m1, subjectUuid: cart.uuid },
+        { metricId: m1, subjectUuid: orders.uuid },
       ]);
-      expect(trend.series.map(({ key }) => key)).toEqual([`${m2}:`, `${m1}:GET /api/cart`, `${m1}:GET /api/orders`]);
-      expect(trend.points[0].values[`${m1}:GET /api/cart`]).toBe(900);
-    });
-
-    it('keeps colons inside the subject', async () => {
-      analysesRepository.findRecentByBranch.mockResolvedValue([] as never);
-      const metricId = '11111111-1111-1111-1111-111111111111';
-
-      await analysesService.getMetricTrend('br-1', AnalysisSchema.API, 20, [`${metricId}:GET /a:b`]);
-
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith('br-1', AnalysisSchema.API, 20, [{ metricId, subject: 'GET /a:b' }]);
+      expect(trend.series.map(({ key }) => key)).toEqual(picks);
+      expect(trend.series[1].subject).toEqual(cart);
+      expect(trend.series[0].subject).toBeNull();
+      expect(trend.points[0].values[`${m1}:${cart.uuid}`]).toBe(900);
     });
   });
 });

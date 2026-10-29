@@ -48,7 +48,7 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
                 </TableCell>
                 <TableCell className="whitespace-nowrap font-medium">{METRIC_LABEL[metric.type]}</TableCell>
                 <TableCell className="max-w-56 break-all font-mono text-xs">
-                  {subject || <span className="font-sans text-muted-foreground">All requests</span>}
+                  {subject?.description ?? <span className="font-sans text-muted-foreground">All requests</span>}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{formatMetricValue(metric.unit, value)}</TableCell>
                 <TableCell className="whitespace-nowrap text-muted-foreground">{METRIC_UNIT_LABEL[metric.unit]}</TableCell>

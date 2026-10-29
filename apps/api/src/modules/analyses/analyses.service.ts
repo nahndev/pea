@@ -11,6 +11,7 @@ import {
   MetricEvaluationStatus,
   type MetricType,
   type MetricUnit,
+  type SubjectType,
 } from "@tomato/constants";
 import type {
   AnalysisDetail,
@@ -93,12 +94,12 @@ export class AnalysesService {
     const points = analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
       const values: MetricTrendPoint["values"] = {};
       for (const { value, subject, metric } of results[0]?.metricResults ?? []) {
-        const key = `${metric.id}:${subject}`;
+        const key = `${metric.id}:${subject?.uuid ?? ""}`;
         if (!seriesByKey.has(key)) {
           seriesByKey.set(key, {
             key,
             metric: { ...metric, type: metric.type as MetricType, unit: metric.unit as MetricUnit },
-            subject,
+            subject: subject && { ...subject, type: subject.type as SubjectType },
           });
         }
         values[key] = value;
@@ -111,7 +112,7 @@ export class AnalysesService {
 
   private parsePick(pick: string): MetricTrendPick {
     const separator = pick.indexOf(":");
-    return { metricId: pick.slice(0, separator), subject: pick.slice(separator + 1) };
+    return { metricId: pick.slice(0, separator), subjectUuid: pick.slice(separator + 1) || null };
   }
 
   private sortSeries(series: MetricTrendSeries[], picks: string[]): MetricTrendSeries[] {

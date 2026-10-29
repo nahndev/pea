@@ -1,16 +1,19 @@
 import { NotFoundException } from '@nestjs/common';
-import { AnalysisSchema, ErrorCode } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode, SubjectType } from '@tomato/constants';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import type { MetricHandler } from './handlers/metric-handler.types';
+import { createMetricSubject } from './metric-subject';
 import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
+import { SubjectsRepository } from './subjects.repository';
 
 describe('MetricsService', () => {
   let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById' | 'update'>>;
   let metricResultsRepository: jest.Mocked<
     Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
   >;
+  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany'>>;
   let metricHandlerFactory: jest.Mocked<Pick<MetricHandlerFactory, 'supports' | 'create'>>;
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
@@ -28,6 +31,7 @@ describe('MetricsService', () => {
       findByAnalysisResult: jest.fn(),
       findDetailedByAnalysisResult: jest.fn(),
     };
+    subjectsRepository = { createMany: jest.fn().mockResolvedValue(0) };
     handler = { handle: jest.fn().mockResolvedValue([{ value: 10 }]) };
     metricHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90'),
@@ -36,6 +40,7 @@ describe('MetricsService', () => {
     metricsService = new MetricsService(
       metricsRepository as unknown as MetricsRepository,
       metricResultsRepository as unknown as MetricResultsRepository,
+      subjectsRepository as unknown as SubjectsRepository,
       metricHandlerFactory as unknown as MetricHandlerFactory,
     );
   });
@@ -48,21 +53,36 @@ describe('MetricsService', () => {
   it('stores a result for every supported metric', async () => {
     await expect(metricsService.measure('res-1', analysis)).resolves.toBe(1);
     expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', subject: '', value: 10 },
+      { metricId: 'm-1', subjectUuid: null, value: 10 },
     ]);
   });
 
   it('stores one result per measurement when a handler returns several', async () => {
+    const cart = createMetricSubject(SubjectType.API, 'GET /api/cart');
+    const checkout = createMetricSubject(SubjectType.API, 'POST /api/checkout');
     handler.handle.mockResolvedValueOnce([
-      { subject: 'GET /api/cart', value: 30 },
-      { subject: 'POST /api/checkout', value: 20 },
+      { subject: cart, value: 30 },
+      { subject: checkout, value: 20 },
     ]);
 
     await expect(metricsService.measure('res-1', analysis)).resolves.toBe(2);
     expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', subject: 'GET /api/cart', value: 30 },
-      { metricId: 'm-1', subject: 'POST /api/checkout', value: 20 },
+      { metricId: 'm-1', subjectUuid: cart.uuid, value: 30 },
+      { metricId: 'm-1', subjectUuid: checkout.uuid, value: 20 },
     ]);
+  });
+
+  it('saves each subject once before storing the results', async () => {
+    const cart = createMetricSubject(SubjectType.API, 'GET /api/cart');
+    metricsRepository.findAll.mockResolvedValue([metricList[0], { id: 'm-3', type: 'P90' }] as never);
+    handler.handle.mockResolvedValue([{ subject: cart, value: 30 }]);
+
+    await metricsService.measure('res-1', analysis);
+
+    expect(subjectsRepository.createMany).toHaveBeenCalledWith([cart]);
+    expect(subjectsRepository.createMany.mock.invocationCallOrder[0]).toBeLessThan(
+      metricResultsRepository.createMany.mock.invocationCallOrder[0],
+    );
   });
 
   it('passes the analysis result to the handler', async () => {
@@ -91,20 +111,22 @@ describe('MetricsService', () => {
       {
         id: 'mr-1',
         value: 3,
-        subject: '',
+        subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart', createdAt: new Date() },
         metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
         evaluations: [],
       },
+      { id: 'mr-2', value: 4, subject: null, metric: { id: 'm-9', type: 'P50', unit: 'MILLISECOND', description: 'P50' }, evaluations: [] },
     ] as never);
 
     await expect(metricsService.findResultViews('res-1')).resolves.toEqual([
       {
         id: 'mr-1',
         value: 3,
-        subject: '',
+        subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
         metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
         evaluations: [],
       },
+      { id: 'mr-2', value: 4, subject: null, metric: { id: 'm-9', type: 'P50', unit: 'MILLISECOND', description: 'P50' }, evaluations: [] },
     ]);
   });
 

@@ -3,7 +3,8 @@ import { Transform, Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 import { MAX_TREND_PICKS } from '../analyses.constants';
 
-const PICK_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:.{0,255}$/i;
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const PICK_PATTERN = new RegExp(`^${UUID}:(${UUID})?$`, 'i');
 
 export class MetricTrendQueryDto {
   @IsOptional()

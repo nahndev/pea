@@ -67,7 +67,7 @@ export class AnalysesRepository {
   ): Promise<AnalysisTrendRecord[]> {
     const where: Prisma.MetricResultWhereInput = picks.length
       ? { OR: picks }
-      : { subject: '', metric: { type: { in: [...DEFAULT_TREND_METRIC_TYPES] } } };
+      : { subjectUuid: null, metric: { type: { in: [...DEFAULT_TREND_METRIC_TYPES] } } };
     return this.prismaService.analysis.findMany({
       where: { branchId, schema },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -82,7 +82,11 @@ export class AnalysesRepository {
           select: {
             metricResults: {
               where,
-              select: { value: true, subject: true, metric: { select: { id: true, type: true, unit: true, description: true } } },
+              select: {
+                value: true,
+                subject: { select: { uuid: true, type: true, description: true } },
+                metric: { select: { id: true, type: true, unit: true, description: true } },
+              },
             },
           },
         },

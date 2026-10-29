@@ -3,12 +3,12 @@ import type { MetricResult, Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
-  include: { metric: true; evaluations: true };
+  include: { metric: true; subject: true; evaluations: true };
 }>;
 
 export interface MetricResultSource {
   metricId: string;
-  subject: string;
+  subjectUuid: string | null;
   value: number;
 }
 
@@ -30,9 +30,10 @@ export class MetricResultsRepository {
   findDetailedByAnalysisResult(analysisResultId: string): Promise<MetricResultWithDetails[]> {
     return this.prismaService.metricResult.findMany({
       where: { analysisResultId },
-      orderBy: [{ metric: { type: 'asc' } }, { subject: 'asc' }],
+      orderBy: [{ metric: { type: 'asc' } }, { subject: { description: 'asc' } }],
       include: {
         metric: true,
+        subject: true,
         evaluations: { orderBy: { id: 'asc' } },
       },
     });

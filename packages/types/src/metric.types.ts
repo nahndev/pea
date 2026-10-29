@@ -4,7 +4,14 @@ import type {
   MetricEvaluationStatus,
   MetricType,
   MetricUnit,
+  SubjectType,
 } from '@tomato/constants';
+
+export interface SubjectView {
+  uuid: string;
+  type: SubjectType;
+  description: string;
+}
 
 export interface MetricView {
   id: string;
@@ -24,16 +31,16 @@ export interface MetricEvaluationView {
 export interface MetricResultView {
   id: string;
   value: number;
-  subject: string;
+  subject: SubjectView | null;
   metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
   evaluations: MetricEvaluationView[];
 }
 
 export interface MetricTrendSeries {
-  /** `<metric id>:<subject>`; the key used in `MetricTrendPoint.values` */
+  /** `<metric id>:<subject uuid>` (empty without a subject); the key used in `MetricTrendPoint.values` */
   key: string;
   metric: { id: string; type: MetricType; unit: MetricUnit; description: string };
-  subject: string;
+  subject: SubjectView | null;
 }
 
 export interface MetricTrendPoint {

@@ -9,6 +9,7 @@ import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsController } from './metrics.controller';
 import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
+import { SubjectsRepository } from './subjects.repository';
 
 @Module({
   imports: [FilesModule, IssuesModule],
@@ -17,6 +18,7 @@ import { MetricsService } from './metrics.service';
     MetricsService,
     MetricsRepository,
     MetricResultsRepository,
+    SubjectsRepository,
     PercentileHandler,
     IssueCountHandler,
     EndpointPercentileHandler,

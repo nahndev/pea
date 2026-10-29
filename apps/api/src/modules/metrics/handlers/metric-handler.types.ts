@@ -1,8 +1,9 @@
 import type { Analysis, Metric } from '../../../generated/client';
+import type { MetricSubject } from '../metric-subject';
 
 export interface MetricMeasurement {
   value: number;
-  subject?: string;
+  subject?: MetricSubject;
 }
 
 export interface MetricHandler {

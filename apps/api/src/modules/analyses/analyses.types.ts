@@ -26,7 +26,11 @@ export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{
     results: {
       select: {
         metricResults: {
-          select: { value: true; subject: true; metric: { select: { id: true; type: true; unit: true; description: true } } };
+          select: {
+            value: true;
+            subject: { select: { uuid: true; type: true; description: true } };
+            metric: { select: { id: true; type: true; unit: true; description: true } };
+          };
         };
       };
     };
@@ -35,5 +39,5 @@ export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{
 
 export interface MetricTrendPick {
   metricId: string;
-  subject: string;
+  subjectUuid: string | null;
 }

@@ -6,9 +6,9 @@ const result = (
   type: 'P50' | 'P90' | 'P95',
   value: number,
   statuses: ('PASSED' | 'FAILED')[] = [],
-  subject = '',
+  subject: MetricResultView['subject'] = null,
 ): MetricResultView => ({
-  id: `${type}-${value}-${subject}`,
+  id: `${type}-${value}-${subject?.uuid ?? ''}`,
   value,
   subject,
   metric: { id: `m-${type}`, type, unit: 'MILLISECOND', description: type },
@@ -21,7 +21,7 @@ describe('summarizeMetrics', () => {
   });
 
   it('orders by metric type and keeps the worst value', () => {
-    const summaries = summarizeMetrics([result('P95', 900), result('P50', 100), result('P50', 300, [], 'GET /b')]);
+    const summaries = summarizeMetrics([result('P95', 900), result('P50', 100), result('P50', 300, [], { uuid: 'su-b', type: 'API', description: 'GET /b' })]);
 
     expect(summaries.map(({ type }) => type)).toEqual(['P50', 'P95']);
     expect(summaries[0]).toMatchObject({ worstValue: 300, gateStatus: null, limit: null });

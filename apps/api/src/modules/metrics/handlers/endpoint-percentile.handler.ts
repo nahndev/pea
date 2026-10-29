@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SubjectType } from '@tomato/constants';
 import type { Analysis, Metric } from '../../../generated/client';
 import {
   API_METRIC_DURATION_COLUMN,
@@ -7,6 +8,7 @@ import {
 } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
+import { createMetricSubject } from '../metric-subject';
 import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
 import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
 
@@ -25,6 +27,9 @@ export class EndpointPercentileHandler implements MetricHandler {
       ORDER BY value DESC, subject ASC
     `);
 
-    return rows.map((row) => ({ subject: String(row.subject), value: Number(row.value) }));
+    return rows.map((row) => ({
+      subject: createMetricSubject(SubjectType.API, String(row.subject)),
+      value: Number(row.value),
+    }));
   }
 }
