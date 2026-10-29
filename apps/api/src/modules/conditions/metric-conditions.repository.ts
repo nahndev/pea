@@ -11,8 +11,9 @@ const INCLUDE = {
 export class MetricConditionsRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAll(): Promise<MetricConditionWithRelations[]> {
+  findAll(filter: { schema?: AnalysisSchema } = {}): Promise<MetricConditionWithRelations[]> {
     return this.prismaService.metricCondition.findMany({
+      where: filter.schema ? { metric: { schema: filter.schema } } : undefined,
       orderBy: [{ metric: { schema: 'asc' } }, { metric: { type: 'asc' } }, { id: 'asc' }],
       include: INCLUDE,
     });

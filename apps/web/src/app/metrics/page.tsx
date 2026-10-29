@@ -1,14 +1,23 @@
 import type { Metadata } from 'next';
 import { MetricListView } from '@/modules/metrics';
 import { PageHeader } from '@/shared/components/page-header';
+import { SchemaTabs } from '@/shared/components/schema-tabs';
+import { schemaParamsSchema } from '@/shared/lib/schema-params';
 
 export const metadata: Metadata = { title: 'Metrics' };
 
-export default function MetricsPage() {
+interface MetricsPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function MetricsPage({ searchParams }: MetricsPageProps) {
+  const { schema } = schemaParamsSchema.parse(await searchParams);
+
   return (
     <>
       <PageHeader title="Metrics" description="Values measured for every analysis. Open a metric to edit or disable it." />
-      <MetricListView />
+      <SchemaTabs pathname="/metrics" schema={schema} />
+      <MetricListView schema={schema} />
     </>
   );
 }

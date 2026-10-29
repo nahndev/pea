@@ -1,16 +1,20 @@
 'use client';
 
+import type { AnalysisSchema } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { ErrorState } from '@/shared/components/error-state';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
-import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useRules } from '../hooks/use-rules';
 
-export function RuleListView() {
-  const { data, error, isPending } = useRules();
+interface RuleListViewProps {
+  schema: AnalysisSchema;
+}
+
+export function RuleListView({ schema }: RuleListViewProps) {
+  const { data, error, isPending } = useRules(schema);
 
   return (
     <section className="flex flex-col gap-4">
@@ -22,7 +26,6 @@ export function RuleListView() {
             <TableHeader>
               <TableRow>
                 <TableHead>Rule</TableHead>
-                <TableHead>Schema</TableHead>
                 <TableHead>Severity</TableHead>
                 <TableHead>Type</TableHead>
               </TableRow>
@@ -35,7 +38,6 @@ export function RuleListView() {
                       {rule.description}
                     </Link>
                   </TableCell>
-                  <TableCell>{ANALYSIS_SCHEMA_LABEL[rule.schema]}</TableCell>
                   <TableCell>
                     <StatusBadge style={SEVERITY_STYLE[rule.severity]} />
                   </TableCell>

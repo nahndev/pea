@@ -1,17 +1,21 @@
 'use client';
 
+import type { AnalysisSchema } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
-import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
 import { useConditions } from '../hooks/use-conditions';
 
-export function ConditionListView() {
-  const { data, error, isPending } = useConditions();
+interface ConditionListViewProps {
+  schema: AnalysisSchema;
+}
+
+export function ConditionListView({ schema }: ConditionListViewProps) {
+  const { data, error, isPending } = useConditions(schema);
 
   return (
     <section className="flex flex-col gap-4">
@@ -24,20 +28,18 @@ export function ConditionListView() {
             <TableHeader>
               <TableRow>
                 <TableHead>Metric</TableHead>
-                <TableHead>Schema</TableHead>
                 <TableHead>Fails when</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map(({ id, schema, metric, operator, threshold, isActive }) => (
+              {data.map(({ id, metric, operator, threshold, isActive }) => (
                 <TableRow key={id}>
                   <TableCell className="font-medium">
                     <Link href={`/conditions/${id}`} className="hover:underline focus-ring rounded-sm">
                       {METRIC_LABEL[metric.type]}
                     </Link>
                   </TableCell>
-                  <TableCell>{ANALYSIS_SCHEMA_LABEL[schema]}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {VIOLATION_PHRASE[operator]} {formatMetricValue(metric.unit, threshold)}
                   </TableCell>

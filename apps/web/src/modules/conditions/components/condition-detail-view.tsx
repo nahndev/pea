@@ -4,6 +4,7 @@ import { Skeleton } from '@tomato/ui';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
+import { buildHref } from '@/shared/lib/pagination';
 import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { METRIC_LABEL } from '@/modules/metrics';
 import { useCondition } from '../hooks/use-conditions';
@@ -24,7 +25,7 @@ export function ConditionDetailView({ conditionId }: ConditionDetailViewProps) {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <PageHeader title={title} description="Changes apply to analyses run from now on. Past results keep the condition they were checked against.">
-        <Breadcrumbs entries={[{ label: 'Conditions', href: '/conditions' }, { label: title }]} />
+        <Breadcrumbs entries={[{ label: 'Conditions', href: buildHref('/conditions', { schema: data.schema }) }, { label: title }]} />
       </PageHeader>
       <ConditionForm key={`${data.operator}:${data.threshold}:${data.isActive}`} condition={data} />
     </div>

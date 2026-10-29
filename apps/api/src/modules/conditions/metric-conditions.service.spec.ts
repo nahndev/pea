@@ -120,6 +120,12 @@ describe('MetricConditionsService', () => {
     await expect(metricConditionsService.findAll()).resolves.toEqual([view]);
   });
 
+  it('lists the conditions of one schema', async () => {
+    metricConditionsRepository.findAll.mockResolvedValue([condition]);
+    await metricConditionsService.findAll({ schema: AnalysisSchema.API });
+    expect(metricConditionsRepository.findAll).toHaveBeenCalledWith({ schema: AnalysisSchema.API });
+  });
+
   it('returns one condition', async () => {
     metricConditionsRepository.findById.mockResolvedValue(condition);
     await expect(metricConditionsService.findOne('c-1')).resolves.toEqual(view);

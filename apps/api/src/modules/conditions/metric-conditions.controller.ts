@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -8,6 +8,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateMetricConditionDto } from './dto/create-metric-condition.dto';
+import { ListMetricConditionsQueryDto } from './dto/list-metric-conditions-query.dto';
 import { UpdateMetricConditionDto } from './dto/update-metric-condition.dto';
 import { MetricConditionsService } from './metric-conditions.service';
 
@@ -18,8 +19,8 @@ export class MetricConditionsController {
 
   @Get()
   @ApiOkResponse()
-  findAll() {
-    return this.metricConditionsService.findAll();
+  findAll(@Query() { schema }: ListMetricConditionsQueryDto) {
+    return this.metricConditionsService.findAll({ schema });
   }
 
   @Post()

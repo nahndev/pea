@@ -27,8 +27,8 @@ export class MetricConditionsService {
     private readonly metricsService: MetricsService,
   ) {}
 
-  async findAll(): Promise<MetricConditionView[]> {
-    const conditions = await this.metricConditionsRepository.findAll();
+  async findAll(filter: { schema?: AnalysisSchema } = {}): Promise<MetricConditionView[]> {
+    const conditions = await this.metricConditionsRepository.findAll(filter);
     return conditions.map((condition) => this.toView(condition));
   }
 

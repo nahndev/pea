@@ -22,7 +22,8 @@ export const useMetricTrend = (branchId: string | undefined, schema: AnalysisSch
     placeholderData: keepPreviousData,
   });
 
-export const useMetrics = () => useQuery({ queryKey: ['metrics', 'list'], queryFn: () => metricsService.list() });
+export const useMetrics = (schema: AnalysisSchema) =>
+  useQuery({ queryKey: ['metrics', 'list', schema], queryFn: () => metricsService.list(schema) });
 
 export const useMetric = (metricId: string) =>
   useQuery({ queryKey: ['metrics', 'detail', metricId], queryFn: () => metricsService.get(metricId) });

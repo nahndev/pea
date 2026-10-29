@@ -4,6 +4,7 @@ import { Skeleton } from '@tomato/ui';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
+import { buildHref } from '@/shared/lib/pagination';
 import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { useMetric } from '../hooks/use-metrics';
 import { METRIC_LABEL, METRIC_UNIT_LABEL } from '../metrics.constants';
@@ -24,7 +25,7 @@ export function MetricDetailView({ metricId }: MetricDetailViewProps) {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <PageHeader title={title} description={`${ANALYSIS_SCHEMA_LABEL[data.schema]} · ${data.type} · measured in ${METRIC_UNIT_LABEL[data.unit]}. Past results are kept when a metric is disabled.`}>
-        <Breadcrumbs entries={[{ label: 'Metrics', href: '/metrics' }, { label: title }]} />
+        <Breadcrumbs entries={[{ label: 'Metrics', href: buildHref('/metrics', { schema: data.schema }) }, { label: title }]} />
       </PageHeader>
       <MetricForm key={`${data.description}:${data.isActive}`} metric={data} />
     </div>

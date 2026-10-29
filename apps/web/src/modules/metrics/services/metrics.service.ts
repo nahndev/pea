@@ -5,8 +5,8 @@ import { TREND_LIMIT } from '../metrics.constants';
 import type { UpdateMetricInput } from '../metrics.schemas';
 
 export const metricsService = {
-  async list() {
-    const { data } = await apiClient.get<MetricView[]>('/metrics');
+  async list(schema: AnalysisSchema) {
+    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { schema } });
     return data;
   },
 

@@ -1,5 +1,6 @@
 'use client';
 
+import type { AnalysisSchema } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import { Button } from '@tomato/ui';
 import { EmptyState } from '@/shared/components/empty-state';
@@ -10,13 +11,14 @@ import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useRules } from '../hooks/use-rules';
 
 interface RuleBaseStepProps {
+  schema: AnalysisSchema;
   baseId: string | undefined;
   onSelect: (rule: RuleView) => void;
   onNext: () => void;
 }
 
-export function RuleBaseStep({ baseId, onSelect, onNext }: RuleBaseStepProps) {
-  const { data, error, isPending } = useRules();
+export function RuleBaseStep({ schema, baseId, onSelect, onNext }: RuleBaseStepProps) {
+  const { data, error, isPending } = useRules(schema);
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-card">

@@ -1,10 +1,11 @@
+import type { AnalysisSchema } from '@tomato/constants';
 import type { MetricConditionView, MetricView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import type { CreateConditionInput, UpdateConditionInput } from '../conditions.schemas';
 
 export const conditionsService = {
-  async list() {
-    const { data } = await apiClient.get<MetricConditionView[]>('/conditions');
+  async list(schema: AnalysisSchema) {
+    const { data } = await apiClient.get<MetricConditionView[]>('/conditions', { params: { schema } });
     return data;
   },
 
@@ -13,8 +14,8 @@ export const conditionsService = {
     return data;
   },
 
-  async listMetrics() {
-    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { isActive: true } });
+  async listMetrics(schema: AnalysisSchema) {
+    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { isActive: true, schema } });
     return data;
   },
 
