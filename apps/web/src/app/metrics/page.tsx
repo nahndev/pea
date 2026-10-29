@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { MetricListView } from '@/modules/metrics';
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
+import { buildHref } from '@/shared/lib/pagination';
 import { schemaParamsSchema } from '@/shared/lib/schema-params';
 
 export const metadata: Metadata = { title: 'Metrics' };
@@ -16,7 +17,7 @@ export default async function MetricsPage({ searchParams }: MetricsPageProps) {
   return (
     <>
       <PageHeader title="Metrics" description="Values measured for every analysis. Open a metric to edit or disable it." />
-      <SchemaTabs pathname="/metrics" schema={schema} />
+      <SchemaTabs schema={schema} href={(value) => buildHref('/metrics', { schema: value })} />
       <MetricListView schema={schema} />
     </>
   );

@@ -24,7 +24,7 @@ export default async function ConditionsPage({ searchParams }: ConditionsPagePro
           Create condition
         </Link>
       </div>
-      <SchemaTabs pathname="/conditions" schema={schema} />
+      <SchemaTabs schema={schema} href={(value) => buildHref('/conditions', { schema: value })} />
       <ConditionListView schema={schema} />
     </>
   );

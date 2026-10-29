@@ -1,25 +1,12 @@
-import type { Metadata } from 'next';
-import { AnalysisListView } from '@/modules/analyses';
-import { BranchHeader, BranchSchemaTabs, branchDetailParamsSchema } from '@/modules/branches';
-import { TrendChartBySchema } from '@/modules/metrics';
-
-export const metadata: Metadata = { title: 'Branch analyses' };
+import { redirect } from 'next/navigation';
+import { branchSchemaHref } from '@/modules/branches';
+import { DEFAULT_ANALYSIS_SCHEMA } from '@/shared/lib/analysis-schema.constants';
 
 interface BranchPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function BranchPage({ params, searchParams }: BranchPageProps) {
-  const { id: branchId } = await params;
-  const { schema, page } = branchDetailParamsSchema.parse(await searchParams);
-
-  return (
-    <>
-      <BranchHeader branchId={branchId} schema={schema} />
-      <BranchSchemaTabs branchId={branchId} schema={schema} />
-      <TrendChartBySchema schema={schema} branchId={branchId} />
-      <AnalysisListView branchId={branchId} schema={schema} page={page} />
-    </>
-  );
+export default async function BranchPage({ params }: BranchPageProps) {
+  const { id } = await params;
+  redirect(branchSchemaHref(id, DEFAULT_ANALYSIS_SCHEMA));
 }

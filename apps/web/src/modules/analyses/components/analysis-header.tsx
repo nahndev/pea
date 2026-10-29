@@ -29,7 +29,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-24 w-full max-w-md" />;
 
-  const { branch, latestResult, mergeRequestIid, createdAt, file } = data;
+  const { branch, schema, latestResult, mergeRequestIid, createdAt, file } = data;
   const title = `Analysis of ${formatDateTime(createdAt)}`;
 
   return (
@@ -39,7 +39,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           <Breadcrumbs
             entries={[
               { label: 'Branches', href: '/branches' },
-              { label: branch.name, href: `/branches/${branch.id}` },
+              { label: branch.name, href: `/branches/${branch.id}/schemas/${schema.toLowerCase()}` },
               { label: title },
             ]}
           />

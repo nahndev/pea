@@ -22,7 +22,7 @@ const linkClass = 'text-sm underline-offset-4 hover:underline focus-ring rounded
 
 export function AnalysisListView({ branchId, schema, page }: AnalysisListViewProps) {
   const { data, error, isPending } = useBranchAnalyses(branchId, schema, page);
-  const pathname = `/branches/${branchId}`;
+  const pathname = `/branches/${branchId}/schemas/${schema.toLowerCase()}`;
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="analyses-heading">
@@ -71,7 +71,7 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
               </TableBody>
             </Table>
           </div>
-          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { schema, page: target > 1 ? target : undefined })} />
+          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined })} />
         </>
       ) : null}
     </section>

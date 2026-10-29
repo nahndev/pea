@@ -6,6 +6,8 @@ import { useState, type FormEvent } from 'react';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
+import { DEFAULT_ANALYSIS_SCHEMA } from '@/shared/lib/analysis-schema.constants';
+import { branchSchemaHref } from '../branch-schema-href';
 import { createBranchSchema } from '../branches.schemas';
 import { useCreateBranch } from '../hooks/use-branches';
 
@@ -27,7 +29,7 @@ export function CreateBranchForm() {
       return;
     }
     setNameError(undefined);
-    mutate(parsed.data, { onSuccess: ({ id }) => router.push(`/branches/${id}`) });
+    mutate(parsed.data, { onSuccess: ({ id }) => router.push(branchSchemaHref(id, DEFAULT_ANALYSIS_SCHEMA)) });
   };
 
   return (

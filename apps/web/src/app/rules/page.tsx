@@ -24,7 +24,7 @@ export default async function RulesPage({ searchParams }: RulesPageProps) {
           Create rule
         </Link>
       </div>
-      <SchemaTabs pathname="/rules" schema={schema} />
+      <SchemaTabs schema={schema} href={(value) => buildHref('/rules', { schema: value })} />
       <RuleListView schema={schema} />
     </>
   );

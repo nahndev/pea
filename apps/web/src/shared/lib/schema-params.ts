@@ -4,3 +4,10 @@ import { DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from './analysis-schema
 export const schemaParamsSchema = z.object({
   schema: z.enum(analysisSchemaValues).catch(DEFAULT_ANALYSIS_SCHEMA),
 });
+
+export const schemaSlugParamsSchema = z.object({
+  type: z
+    .string()
+    .transform((value) => value.toUpperCase())
+    .pipe(z.enum(analysisSchemaValues)),
+});
