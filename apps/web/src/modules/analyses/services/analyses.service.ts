@@ -29,4 +29,9 @@ export const analysesService = {
     const { data } = await apiClient.post<{ id: string }>('/analyses', body);
     return data;
   },
+
+  async rerun(id: string) {
+    const { data } = await apiClient.post<{ id: string }>(`/analyses/${id}/results`);
+    return data;
+  },
 };

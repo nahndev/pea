@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { AnalysisResultStatus, ErrorCode } from '@tomato/constants';
 import { AnalysesService } from '../analyses/analyses.service';
 import { IssuesService } from '../issues/issues.service';
@@ -120,6 +120,42 @@ describe('AnalysisResultService', () => {
       new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND }),
     );
     await expect(analysisResultService.run({ analysisId: 'missing' })).rejects.toBeInstanceOf(NotFoundException);
+    expect(analysisResultRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('rerun returns the new running result before the analysis finishes', async () => {
+    let release: () => void = () => undefined;
+    metricsService.measure.mockImplementation(() => new Promise((resolve) => (release = () => resolve(0))));
+
+    await expect(analysisResultService.rerun('an-1')).resolves.toEqual({ id: 'res-1' });
+    await new Promise(setImmediate);
+    expect(analysisResultRepository.finish).not.toHaveBeenCalled();
+
+    release();
+    await new Promise(setImmediate);
+    expect(analysisResultRepository.finish).toHaveBeenCalledWith('res-1', {
+      status: AnalysisResultStatus.COMPLETED,
+      issueCount: 0,
+    });
+  });
+
+  it('rerun marks the result FAILED without rejecting when the run throws', async () => {
+    metricsService.measure.mockRejectedValue(new Error('duckdb'));
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+    await expect(analysisResultService.rerun('an-1')).resolves.toEqual({ id: 'res-1' });
+    await new Promise(setImmediate);
+
+    expect(analysisResultRepository.finish).toHaveBeenCalledWith('res-1', {
+      status: AnalysisResultStatus.FAILED,
+      issueCount: 0,
+    });
+  });
+
+  it('rerun does not create a result when the analysis does not exist', async () => {
+    analysesService.findOne.mockRejectedValue(new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND }));
+
+    await expect(analysisResultService.rerun('missing')).rejects.toBeInstanceOf(NotFoundException);
     expect(analysisResultRepository.create).not.toHaveBeenCalled();
   });
 });

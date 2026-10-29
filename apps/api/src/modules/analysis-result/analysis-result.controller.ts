@@ -1,5 +1,5 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { ApiAcceptedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { AnalysisResultService } from './analysis-result.service';
 
@@ -7,6 +7,15 @@ import { AnalysisResultService } from './analysis-result.service';
 @Controller('analyses/:analysisId')
 export class AnalysisResultController {
   constructor(private readonly analysisResultService: AnalysisResultService) {}
+
+  @Post('results')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiAcceptedResponse()
+  @ApiNotFoundResponse()
+  async rerun(@Param('analysisId', ParseUUIDPipe) analysisId: string) {
+    const { id } = await this.analysisResultService.rerun(analysisId);
+    return { id };
+  }
 
   @Get('issues')
   @ApiOkResponse()

@@ -37,3 +37,11 @@ export const useCreateAnalysis = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['branches'] }),
   });
 };
+
+export const useRerunAnalysis = (analysisId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => analysesService.rerun(analysisId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['analyses'] }),
+  });
+};
