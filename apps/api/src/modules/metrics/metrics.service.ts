@@ -4,6 +4,7 @@ import type { MetricResultView, MetricView, SubjectView } from '@tomato/types';
 import type { Analysis, Metric, MetricResult, Subject } from '../../generated/client';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
+import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-config';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
 import type { MetricSubject } from './metric-subject';
 import { MetricsRepository } from './metrics.repository';
@@ -24,7 +25,8 @@ export class MetricsService {
     const subjects = new Map<string, MetricSubject>();
     for (const metric of metrics) {
       if (!this.metricHandlerFactory.supports(metric.type)) continue;
-      const measurements = await this.metricHandlerFactory.create(metric.type).handle(metric, analysis, analysisResultId);
+      const handled = await this.metricHandlerFactory.create(metric.type).handle(metric, analysis, analysisResultId);
+      const measurements = filterBySubject(handled, parseMetricConfig(metric.config));
       for (const { value, subject } of measurements) {
         if (subject) subjects.set(subject.uuid, subject);
         items.push({ metricId: metric.id, subjectUuid: subject?.uuid ?? null, value });
@@ -45,11 +47,20 @@ export class MetricsService {
     return metric;
   }
 
-  async update(id: string, { description, isActive }: UpdateMetricDto): Promise<MetricView> {
-    const metric = await this.getById(id);
-    if (description === undefined && isActive === undefined) return metric;
+  async update(id: string, { description, isActive, include, exclude }: UpdateMetricDto): Promise<MetricView> {
+    const metric = await this.metricsRepository.findById(id);
+    if (!metric) throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
+    if ([description, isActive, include, exclude].every((value) => value === undefined)) return this.toView(metric);
 
-    return this.toView(await this.metricsRepository.update(id, { description, isActive }));
+    const isConfigChanged = include !== undefined || exclude !== undefined;
+    const config = isConfigChanged ? mergeMetricConfig(metric.config, { include, exclude }) : undefined;
+    return this.toView(await this.metricsRepository.update(id, { description, isActive, config }));
+  }
+
+  async findSubjects(metricId: string): Promise<SubjectView[]> {
+    await this.getById(metricId);
+    const subjects = await this.subjectsRepository.findByMetric(metricId);
+    return subjects.map((subject) => this.toSubjectView(subject));
   }
 
   async findOne(id: string): Promise<MetricView | null> {
@@ -85,7 +96,8 @@ export class MetricsService {
     return { uuid, type: type as SubjectType, description };
   }
 
-  private toView({ id, schema, type, unit, description, isActive }: Metric): MetricView {
-    return { id, schema: schema as AnalysisSchema, type: type as MetricType, unit: unit as MetricUnit, description, isActive };
+  private toView({ id, schema, type, unit, description, isActive, config }: Metric): MetricView {
+    const { include, exclude } = parseMetricConfig(config);
+    return { id, schema: schema as AnalysisSchema, type: type as MetricType, unit: unit as MetricUnit, description, isActive, include, exclude };
   }
 }

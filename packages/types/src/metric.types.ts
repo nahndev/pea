@@ -20,6 +20,10 @@ export interface MetricView {
   unit: MetricUnit;
   description: string;
   isActive: boolean;
+  /** Subject uuids; empty means every subject */
+  include: string[];
+  /** Subject uuids that are never measured */
+  exclude: string[];
 }
 
 export interface MetricEvaluationView {

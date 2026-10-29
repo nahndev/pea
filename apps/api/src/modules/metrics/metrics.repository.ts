@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AnalysisSchema } from '@tomato/constants';
-import type { Metric } from '../../generated/client';
+import type { Metric, Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class MetricsRepository {
     return this.prismaService.metric.findUnique({ where: { id } });
   }
 
-  update(id: string, data: { description?: string; isActive?: boolean }): Promise<Metric> {
+  update(id: string, data: { description?: string; isActive?: boolean; config?: Prisma.InputJsonObject }): Promise<Metric> {
     return this.prismaService.metric.update({ where: { id }, data });
   }
 }

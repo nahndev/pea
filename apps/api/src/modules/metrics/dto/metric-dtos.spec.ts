@@ -29,11 +29,19 @@ describe('UpdateMetricDto', () => {
     });
   });
 
+  it('accepts include and exclude lists of subject uuids', async () => {
+    const id = '1774ce23-c32c-58aa-9b40-bd08fcfdb938';
+    await expect(validate({ include: [id], exclude: [] })).resolves.toMatchObject({ include: [id], exclude: [] });
+  });
+
   it.each([
     ['a blank description', { description: '   ' }],
     ['a description over 255 characters', { description: 'a'.repeat(256) }],
     ['a non-boolean isActive', { isActive: 'no' }],
     ['the unit', { unit: 'COUNT' }],
+    ['an include that is not a list', { include: 'GET /api/cart' }],
+    ['an exclude with a non-uuid', { exclude: ['GET /api/cart'] }],
+    ['an include with duplicates', { include: ['1774ce23-c32c-58aa-9b40-bd08fcfdb938', '1774ce23-c32c-58aa-9b40-bd08fcfdb938'] }],
   ])('rejects %s', async (_, body) => {
     await expect(validate(body)).rejects.toBeInstanceOf(BadRequestException);
   });

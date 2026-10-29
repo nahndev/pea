@@ -28,6 +28,9 @@ export const useMetrics = (schema: AnalysisSchema) =>
 export const useMetric = (metricId: string) =>
   useQuery({ queryKey: ['metrics', 'detail', metricId], queryFn: () => metricsService.get(metricId) });
 
+export const useMetricSubjects = (metricId: string) =>
+  useQuery({ queryKey: ['metrics', 'subjects', metricId], queryFn: () => metricsService.listSubjects(metricId) });
+
 export const useUpdateMetric = (metricId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

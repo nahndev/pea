@@ -27,7 +27,7 @@ export function MetricDetailView({ metricId }: MetricDetailViewProps) {
       <PageHeader title={title} description={`${ANALYSIS_SCHEMA_LABEL[data.schema]} · ${data.type} · measured in ${METRIC_UNIT_LABEL[data.unit]}. Past results are kept when a metric is disabled.`}>
         <Breadcrumbs entries={[{ label: 'Metrics', href: buildHref('/metrics', { schema: data.schema }) }, { label: title }]} />
       </PageHeader>
-      <MetricForm key={`${data.description}:${data.isActive}`} metric={data} />
+      <MetricForm key={`${data.description}:${data.isActive}:${data.include.join()}:${data.exclude.join()}`} metric={data} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { AnalysisSchema } from '@tomato/constants';
-import type { MetricResultView, MetricTrend, MetricView } from '@tomato/types';
+import type { MetricResultView, MetricTrend, MetricView, SubjectView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { TREND_LIMIT } from '../metrics.constants';
 import type { UpdateMetricInput } from '../metrics.schemas';
@@ -12,6 +12,11 @@ export const metricsService = {
 
   async get(id: string) {
     const { data } = await apiClient.get<MetricView>(`/metrics/${id}`);
+    return data;
+  },
+
+  async listSubjects(id: string) {
+    const { data } = await apiClient.get<SubjectView[]>(`/metrics/${id}/subjects`);
     return data;
   },
 

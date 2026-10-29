@@ -13,7 +13,7 @@ describe('MetricsService', () => {
   let metricResultsRepository: jest.Mocked<
     Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
   >;
-  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany'>>;
+  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany' | 'findByMetric'>>;
   let metricHandlerFactory: jest.Mocked<Pick<MetricHandlerFactory, 'supports' | 'create'>>;
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
@@ -31,7 +31,7 @@ describe('MetricsService', () => {
       findByAnalysisResult: jest.fn(),
       findDetailedByAnalysisResult: jest.fn(),
     };
-    subjectsRepository = { createMany: jest.fn().mockResolvedValue(0) };
+    subjectsRepository = { createMany: jest.fn().mockResolvedValue(0), findByMetric: jest.fn() };
     handler = { handle: jest.fn().mockResolvedValue([{ value: 10 }]) };
     metricHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90'),
@@ -85,6 +85,26 @@ describe('MetricsService', () => {
     );
   });
 
+  it('only stores the subjects a metric includes and does not exclude', async () => {
+    const [cart, health, orders] = ['GET /api/cart', 'GET /api/health', 'GET /api/orders'].map((description) =>
+      createMetricSubject(SubjectType.API, description),
+    );
+    metricsRepository.findAll.mockResolvedValue([
+      { id: 'm-1', type: 'P90', config: { include: [cart.uuid, health.uuid], exclude: [health.uuid] } },
+    ] as never);
+    handler.handle.mockResolvedValueOnce([
+      { subject: cart, value: 1 },
+      { subject: health, value: 2 },
+      { subject: orders, value: 3 },
+    ]);
+
+    await expect(metricsService.measure('res-1', analysis)).resolves.toBe(1);
+    expect(subjectsRepository.createMany).toHaveBeenCalledWith([cart]);
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
+      { metricId: 'm-1', subjectUuid: cart.uuid, value: 1 },
+    ]);
+  });
+
   it('passes the analysis result to the handler', async () => {
     await metricsService.measure('res-1', analysis);
     expect(handler.handle).toHaveBeenCalledWith(metricList[0], analysis, 'res-1');
@@ -136,7 +156,7 @@ describe('MetricsService', () => {
     ] as never);
 
     await expect(metricsService.findAll({ isActive: false, schema: AnalysisSchema.API })).resolves.toEqual([
-      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false },
+      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, include: [], exclude: [] },
     ]);
     expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: false, schema: AnalysisSchema.API });
   });
@@ -151,8 +171,31 @@ describe('MetricsService', () => {
       unit: 'MILLISECOND',
       description: 'd',
       isActive: true,
+      include: [],
+      exclude: [],
     });
     await expect(metricsService.findOne('missing')).resolves.toBeNull();
+  });
+
+  describe('findSubjects', () => {
+    it('lists the subjects that have results for the metric', async () => {
+      metricsRepository.findById.mockResolvedValue({ id: 'm-1', type: 'ENDPOINT_P95' } as never);
+      subjectsRepository.findByMetric.mockResolvedValue([
+        { uuid: 'su-1', type: 'API', description: 'GET /api/cart', createdAt: new Date() },
+      ]);
+
+      await expect(metricsService.findSubjects('m-1')).resolves.toEqual([
+        { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
+      ]);
+      expect(subjectsRepository.findByMetric).toHaveBeenCalledWith('m-1');
+    });
+
+    it('throws METRIC_NOT_FOUND for an unknown metric', async () => {
+      metricsRepository.findById.mockResolvedValue(null);
+
+      await expect(metricsService.findSubjects('missing')).rejects.toBeInstanceOf(NotFoundException);
+      expect(subjectsRepository.findByMetric).not.toHaveBeenCalled();
+    });
   });
 
   describe('update', () => {
@@ -167,6 +210,26 @@ describe('MetricsService', () => {
         isActive: false,
       });
       expect(metricsRepository.update).toHaveBeenCalledWith('m-1', { description: 'New', isActive: false });
+    });
+
+    it('stores include and exclude in the config and keeps the other keys', async () => {
+      metricsRepository.findById.mockResolvedValue({ ...row, config: { other: 1, exclude: ['x'] } } as never);
+      metricsRepository.update.mockResolvedValue({ ...row, config: { other: 1, include: ['a'], exclude: ['x'] } } as never);
+
+      await expect(metricsService.update('m-1', { include: ['a'] })).resolves.toMatchObject({ include: ['a'], exclude: ['x'] });
+      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', {
+        description: undefined,
+        isActive: undefined,
+        config: { other: 1, include: ['a'], exclude: ['x'] },
+      });
+    });
+
+    it('leaves the config alone when only the description changes', async () => {
+      metricsRepository.findById.mockResolvedValue(row as never);
+      metricsRepository.update.mockResolvedValue(row as never);
+
+      await metricsService.update('m-1', { description: 'New' });
+      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', { description: 'New', isActive: undefined, config: undefined });
     });
 
     it('keeps the metric unchanged when nothing is sent', async () => {

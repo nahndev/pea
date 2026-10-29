@@ -22,6 +22,13 @@ export class MetricsController {
     return this.metricsService.getById(id);
   }
 
+  @Get(':id/subjects')
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  findSubjects(@Param('id', ParseUUIDPipe) id: string) {
+    return this.metricsService.findSubjects(id);
+  }
+
   @Patch(':id')
   @ApiOkResponse()
   @ApiBadRequestResponse()
