@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
 import type { BranchSummary, Paginated } from '@tomato/types';
-import type { Branch } from '../../generated/client';
+import { Prisma, type Branch } from '../../generated/client';
 import { BranchesRepository } from './branches.repository';
 import { ListBranchesQueryDto } from './dto/list-branches-query.dto';
+
+const UNIQUE_VIOLATION_CODE = 'P2002';
 
 @Injectable()
 export class BranchesService {
@@ -11,6 +13,17 @@ export class BranchesService {
 
   findOrCreateByName(name: string): Promise<Branch> {
     return this.branchesRepository.upsertByName(name);
+  }
+
+  async create(name: string): Promise<Branch> {
+    try {
+      return await this.branchesRepository.create(name);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === UNIQUE_VIOLATION_CODE) {
+        throw new ConflictException({ code: ErrorCode.BRANCH_ALREADY_EXISTS });
+      }
+      throw error;
+    }
   }
 
   async findOne(id: string): Promise<Branch> {
@@ -26,7 +39,7 @@ export class BranchesService {
         id,
         name,
         analysisCount,
-        latestAnalysisAt: latestAnalysisAt.toISOString(),
+        latestAnalysisAt: latestAnalysisAt?.toISOString() ?? null,
       })),
       total,
     };

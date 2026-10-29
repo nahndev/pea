@@ -25,10 +25,10 @@ export function BranchListView({ page, search }: BranchListViewProps) {
       {isPending ? <TableSkeleton /> : null}
       {error ? <ErrorState error={error} /> : null}
       {data && data.items.length === 0 ? (
-        <EmptyState title={search ? 'No branch matches your search' : 'No branch analysed yet'}>
+        <EmptyState title={search ? 'No branch matches your search' : 'No branch yet'}>
           {search ? 'Try a different name.' : (
-            <Link href="/analyses/new" className="underline">
-              Submit your first analysis
+            <Link href="/branches/new" className="underline">
+              Create your first branch
             </Link>
           )}
         </EmptyState>
@@ -53,7 +53,7 @@ export function BranchListView({ page, search }: BranchListViewProps) {
                       </Link>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{branch.analysisCount}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDateTime(branch.latestAnalysisAt)}</TableCell>
+                    <TableCell className="text-muted-foreground">{branch.latestAnalysisAt ? formatDateTime(branch.latestAnalysisAt) : '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

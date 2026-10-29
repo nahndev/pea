@@ -2,6 +2,7 @@ import type { Branch, BranchSummary, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
+import type { CreateBranchInput } from '../branches.schemas';
 
 interface ListBranchesParams {
   page: number;
@@ -18,6 +19,11 @@ export const branchesService = {
 
   async get(id: string) {
     const { data } = await apiClient.get<Branch>(`/branches/${id}`);
+    return data;
+  },
+
+  async create(input: CreateBranchInput) {
+    const { data } = await apiClient.post<Branch>('/branches', input);
     return data;
   },
 };

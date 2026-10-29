@@ -5,5 +5,5 @@ export interface Branch {
 
 export interface BranchSummary extends Branch {
   analysisCount: number;
-  latestAnalysisAt: string;
+  latestAnalysisAt: string | null;
 }

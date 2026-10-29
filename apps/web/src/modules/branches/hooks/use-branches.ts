@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CreateBranchInput } from '../branches.schemas';
 import { branchesService } from '../services/branches.service';
 
 export const useBranches = (page: number, search?: string) =>
@@ -6,3 +7,11 @@ export const useBranches = (page: number, search?: string) =>
 
 export const useBranch = (branchId: string) =>
   useQuery({ queryKey: ['branches', branchId], queryFn: () => branchesService.get(branchId) });
+
+export const useCreateBranch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateBranchInput) => branchesService.create(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['branches'] }),
+  });
+};

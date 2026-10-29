@@ -1,5 +1,6 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
+import { Prisma } from '../../generated/client';
 import { BranchesRepository } from './branches.repository';
 import { BranchesService } from './branches.service';
 
@@ -16,6 +17,39 @@ describe('BranchesService', () => {
     branchesRepository.upsertByName.mockResolvedValue({ id: 'br-1', name: 'feat/x' });
     await expect(branchesService.findOrCreateByName('feat/x')).resolves.toEqual({ id: 'br-1', name: 'feat/x' });
     expect(branchesRepository.upsertByName).toHaveBeenCalledWith('feat/x');
+  });
+});
+
+describe('BranchesService create', () => {
+  let branchesRepository: jest.Mocked<Pick<BranchesRepository, 'create'>>;
+  let branchesService: BranchesService;
+
+  beforeEach(() => {
+    branchesRepository = { create: jest.fn() };
+    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository);
+  });
+
+  it('creates the branch', async () => {
+    branchesRepository.create.mockResolvedValue({ id: 'br-1', name: 'feat/x' });
+    await expect(branchesService.create('feat/x')).resolves.toEqual({ id: 'br-1', name: 'feat/x' });
+    expect(branchesRepository.create).toHaveBeenCalledWith('feat/x');
+  });
+
+  it('throws BRANCH_ALREADY_EXISTS on a unique violation', async () => {
+    branchesRepository.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('duplicate', { code: 'P2002', clientVersion: 'test' }),
+    );
+
+    const error = await branchesService.create('feat/x').catch((e: ConflictException) => e);
+
+    expect(error).toBeInstanceOf(ConflictException);
+    expect((error as ConflictException).getResponse()).toEqual({ code: ErrorCode.BRANCH_ALREADY_EXISTS });
+  });
+
+  it('rethrows other errors', async () => {
+    const failure = new Error('db down');
+    branchesRepository.create.mockRejectedValue(failure);
+    await expect(branchesService.create('feat/x')).rejects.toBe(failure);
   });
 });
 
@@ -50,5 +84,16 @@ describe('BranchesService reads', () => {
       items: [{ id: 'br-1', name: 'feat/x', analysisCount: 3, latestAnalysisAt: latestAnalysisAt.toISOString() }],
       total: 1,
     });
+  });
+
+  it('returns a null latest analysis date for a branch without analyses', async () => {
+    branchesRepository.findActivities.mockResolvedValue({
+      items: [{ id: 'br-2', name: 'feat/y', analysisCount: 0, latestAnalysisAt: null }],
+      total: 1,
+    });
+
+    const page = await branchesService.findAll({ limit: 10, offset: 0 });
+
+    expect(page.items).toEqual([{ id: 'br-2', name: 'feat/y', analysisCount: 0, latestAnalysisAt: null }]);
   });
 });

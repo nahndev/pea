@@ -1,4 +1,6 @@
+import { buttonVariants } from '@tomato/ui';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { BranchListView, branchListParamsSchema } from '@/modules/branches';
 import { PageHeader } from '@/shared/components/page-header';
 
@@ -13,7 +15,12 @@ export default async function BranchesPage({ searchParams }: BranchesPageProps) 
 
   return (
     <>
-      <PageHeader title="Branches" description="Branches that have been analysed, most recently active first." />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader title="Branches" description="Branches, most recently analysed first." />
+        <Link href="/branches/new" className={buttonVariants({ size: 'sm' })}>
+          Create branch
+        </Link>
+      </div>
       <BranchListView page={page} search={q} />
     </>
   );
