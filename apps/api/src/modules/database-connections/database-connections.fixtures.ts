@@ -7,6 +7,7 @@ export const DATABASE_CONTEXT: DatabaseAnalysisContext = {
   schema: AnalysisSchema.DATABASE,
   connection: { connectionString: 'postgresql://reader@db/shop' },
   isPgStatStatements: true,
+  queryStats: { current: [], previous: null },
 };
 
 export const API_CONTEXT: ApiAnalysisContext = { schema: AnalysisSchema.API, logPath: '/uploads/api_metric.log' };

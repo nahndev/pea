@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { DatabaseQueryStats, Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DATABASE_INCLUDE, type DatabaseWithCount } from './databases.types';
 
@@ -24,5 +25,13 @@ export class DatabasesRepository {
 
   async delete(id: string): Promise<void> {
     await this.prismaService.database.delete({ where: { id } });
+  }
+
+  findQueryStats(databaseId: string): Promise<DatabaseQueryStats | null> {
+    return this.prismaService.databaseQueryStats.findUnique({ where: { databaseId } });
+  }
+
+  async saveQueryStats(databaseId: string, data: { queries: Prisma.InputJsonObject; takenAt: Date }): Promise<void> {
+    await this.prismaService.databaseQueryStats.upsert({ where: { databaseId }, create: { databaseId, ...data }, update: data });
   }
 }

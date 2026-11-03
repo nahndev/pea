@@ -34,6 +34,13 @@ describe('buildRuleConfigSchema', () => {
     expect(messages(['minRows'], { minRows: '-1' })).toEqual(['minRows:invalid']);
     expect(messages(['minPercent'], { minPercent: '99.5' })).toEqual([]);
     expect(messages(['minPercent'], { minPercent: '101' })).toEqual(['minPercent:invalid']);
+    expect(messages(['maxRatio'], { maxRatio: '2.5' })).toEqual([]);
+    expect(messages(['maxRatio'], { maxRatio: '-1' })).toEqual(['maxRatio:invalid']);
+    expect(messages(['maxRows'], { maxRows: '0.5' })).toEqual([]);
+    expect(messages(['maxBlocks'], { maxBlocks: '0' })).toEqual([]);
+    expect(messages(['maxBlocks'], { maxBlocks: '1.5' })).toEqual(['maxBlocks:invalid']);
+    expect(messages(['maxBytes'], { maxBytes: '-1' })).toEqual(['maxBytes:invalid']);
+    expect(messages(['maxItems'], { maxItems: '0' })).toEqual(['maxItems:invalid']);
   });
 });
 

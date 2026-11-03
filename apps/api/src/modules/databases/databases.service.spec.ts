@@ -5,6 +5,7 @@ import { ErrorCode } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
 import type { DatabaseConnection } from '../database-connections/database-connections.types';
+import { createQuerySubject } from '../database-connections/postgres-stats';
 import { DatabasesRepository } from './databases.repository';
 import { DatabasesService } from './databases.service';
 import type { DatabaseWithCount } from './databases.types';
@@ -14,7 +15,7 @@ describe('DatabasesService', () => {
   const fields = { host: 'db', port: 5432, database: 'shop', user: 'reader', password: 'secret' };
   const createdAt = new Date('2026-11-01T00:00:00.000Z');
   let databaseConnectionsService: DatabaseConnectionsService;
-  let databasesRepository: jest.Mocked<Pick<DatabasesRepository, 'findAll' | 'findById' | 'create' | 'update' | 'delete'>>;
+  let databasesRepository: jest.Mocked<Pick<DatabasesRepository, 'findAll' | 'findById' | 'create' | 'update' | 'delete' | 'findQueryStats' | 'saveQueryStats'>>;
   let databasesService: DatabasesService;
 
   const record = (connection: DatabaseConnection, analyses = 0): DatabaseWithCount => ({
@@ -43,6 +44,8 @@ describe('DatabasesService', () => {
       create: jest.fn(async ({ connection }) => ({ ...record(fields), connection })),
       update: jest.fn(async (_id, { connection }) => ({ ...record(fields), ...(connection && { connection }) })),
       delete: jest.fn(),
+      findQueryStats: jest.fn(),
+      saveQueryStats: jest.fn(),
     };
     databasesService = new DatabasesService(databasesRepository as unknown as DatabasesRepository, databaseConnectionsService);
   });
@@ -142,5 +145,23 @@ describe('DatabasesService', () => {
     await databasesService.verify('db-1');
 
     expect(databaseConnectionsService.verify).toHaveBeenCalledWith(fields);
+  });
+
+  it('saves the current query stats by subject and returns the previous ones', async () => {
+    const subject = createQuerySubject('SELECT 1');
+    const queries = { [subject.uuid]: { calls: 1, execMs: 2 } };
+    databasesRepository.findQueryStats.mockResolvedValue({ databaseId: 'db-1', queries, takenAt: createdAt });
+
+    await expect(databasesService.swapQueryStats('db-1', [{ subject, calls: 5, execMs: 9 }])).resolves.toEqual({ takenAt: createdAt, queries });
+    expect(databasesRepository.saveQueryStats).toHaveBeenCalledWith('db-1', {
+      queries: { [subject.uuid]: { calls: 5, execMs: 9 } },
+      takenAt: expect.any(Date),
+    });
+  });
+
+  it('has no previous query stats on the first run', async () => {
+    databasesRepository.findQueryStats.mockResolvedValue(null);
+
+    await expect(databasesService.swapQueryStats('db-1', [])).resolves.toBeNull();
   });
 });

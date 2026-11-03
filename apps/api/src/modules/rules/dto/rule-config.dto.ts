@@ -32,4 +32,29 @@ export class RuleConfigDto {
   @Min(0)
   @Max(100)
   minPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  maxRatio?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  maxRows?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maxBlocks?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maxBytes?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxItems?: number;
 }

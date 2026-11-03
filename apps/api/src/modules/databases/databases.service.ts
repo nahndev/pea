@@ -4,7 +4,7 @@ import type { DatabaseSummary, DatabaseView } from '@tomato/types';
 import { type Database, Prisma } from '../../generated/client';
 import { DEFAULT_DATABASE_PORT } from '../database-connections/database-connections.constants';
 import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
-import type { DatabaseConnection } from '../database-connections/database-connections.types';
+import type { DatabaseConnection, QueryStat, QueryStatsSnapshot, SubjectQueryStat } from '../database-connections/database-connections.types';
 import { DatabasesRepository } from './databases.repository';
 import type { DatabaseWithCount } from './databases.types';
 import { CreateDatabaseDto } from './dto/create-database.dto';
@@ -62,6 +62,14 @@ export class DatabasesService {
   async verify(id: string): Promise<void> {
     const database = await this.findRecord(id);
     await this.databaseConnectionsService.verify(this.databaseConnectionsService.decrypt(database.connection));
+  }
+
+  /** Saves the current per-query counters and returns the previous ones. */
+  async swapQueryStats(databaseId: string, current: SubjectQueryStat[]): Promise<QueryStatsSnapshot | null> {
+    const previous = await this.databasesRepository.findQueryStats(databaseId);
+    const queries = Object.fromEntries(current.map(({ subject, calls, execMs }) => [subject.uuid, { calls, execMs }]));
+    await this.databasesRepository.saveQueryStats(databaseId, { queries, takenAt: new Date() });
+    return previous && { takenAt: previous.takenAt, queries: previous.queries as unknown as Record<string, QueryStat> };
   }
 
   toSummary({ id, name, connection }: Database): DatabaseSummary {

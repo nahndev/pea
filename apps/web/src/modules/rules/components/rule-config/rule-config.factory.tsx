@@ -15,6 +15,8 @@ import { DeadTupleRateRuleConfig } from './dead-tuple-rate-rule-config';
 import { SeqScanRateRuleConfig } from './seq-scan-rate-rule-config';
 import { UnusedIndexRuleConfig } from './unused-index-rule-config';
 import { LowCacheHitRatioRuleConfig } from './low-cache-hit-ratio-rule-config';
+import { PgStatStatementsRuleConfig } from './pg-stat-statements-rule-config';
+import { PG_STAT_STATEMENTS_RULE_CONFIG } from '../../rules.constants';
 
 const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProps>>> = {
   [RuleType.P50_FAILURE]: LatencyRuleConfig,
@@ -36,6 +38,7 @@ const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProp
   [RuleType.SEQ_SCAN_RATE]: SeqScanRateRuleConfig,
   [RuleType.UNUSED_INDEX]: UnusedIndexRuleConfig,
   [RuleType.LOW_CACHE_HIT_RATIO]: LowCacheHitRatioRuleConfig,
+  ...Object.fromEntries(Object.keys(PG_STAT_STATEMENTS_RULE_CONFIG).map((type) => [type, PgStatStatementsRuleConfig])),
 };
 
 export function createRuleConfig(rule: RuleView): ReactElement | null {

@@ -1,6 +1,6 @@
 import type { AnalysisSchema } from '@tomato/constants';
 import type { Prisma } from '../../generated/client';
-import type { DatabaseConnection } from '../database-connections/database-connections.types';
+import type { DatabaseConnection, QueryStatsSnapshot, SubjectQueryStat } from '../database-connections/database-connections.types';
 
 const LATEST_RESULT_ORDER = [{ createdAt: 'desc' }, { id: 'desc' }] satisfies Prisma.AnalysisResultOrderByWithRelationInput[];
 
@@ -62,6 +62,8 @@ export interface DatabaseAnalysisContext {
   connection: DatabaseConnection;
   /** `pg_stat_statements` is installed and preloaded */
   isPgStatStatements: boolean;
+  /** Per-query counters now and at the previous run on this database, empty without `pg_stat_statements` */
+  queryStats: { current: SubjectQueryStat[]; previous: QueryStatsSnapshot | null };
 }
 
 /** What rule and metric handlers read from an analysis, built once per run */

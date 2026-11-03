@@ -13,6 +13,12 @@ import { DeadTupleRateHandler } from './handlers/database/dead-tuple-rate.handle
 import { SeqScanRateHandler } from './handlers/database/seq-scan-rate.handler';
 import { UnusedIndexHandler } from './handlers/database/unused-index.handler';
 import { LowCacheHitRatioHandler } from './handlers/database/low-cache-hit-ratio.handler';
+import { StatementHandler } from './handlers/database/statement.handler';
+import { WorkloadHandler } from './handlers/database/workload.handler';
+import { QuerySnapshotHandler } from './handlers/database/query-snapshot.handler';
+import { StatementEvictionHandler } from './handlers/database/statement-eviction.handler';
+import { QueryVariantsHandler } from './handlers/database/query-variants.handler';
+import { ReadWriteRatioHandler } from './handlers/database/read-write-ratio.handler';
 import { RulesController } from './rules.controller';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -35,6 +41,12 @@ import { RulesService } from './rules.service';
     SeqScanRateHandler,
     UnusedIndexHandler,
     LowCacheHitRatioHandler,
+    StatementHandler,
+    WorkloadHandler,
+    QuerySnapshotHandler,
+    StatementEvictionHandler,
+    QueryVariantsHandler,
+    ReadWriteRatioHandler,
     RuleHandlerFactory,
   ],
   exports: [RulesService, RuleHandlerFactory],

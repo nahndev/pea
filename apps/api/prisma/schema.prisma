@@ -59,8 +59,19 @@ model Database {
   createdAt  DateTime               @default(now()) @map("created_at")
   updatedAt  DateTime               @updatedAt @map("updated_at")
   analyses   DatabaseAnalysisData[]
+  queryStats DatabaseQueryStats?
 
   @@map("databases")
+}
+
+/// Latest `pg_stat_statements` counters per query subject, compared by the next analysis run
+model DatabaseQueryStats {
+  databaseId String   @id @map("database_id") @db.Uuid
+  queries    Json     @db.JsonB
+  takenAt    DateTime @map("taken_at")
+  database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+
+  @@map("database_query_stats")
 }
 
 model Rule {

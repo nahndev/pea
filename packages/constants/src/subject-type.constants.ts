@@ -4,6 +4,8 @@ export const SubjectType = {
   QUERY: 'QUERY',
   TABLE: 'TABLE',
   INDEX: 'INDEX',
+  DATABASE: 'DATABASE',
+  ROLE: 'ROLE',
 } as const;
 
 export type SubjectType = (typeof SubjectType)[keyof typeof SubjectType];

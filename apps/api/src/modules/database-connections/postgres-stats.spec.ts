@@ -1,5 +1,5 @@
 import type { Client } from 'pg';
-import { createQuerySubject, hasPgStatStatements } from './postgres-stats';
+import { createQuerySubject, hasPgStatStatements, readQueryStats } from './postgres-stats';
 
 describe('hasPgStatStatements', () => {
   const client = (query: jest.Mock) => ({ query }) as unknown as Client;
@@ -30,5 +30,21 @@ describe('createQuerySubject', () => {
   it('collapses whitespace so the same query keeps the same subject', () => {
     expect(createQuerySubject('SELECT *\n  FROM orders  ')).toEqual(createQuerySubject('SELECT * FROM orders'));
     expect(createQuerySubject('SELECT *\n  FROM orders').description).toBe('SELECT * FROM orders');
+  });
+});
+
+describe('readQueryStats', () => {
+  it('sums the counters of query texts sharing a subject', async () => {
+    const rows = [
+      { query: 'SELECT *\n FROM orders', calls: 2, execMs: 5 },
+      { query: 'SELECT * FROM orders', calls: 3, execMs: 7 },
+      { query: 'SELECT 1', calls: 1, execMs: 1 },
+    ];
+    const client = { query: jest.fn().mockResolvedValue({ rows }) } as unknown as Client;
+
+    await expect(readQueryStats(client)).resolves.toEqual([
+      { subject: createQuerySubject('SELECT * FROM orders'), calls: 5, execMs: 12 },
+      { subject: createQuerySubject('SELECT 1'), calls: 1, execMs: 1 },
+    ]);
   });
 });
