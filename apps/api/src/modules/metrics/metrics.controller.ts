@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { ListMetricsQueryDto } from './dto/list-metrics-query.dto';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricsService } from './metrics.service';
@@ -27,6 +28,13 @@ export class MetricsController {
   @ApiNotFoundResponse()
   findSubjects(@Param('id', ParseUUIDPipe) id: string) {
     return this.metricsService.findSubjects(id);
+  }
+
+  @Get(':id/results')
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  findHistory(@Param('id', ParseUUIDPipe) id: string, @Query() { limit, offset }: PaginationQueryDto) {
+    return this.metricsService.findHistory(id, limit, offset);
   }
 
   @Patch(':id')
