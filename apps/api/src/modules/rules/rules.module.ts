@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { FilesModule } from '../files/files.module';
-import { LatencyHandler } from './handlers/latency.handler';
-import { RateHandler } from './handlers/rate.handler';
-import { RouteErrorRateHandler } from './handlers/route-error-rate.handler';
+import { LatencyHandler } from './handlers/api/latency.handler';
+import { RateHandler } from './handlers/api/rate.handler';
+import { RouteErrorRateHandler } from './handlers/api/route-error-rate.handler';
 import { RuleHandlerFactory } from './handlers/rule-handler.factory';
-import { SlowApiHandler } from './handlers/slow-api.handler';
-import { SlowRouteHandler } from './handlers/slow-route.handler';
+import { SlowApiHandler } from './handlers/api/slow-api.handler';
+import { SlowRouteHandler } from './handlers/api/slow-route.handler';
 import { RulesController } from './rules.controller';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';

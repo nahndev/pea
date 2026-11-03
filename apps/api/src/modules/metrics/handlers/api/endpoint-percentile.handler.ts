@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { SubjectType } from '@tomato/constants';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
 import {
   API_METRIC_DURATION_COLUMN,
   API_METRIC_ENDPOINT_COLUMN,
   apiMetricRequests,
-} from '../../files/api-metric-requests';
-import { queryRows } from '../../files/duckdb-query';
-import { StorageService } from '../../files/storage.service';
-import { createSubject } from '../../subjects/subject';
-import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
-import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
+} from '../../../files/api-metric-requests';
+import { queryRows } from '../../../files/duckdb-query';
+import { StorageService } from '../../../files/storage.service';
+import { createSubject } from '../../../subjects/subject';
+import { PERCENTILE_BY_METRIC_TYPE } from '../../metrics.constants';
+import type { MetricHandler, MetricMeasurement } from '../metric-handler.types';
 
 @Injectable()
 export class EndpointPercentileHandler implements MetricHandler {

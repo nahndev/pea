@@ -1,10 +1,10 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, MetricType } from '@tomato/constants';
-import { EndpointPercentileHandler } from './endpoint-percentile.handler';
+import { EndpointPercentileHandler } from './api/endpoint-percentile.handler';
 import { IssueCountHandler } from './issue-count.handler';
 import type { MetricHandler } from './metric-handler.types';
-import { PercentileHandler } from './percentile.handler';
-import { TableRowsHandler } from './table-rows.handler';
+import { PercentileHandler } from './api/percentile.handler';
+import { TableRowsHandler } from './database/table-rows.handler';
 
 @Injectable()
 export class MetricHandlerFactory {

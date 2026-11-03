@@ -2,10 +2,10 @@ import { MetricType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { apiRequestLine } from '../../files/api-metric.fixtures';
-import { StorageService } from '../../files/storage.service';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { apiRequestLine } from '../../../files/api-metric.fixtures';
+import { StorageService } from '../../../files/storage.service';
 import { PercentileHandler } from './percentile.handler';
 
 describe('PercentileHandler', () => {

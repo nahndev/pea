@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { SubjectType } from '@tomato/constants';
 import { escapeIdentifier } from 'pg';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { DatabaseConnectionsService } from '../../database-connections/database-connections.service';
-import { createSubject } from '../../subjects/subject';
-import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { DatabaseConnectionsService } from '../../../database-connections/database-connections.service';
+import { createSubject } from '../../../subjects/subject';
+import type { MetricHandler, MetricMeasurement } from '../metric-handler.types';
 
 const READABLE_TABLES_SQL = `
   SELECT n.nspname AS schema, c.relname AS name

@@ -1,11 +1,11 @@
 import { DuckDBInstance } from '@duckdb/node-api';
 import { Injectable } from '@nestjs/common';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../files/api-metric-requests';
-import { StorageService } from '../../files/storage.service';
-import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
-import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../../files/api-metric-requests';
+import { StorageService } from '../../../files/storage.service';
+import { PERCENTILE_BY_METRIC_TYPE } from '../../metrics.constants';
+import type { MetricHandler, MetricMeasurement } from '../metric-handler.types';
 
 @Injectable()
 export class PercentileHandler implements MetricHandler {

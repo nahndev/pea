@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import type { Rule } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { apiMetricRequests } from '../../files/api-metric-requests';
-import { queryRows } from '../../files/duckdb-query';
-import { StorageService } from '../../files/storage.service';
-import { RATE_BY_RULE_TYPE } from '../rules.constants';
-import type { RuleConfig } from '../rules.types';
-import type { RuleHandler, RuleIssue } from './rule-handler.types';
+import type { Rule } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { apiMetricRequests } from '../../../files/api-metric-requests';
+import { queryRows } from '../../../files/duckdb-query';
+import { StorageService } from '../../../files/storage.service';
+import { RATE_BY_RULE_TYPE } from '../../rules.constants';
+import type { RuleConfig } from '../../rules.types';
+import type { RuleHandler, RuleIssue } from '../rule-handler.types';
 
 @Injectable()
 export class RateHandler implements RuleHandler {

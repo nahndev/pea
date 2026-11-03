@@ -2,10 +2,10 @@ import { RuleType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Rule } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { apiRequestLine } from '../../files/api-metric.fixtures';
-import { StorageService } from '../../files/storage.service';
+import type { Rule } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { apiRequestLine } from '../../../files/api-metric.fixtures';
+import { StorageService } from '../../../files/storage.service';
 import { LatencyHandler } from './latency.handler';
 
 describe('LatencyHandler', () => {

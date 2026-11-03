@@ -1,11 +1,11 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, RuleType } from '@tomato/constants';
-import { LatencyHandler } from './latency.handler';
-import { RateHandler } from './rate.handler';
-import { RouteErrorRateHandler } from './route-error-rate.handler';
+import { LatencyHandler } from './api/latency.handler';
+import { RateHandler } from './api/rate.handler';
+import { RouteErrorRateHandler } from './api/route-error-rate.handler';
 import { RuleHandlerFactory } from './rule-handler.factory';
-import { SlowApiHandler } from './slow-api.handler';
-import { SlowRouteHandler } from './slow-route.handler';
+import { SlowApiHandler } from './api/slow-api.handler';
+import { SlowRouteHandler } from './api/slow-route.handler';
 
 describe('RuleHandlerFactory', () => {
   const latencyHandler = {} as LatencyHandler;

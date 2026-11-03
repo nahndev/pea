@@ -2,11 +2,11 @@ import { MetricType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
-import { StorageService } from '../../files/storage.service';
-import { createSubject } from '../../subjects/subject';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { type ApiRequestFixture, apiRequestLine } from '../../../files/api-metric.fixtures';
+import { StorageService } from '../../../files/storage.service';
+import { createSubject } from '../../../subjects/subject';
 import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 
 describe('EndpointPercentileHandler', () => {

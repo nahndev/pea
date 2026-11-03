@@ -1,9 +1,9 @@
 import { SubjectType } from '@tomato/constants';
 import type { Client } from 'pg';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { DatabaseConnectionsService } from '../../database-connections/database-connections.service';
-import { createSubject } from '../../subjects/subject';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { DatabaseConnectionsService } from '../../../database-connections/database-connections.service';
+import { createSubject } from '../../../subjects/subject';
 import { TableRowsHandler } from './table-rows.handler';
 
 describe('TableRowsHandler', () => {

@@ -3,11 +3,11 @@ import { DatabaseConnectionsModule } from '../database-connections/database-conn
 import { FilesModule } from '../files/files.module';
 import { IssuesModule } from '../issues/issues.module';
 import { SubjectsModule } from '../subjects/subjects.module';
-import { EndpointPercentileHandler } from './handlers/endpoint-percentile.handler';
+import { EndpointPercentileHandler } from './handlers/api/endpoint-percentile.handler';
 import { IssueCountHandler } from './handlers/issue-count.handler';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
-import { PercentileHandler } from './handlers/percentile.handler';
-import { TableRowsHandler } from './handlers/table-rows.handler';
+import { PercentileHandler } from './handlers/api/percentile.handler';
+import { TableRowsHandler } from './handlers/database/table-rows.handler';
 import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsController } from './metrics.controller';
 import { MetricsRepository } from './metrics.repository';
