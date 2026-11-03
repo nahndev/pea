@@ -7,11 +7,11 @@ export const ISSUE_STATUS_STYLE: Record<IssueStatus, StatusStyle> = {
   [IssueStatus.DISMISSED]: { label: 'Dismissed', intent: 'neutral' },
 };
 
-export const ISSUE_SUBJECT_STATUS_LABEL: Record<IssueSubjectStatus, string> = {
-  [IssueSubjectStatus.TO_REVIEW]: 'To review',
-  [IssueSubjectStatus.PLANNING]: 'Planning',
-  [IssueSubjectStatus.IN_PROGRESS]: 'In progress',
-  [IssueSubjectStatus.FIXED]: 'Fixed',
+export const ISSUE_SUBJECT_STATUS_STYLE: Record<IssueSubjectStatus, StatusStyle> = {
+  [IssueSubjectStatus.TO_REVIEW]: { label: 'To review', intent: 'warning' },
+  [IssueSubjectStatus.PLANNING]: { label: 'Planning', intent: 'info' },
+  [IssueSubjectStatus.IN_PROGRESS]: { label: 'In progress', intent: 'primary' },
+  [IssueSubjectStatus.FIXED]: { label: 'Fixed', intent: 'success' },
 };
 
 export const RULE_TYPE_LABEL: Record<RuleType, string> = {

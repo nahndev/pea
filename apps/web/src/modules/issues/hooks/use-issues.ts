@@ -14,6 +14,9 @@ export const useIssues = (analysisId: string, params: IssueListParams) => {
   });
 };
 
+export const useIssue = (issueId: string) =>
+  useQuery({ queryKey: ['issues', 'detail', issueId], queryFn: () => issuesService.get(issueId) });
+
 export const useUpdateIssueSubject = (issueSubjectId: string) => {
   const queryClient = useQueryClient();
   return useMutation({

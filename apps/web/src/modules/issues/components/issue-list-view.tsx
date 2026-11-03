@@ -1,6 +1,8 @@
 'use client';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
@@ -10,10 +12,9 @@ import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssues } from '../hooks/use-issues';
-import { ISSUE_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
+import { ISSUE_STATUS_STYLE, ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
 import { IssueFilters } from './issue-filters';
-import { IssueSubjectStatusSelect } from './issue-subject-status-select';
 
 interface IssueListViewProps {
   analysisId: string;
@@ -21,6 +22,7 @@ interface IssueListViewProps {
 }
 
 export function IssueListView({ analysisId, params }: IssueListViewProps) {
+  const router = useRouter();
   const { data, error, isPending } = useIssues(analysisId, params);
   const pathname = `/analyses/${analysisId}/issues`;
   const hasFilters = Boolean(params.status || params.severity || params.ruleType);
@@ -47,28 +49,46 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                   <TableHead>Details</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Subject status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
                   <TableHead>Raised</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.items.map((issue) => (
-                  <TableRow key={issue.id}>
+                  <TableRow
+                    key={issue.id}
+                    className="cursor-pointer"
+                    onClick={(event) => {
+                      if (!(event.target as HTMLElement).closest('a')) router.push(`${pathname}/${issue.id}`);
+                    }}
+                  >
                     <TableCell>
                       <StatusBadge style={SEVERITY_STYLE[issue.severity]} />
                     </TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{RULE_TYPE_LABEL[issue.rule.type]}</TableCell>
-                    <TableCell className="max-w-56 break-all font-mono text-xs">{issue.subject.description}</TableCell>
-                    <TableCell className="min-w-64 max-w-96 whitespace-normal text-muted-foreground">{issue.description ?? issue.rule.description}</TableCell>
+                    <TableCell className="max-w-56 truncate font-mono text-xs" title={issue.subject.description}>
+                      {issue.subject.description}
+                    </TableCell>
+                    <TableCell className="max-w-96 text-muted-foreground">
+                      <Link
+                        href={`${pathname}/${issue.id}`}
+                        title={issue.description ?? issue.rule.description}
+                        className="block truncate hover:underline focus-ring rounded-sm"
+                      >
+                        {issue.description ?? issue.rule.description}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       <StatusBadge style={ISSUE_STATUS_STYLE[issue.status]} />
                     </TableCell>
                     <TableCell>
                       {issue.issueSubject ? (
-                        <IssueSubjectStatusSelect issueSubject={issue.issueSubject} />
+                        <StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issue.issueSubject.status]} />
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right tabular-nums">{issue.issueCount}</TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(issue.createdAt)}</TableCell>
                   </TableRow>
                 ))}

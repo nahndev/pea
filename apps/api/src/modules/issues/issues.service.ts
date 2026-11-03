@@ -16,7 +16,7 @@ import {
   type IssueSubjectKey,
   IssueSubjectsRepository,
 } from "./issue-subjects.repository";
-import { IssuesRepository } from "./issues.repository";
+import { type IssueWithRelations, IssuesRepository } from "./issues.repository";
 import type { NewIssue } from "./issues.types";
 
 const toKey = ({ ruleId, subjectUuid }: IssueSubjectKey) =>
@@ -72,35 +72,14 @@ export class IssuesService {
       limit,
       offset,
     );
-    const issueSubjects = items.length
-      ? await this.issueSubjectsRepository.findByKeys(
-          items.map(({ ruleId, subjectUuid }) => ({ ruleId, subjectUuid })),
-        )
-      : [];
-    const issueSubjectByKey = new Map(
-      issueSubjects.map((issueSubject) => [toKey(issueSubject), issueSubject]),
-    );
-    return {
-      items: items.map((issue) => {
-        const issueSubject = issueSubjectByKey.get(toKey(issue));
-        return {
-          id: issue.id,
-          status: issue.status as IssueStatus,
-          severity: issue.severity as Severity,
-          description: issue.description,
-          subject: toSubjectView(issue.subject),
-          issueSubject: issueSubject
-            ? this.toIssueSubjectView(issueSubject)
-            : null,
-          createdAt: issue.createdAt.toISOString(),
-          rule: {
-            type: issue.rule.type as RuleType,
-            description: issue.rule.description,
-          },
-        };
-      }),
-      total,
-    };
+    return { items: await this.toViews(items), total };
+  }
+
+  async findOne(id: string): Promise<IssueView> {
+    const issue = await this.issuesRepository.findById(id);
+    if (!issue) throw new NotFoundException({ code: ErrorCode.ISSUE_NOT_FOUND });
+    const [view] = await this.toViews([issue]);
+    return view;
   }
 
   async updateSubject(
@@ -113,6 +92,42 @@ export class IssuesService {
     return this.toIssueSubjectView(
       await this.issueSubjectsRepository.update(id, { status }),
     );
+  }
+
+  private async toViews(issues: IssueWithRelations[]): Promise<IssueView[]> {
+    if (!issues.length) return [];
+    const keys = issues.map(({ ruleId, subjectUuid }) => ({ ruleId, subjectUuid }));
+    const [issueSubjects, counts] = await Promise.all([
+      this.issueSubjectsRepository.findByKeys(keys),
+      this.issuesRepository.countByKeys(keys),
+    ]);
+    const issueSubjectByKey = new Map(issueSubjects.map((issueSubject) => [toKey(issueSubject), issueSubject]));
+    const countByKey = new Map(counts.map(({ count, ...key }) => [toKey(key), count]));
+    return issues.map((issue) =>
+      this.toView(issue, issueSubjectByKey.get(toKey(issue)), countByKey.get(toKey(issue)) ?? 0),
+    );
+  }
+
+  private toView(
+    issue: IssueWithRelations,
+    issueSubject: IssueSubject | undefined,
+    issueCount: number,
+  ): IssueView {
+    return {
+      id: issue.id,
+      status: issue.status as IssueStatus,
+      severity: issue.severity as Severity,
+      description: issue.description,
+      subject: toSubjectView(issue.subject),
+      issueSubject: issueSubject ? this.toIssueSubjectView(issueSubject) : null,
+      issueCount,
+      createdAt: issue.createdAt.toISOString(),
+      rule: {
+        id: issue.rule.id,
+        type: issue.rule.type as RuleType,
+        description: issue.rule.description,
+      },
+    };
   }
 
   private toIssueSubjectView({ id, status }: IssueSubject): IssueSubjectView {

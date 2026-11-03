@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { IssueSubjectKey } from './issue-subjects.repository';
 
 export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true; subject: true } }>;
 
@@ -20,6 +21,22 @@ export class IssuesRepository {
       data: items.map((item) => ({ ...item, analysisResultId })),
     });
     return count;
+  }
+
+  findById(id: string): Promise<IssueWithRelations | null> {
+    return this.prismaService.issue.findUnique({
+      where: { id },
+      include: { rule: true, subject: true },
+    });
+  }
+
+  async countByKeys(keys: IssueSubjectKey[]): Promise<(IssueSubjectKey & { count: number })[]> {
+    const groups = await this.prismaService.issue.groupBy({
+      by: ['ruleId', 'subjectUuid'],
+      where: { OR: keys },
+      _count: { _all: true },
+    });
+    return groups.map(({ ruleId, subjectUuid, _count }) => ({ ruleId, subjectUuid, count: _count._all }));
   }
 
   countBySeverity(analysisResultId: string, severity: string): Promise<number> {

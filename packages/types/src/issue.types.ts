@@ -13,6 +13,7 @@ export interface IssueView {
   description: string | null;
   subject: SubjectView;
   issueSubject: IssueSubjectView | null;
+  issueCount: number;
   createdAt: string;
-  rule: { type: RuleType; description: string };
+  rule: { id: string; type: RuleType; description: string };
 }

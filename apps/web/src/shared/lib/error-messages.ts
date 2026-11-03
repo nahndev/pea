@@ -16,6 +16,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.METRIC_DISABLED]: 'This metric is disabled.',
   [ErrorCode.METRIC_CONDITION_NOT_FOUND]: 'This condition does not exist.',
   [ErrorCode.METRIC_CONDITION_ALREADY_EXISTS]: 'This metric already has a condition.',
+  [ErrorCode.ISSUE_NOT_FOUND]: 'This issue does not exist.',
   [ErrorCode.ISSUE_SUBJECT_NOT_FOUND]: 'This issue subject does not exist.',
   [ErrorCode.RULE_NOT_FOUND]: 'This rule does not exist.',
   [ErrorCode.RULE_CONFIG_INVALID]: 'This setting is not valid for the rule.',

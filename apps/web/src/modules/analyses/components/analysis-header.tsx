@@ -24,7 +24,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
   const { data, error } = useAnalysis(analysisId);
   const isRunning = useAnalysisRunning(analysisId);
   const { mutate: rerun, isPending: isRerunning, error: rerunError } = useRerunAnalysis(analysisId);
-  const activeTab = TABS.find(({ segment }) => pathname.endsWith(`/${segment}`))?.segment;
+  const activeTab = TABS.find(({ segment }) => pathname.split('/').includes(segment))?.segment;
 
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-24 w-full max-w-md" />;

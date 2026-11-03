@@ -13,6 +13,11 @@ export const issuesService = {
     return data;
   },
 
+  async get(id: string) {
+    const { data } = await apiClient.get<IssueView>(`/issues/${id}`);
+    return data;
+  },
+
   async updateSubject(id: string, status: IssueSubjectStatus) {
     const { data } = await apiClient.patch<IssueSubjectView>(`/issue-subjects/${id}`, { status });
     return data;

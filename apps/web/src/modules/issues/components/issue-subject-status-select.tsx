@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getApiError } from '@/shared/lib/api-client';
 import { getErrorMessage } from '@/shared/lib/error-messages';
 import { useUpdateIssueSubject } from '../hooks/use-issues';
-import { ISSUE_SUBJECT_STATUS_LABEL } from '../issues.constants';
+import { ISSUE_SUBJECT_STATUS_STYLE } from '../issues.constants';
 
 interface IssueSubjectStatusSelectProps {
   issueSubject: IssueSubjectView;
@@ -24,7 +24,7 @@ export function IssueSubjectStatusSelect({ issueSubject }: IssueSubjectStatusSel
         <SelectContent>
           {Object.values(IssueSubjectStatus).map((status) => (
             <SelectItem key={status} value={status}>
-              {ISSUE_SUBJECT_STATUS_LABEL[status]}
+              {ISSUE_SUBJECT_STATUS_STYLE[status].label}
             </SelectItem>
           ))}
         </SelectContent>
