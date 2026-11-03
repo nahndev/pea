@@ -7,6 +7,7 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { AnalysisResultModule } from './modules/analysis-result/analysis-result.module';
 import { AnalysesModule } from './modules/analyses/analyses.module';
 import { ConditionsModule } from './modules/conditions/conditions.module';
+import { DatabasesModule } from './modules/databases/databases.module';
 import { IssuesModule } from './modules/issues/issues.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { RulesModule } from './modules/rules/rules.module';
@@ -23,6 +24,7 @@ import { PrismaModule } from './prisma/prisma.module';
     IssuesModule,
     MetricsModule,
     ConditionsModule,
+    DatabasesModule,
     AnalysisResultModule,
     AddOnsModule,
   ],

@@ -43,11 +43,24 @@ model ApiAnalysisData {
 
 model DatabaseAnalysisData {
   analysisId String   @id @map("analysis_id") @db.Uuid
+  databaseId String   @map("database_id") @db.Uuid
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  database   Database @relation(fields: [databaseId], references: [id], onDelete: Restrict)
+
+  @@index([databaseId])
+  @@map("database_analysis_data")
+}
+
+model Database {
+  id         String                 @id @default(uuid(7)) @db.Uuid
+  name       String                 @unique @db.VarChar(255)
   /// AES-256-GCM encrypted
   connection String
-  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  createdAt  DateTime               @default(now()) @map("created_at")
+  updatedAt  DateTime               @updatedAt @map("updated_at")
+  analyses   DatabaseAnalysisData[]
 
-  @@map("database_analysis_data")
+  @@map("databases")
 }
 
 model Rule {

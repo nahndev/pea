@@ -20,21 +20,21 @@ interface CreateAnalysisData {
   schema: AnalysisSchema;
   title: string;
   file?: StoredFile;
-  connection?: string;
+  databaseId?: string;
 }
 
 @Injectable()
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, schema, title, file, connection }: CreateAnalysisData): Promise<Analysis> {
+  create({ branchId, schema, title, file, databaseId }: CreateAnalysisData): Promise<Analysis> {
     return this.prismaService.analysis.create({
       data: {
         branchId,
         schema,
         title,
         apiData: file ? { create: file } : undefined,
-        databaseData: connection ? { create: { connection } } : undefined,
+        databaseData: databaseId ? { create: { databaseId } } : undefined,
       },
     });
   }

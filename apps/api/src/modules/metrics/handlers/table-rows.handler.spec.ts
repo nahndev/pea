@@ -27,7 +27,7 @@ describe('TableRowsHandler', () => {
   });
 
   it('counts the rows of every readable table, one subject per table', async () => {
-    const measurements = await tableRowsHandler.handle(metric, { databaseData: { connection: 'sealed' } } as AnalysisWithData);
+    const measurements = await tableRowsHandler.handle(metric, { databaseData: { database: { connection: 'sealed' } } } as AnalysisWithData);
 
     expect(databaseConnectionsService.decrypt).toHaveBeenCalledWith('sealed');
     expect(databaseConnectionsService.withClient).toHaveBeenCalledWith(connection, expect.any(Function));

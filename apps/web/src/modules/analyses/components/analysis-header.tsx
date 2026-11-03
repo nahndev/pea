@@ -73,7 +73,12 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
         {database ? (
           <div className="flex items-center gap-2">
             <dt className="text-muted-foreground">Database</dt>
-            <dd className="break-all font-mono text-xs font-medium">{database}</dd>
+            <dd className="flex flex-wrap items-baseline gap-2">
+              <Link href={`/databases/${database.id}`} className="font-medium hover:underline focus-ring rounded-sm">
+                {database.name}
+              </Link>
+              <span className="break-all font-mono text-xs text-muted-foreground">{database.address}</span>
+            </dd>
           </div>
         ) : null}
       </dl>

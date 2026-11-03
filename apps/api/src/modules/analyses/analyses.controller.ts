@@ -40,12 +40,7 @@ export class AnalysesController {
         schema: { type: "string", enum: Object.values(AnalysisSchema) },
         title: { type: "string", minLength: 1, maxLength: 255 },
         [LOG_FILE_FIELD]: { type: "string", format: "binary", description: "Required unless schema is DATABASE" },
-        connectionString: { type: "string", example: "postgresql://user:password@host:5432/database" },
-        host: { type: "string" },
-        port: { type: "integer", minimum: 1, maximum: 65535, default: 5432 },
-        database: { type: "string" },
-        user: { type: "string" },
-        password: { type: "string", format: "password" },
+        databaseId: { type: "string", format: "uuid", description: "Required when schema is DATABASE" },
       },
     },
   })

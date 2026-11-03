@@ -1,7 +1,6 @@
 import { AnalysisSchema } from '@tomato/constants';
-import { Transform, Type } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min, ValidateIf } from 'class-validator';
-import { POSTGRES_URL_PATTERN } from '../analyses.constants';
+import { Transform } from 'class-transformer';
+import { IsIn, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -23,43 +22,7 @@ export class CreateAnalysisDto {
   @MaxLength(255)
   title: string;
 
-  @ValidateIf((dto: CreateAnalysisDto) => isDatabase(dto) && dto.host === undefined)
-  @Transform(trim)
-  @IsString()
-  @Matches(POSTGRES_URL_PATTERN)
-  @MaxLength(2048)
-  connectionString?: string;
-
-  @ValidateIf((dto: CreateAnalysisDto) => isDatabase(dto) && dto.connectionString === undefined)
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  host?: string;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(65535)
-  port?: number;
-
-  @ValidateIf((dto: CreateAnalysisDto) => isDatabase(dto) && dto.connectionString === undefined)
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  database?: string;
-
-  @ValidateIf((dto: CreateAnalysisDto) => isDatabase(dto) && dto.connectionString === undefined)
-  @Transform(trim)
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  user?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(255)
-  password?: string;
+  @ValidateIf(isDatabase)
+  @IsUUID()
+  databaseId?: string;
 }

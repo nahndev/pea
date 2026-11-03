@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
+import { FieldError } from '@/shared/components/field-error';
 import { PageHeader } from '@/shared/components/page-header';
 import { ANALYSIS_SCHEMA_LABEL, DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
-import { DatabaseConnectionMode, LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from '../analyses.constants';
+import { DatabaseSelect } from '@/modules/databases';
+import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
-import { DatabaseAnalysisCreation } from './database-analysis-creation';
-import { FieldError } from './field-error';
 
 interface NewAnalysisFormProps {
   branch?: string;
@@ -23,8 +23,6 @@ const FIELD_ERRORS: Record<string, string> = {
   required: 'This field is required.',
   too_long: 'Must be at most 255 characters.',
   invalid: 'This value is not valid.',
-  invalid_port: 'Enter a port between 1 and 65535.',
-  invalid_connection_string: 'Enter a postgres:// or postgresql:// connection string.',
   empty: 'The file is empty.',
   too_large: `The file must be at most ${MAX_LOG_FILE_SIZE / 1024 / 1024} MB.`,
   file_required: 'Attach the log file.',
@@ -34,7 +32,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
   const router = useRouter();
   const { mutate, isPending, error: requestError } = useCreateAnalysis();
   const [schema, setSchema] = useState<AnalysisSchema>(initialSchema);
-  const [connectionMode, setConnectionMode] = useState<DatabaseConnectionMode>(DatabaseConnectionMode.FIELDS);
+  const [databaseId, setDatabaseId] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isDatabase = schema === AnalysisSchema.DATABASE;
@@ -47,7 +45,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
         [...form.entries()].filter(([, value]) => !(value instanceof File && value.size === 0 && value.name === '')),
       ),
       schema,
-      ...(isDatabase ? { connectionMode } : {}),
+      ...(isDatabase ? { databaseId } : {}),
     };
     const parsed = createAnalysisSchema.safeParse(raw);
     if (!parsed.success) {
@@ -60,7 +58,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="New analysis" description="Upload a log file or connect a database to analyse a branch. Results appear once processing finishes.">
+      <PageHeader title="New analysis" description="Upload a log file or pick a database to analyse a branch. Results appear once processing finishes.">
         <Breadcrumbs entries={[{ label: 'Branches', href: '/branches' }, { label: 'New analysis' }]} />
       </PageHeader>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
@@ -90,7 +88,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
           <FieldError id="title-error" message={fieldErrors.title} />
         </div>
         {isDatabase ? (
-          <DatabaseAnalysisCreation mode={connectionMode} onModeChange={setConnectionMode} fieldErrors={fieldErrors} />
+          <DatabaseSelect value={databaseId} onChange={setDatabaseId} error={fieldErrors.databaseId} />
         ) : (
           <div className="flex flex-col gap-2">
             <Label htmlFor={LOG_FILE_FIELD.name}>{LOG_FILE_FIELD.label}</Label>

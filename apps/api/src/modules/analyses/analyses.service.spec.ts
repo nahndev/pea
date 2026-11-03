@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { AnalysisEvent, AnalysisSchema, ErrorCode } from '@tomato/constants';
-import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
+import { DatabasesService } from '../databases/databases.service';
 import { StorageService } from '../files/storage.service';
 import type { StoredFile } from '../files/storage.service';
 import { BranchesService } from '../branches/branches.service';
@@ -15,7 +15,7 @@ describe('AnalysesService', () => {
   let analysesRepository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
   let branchesService: jest.Mocked<Pick<BranchesService, 'findOrCreateByName'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'save' | 'remove'>>;
-  let databaseConnectionsService: jest.Mocked<Pick<DatabaseConnectionsService, 'verify' | 'encrypt'>>;
+  let databasesService: jest.Mocked<Pick<DatabasesService, 'verify'>>;
   let eventEmitter2: jest.Mocked<Pick<EventEmitter2, 'emit'>>;
   let analysesService: AnalysesService;
 
@@ -26,13 +26,13 @@ describe('AnalysesService', () => {
       save: jest.fn().mockResolvedValue(STORED_FILE),
       remove: jest.fn().mockResolvedValue(undefined),
     };
-    databaseConnectionsService = { verify: jest.fn().mockResolvedValue(undefined), encrypt: jest.fn().mockReturnValue('sealed') };
+    databasesService = { verify: jest.fn().mockResolvedValue(undefined) };
     eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
       branchesService as unknown as BranchesService,
       storageService as unknown as StorageService,
-      databaseConnectionsService as unknown as DatabaseConnectionsService,
+      databasesService as unknown as DatabasesService,
     );
     Object.assign(analysesService, { eventEmitter2 });
   });
@@ -79,35 +79,27 @@ describe('AnalysesService', () => {
   });
 
   describe('database analysis', () => {
-    const dto = { branch: 'feat/x', schema: AnalysisSchema.DATABASE, title: 'Nightly', host: 'db', database: 'shop', user: 'reader', password: 'secret' };
+    const dto = { branch: 'feat/x', schema: AnalysisSchema.DATABASE, title: 'Nightly', databaseId: 'db-1' };
 
-    it('verifies and stores the encrypted connection without a file', async () => {
+    it('verifies the database and links it without a file', async () => {
       const analysis = { id: 'an-1', branchId: 'br-1' };
       analysesRepository.create.mockResolvedValue(analysis as never);
 
       await expect(analysesService.create(dto)).resolves.toBe(analysis);
 
-      const connection = { host: 'db', port: 5432, database: 'shop', user: 'reader', password: 'secret' };
-      expect(databaseConnectionsService.verify).toHaveBeenCalledWith(connection);
-      expect(databaseConnectionsService.encrypt).toHaveBeenCalledWith(connection);
+      expect(databasesService.verify).toHaveBeenCalledWith('db-1');
       expect(analysesRepository.create).toHaveBeenCalledWith({
         branchId: 'br-1',
         schema: AnalysisSchema.DATABASE,
         title: 'Nightly',
-        connection: 'sealed',
+        databaseId: 'db-1',
       });
       expect(storageService.save).not.toHaveBeenCalled();
       expect(eventEmitter2.emit).toHaveBeenCalledWith(AnalysisEvent.CREATED, analysis);
     });
 
-    it('prefers the connection string', async () => {
-      await analysesService.create({ ...dto, connectionString: 'postgresql://reader@db/shop' });
-
-      expect(databaseConnectionsService.verify).toHaveBeenCalledWith({ connectionString: 'postgresql://reader@db/shop' });
-    });
-
     it('creates nothing when the database is unreachable', async () => {
-      databaseConnectionsService.verify.mockRejectedValue(new Error('unreachable'));
+      databasesService.verify.mockRejectedValue(new Error('unreachable'));
 
       await expect(analysesService.create(dto)).rejects.toThrow('unreachable');
       expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
@@ -145,7 +137,7 @@ describe('AnalysesService reads', () => {
       analysesRepository as unknown as AnalysesRepository,
       branchesService as unknown as BranchesService,
       {} as StorageService,
-      {} as DatabaseConnectionsService,
+      {} as DatabasesService,
     );
   });
 
@@ -159,14 +151,15 @@ describe('AnalysesService reads', () => {
 
   it.each([
     [{ apiData: { file: 'a.jsonl', path: 'p-1' }, databaseData: null }, { file: 'a.jsonl', database: null }],
-    [{ apiData: null, databaseData: { connection: 'sealed' } }, { file: null, database: 'reader@db:5432/shop' }],
+    [
+      { apiData: null, databaseData: { database: { id: 'db-1', name: 'Shop', connection: 'sealed' } } },
+      { file: null, database: { id: 'db-1', name: 'Shop', address: 'reader@db:5432/shop' } },
+    ],
   ])('maps the analysis data into the detail', async (data, expected) => {
-    const connection = { host: 'db', port: 5432, database: 'shop', user: 'reader' };
-    const databaseConnectionsService = {
-      decrypt: jest.fn().mockReturnValue(connection),
-      describe: DatabaseConnectionsService.prototype.describe,
+    const databasesService = {
+      toSummary: jest.fn(({ id, name }) => ({ id, name, address: 'reader@db:5432/shop' })),
     };
-    Object.assign(analysesService, { databaseConnectionsService });
+    Object.assign(analysesService, { databasesService });
     analysesRepository.findDetailById.mockResolvedValue({
       id: 'an-1',
       schema: 'API',

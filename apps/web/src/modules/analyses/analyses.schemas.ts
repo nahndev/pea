@@ -1,7 +1,7 @@
 import { AnalysisSchema } from '@tomato/constants';
 import { z } from 'zod';
 import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
-import { DatabaseConnectionMode, LOG_FILE_FIELD, MAX_LOG_FILE_SIZE, POSTGRES_URL_PATTERN } from './analyses.constants';
+import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from './analyses.constants';
 
 const logFileSchema = z
   .instanceof(File, { error: 'file_required' })
@@ -21,30 +21,15 @@ const fileAnalysisSchema = z.object({
   [LOG_FILE_FIELD.name]: logFileSchema,
 });
 
-const databaseFieldsSchema = z.object({
+const databaseAnalysisSchema = z.object({
   ...commonShape,
   schema: z.literal(AnalysisSchema.DATABASE),
-  connectionMode: z.literal(DatabaseConnectionMode.FIELDS),
-  host: requiredText(),
-  port: z.preprocess(
-    (value) => (value === '' || value === null ? undefined : value),
-    z.coerce.number('invalid_port').int('invalid_port').min(1, 'invalid_port').max(65535, 'invalid_port').optional(),
-  ),
-  database: requiredText(),
-  user: requiredText(),
-  password: z.string().max(255, 'too_long').optional(),
-});
-
-const databaseUrlSchema = z.object({
-  ...commonShape,
-  schema: z.literal(AnalysisSchema.DATABASE),
-  connectionMode: z.literal(DatabaseConnectionMode.URL),
-  connectionString: requiredText(2048).regex(POSTGRES_URL_PATTERN, 'invalid_connection_string'),
+  databaseId: z.string('required').min(1, 'required'),
 });
 
 export const createAnalysisSchema = z.discriminatedUnion(
   'schema',
-  [fileAnalysisSchema, z.discriminatedUnion('connectionMode', [databaseFieldsSchema, databaseUrlSchema])],
+  [fileAnalysisSchema, databaseAnalysisSchema],
   'required',
 );
 

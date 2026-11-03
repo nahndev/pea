@@ -1,5 +1,6 @@
 import type { AnalysisResultStatus, AnalysisSchema, MetricEvaluationStatus } from '@tomato/constants';
 import type { Branch } from './branch.types';
+import type { DatabaseSummary } from './database.types';
 
 export interface AnalysisResultSummary {
   id: string;
@@ -19,6 +20,5 @@ export interface AnalysisSummary {
 export interface AnalysisDetail extends AnalysisSummary {
   branch: Branch;
   file: string | null;
-  /** `user@host:port/database`, without the password */
-  database: string | null;
+  database: DatabaseSummary | null;
 }

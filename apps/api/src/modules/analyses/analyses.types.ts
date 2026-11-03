@@ -12,7 +12,10 @@ export const LATEST_RESULT_INCLUDE = {
 
 export const LATEST_RESULT_ORDER_BY = LATEST_RESULT_ORDER;
 
-export const ANALYSIS_DATA_INCLUDE = { apiData: true, databaseData: true } satisfies Prisma.AnalysisInclude;
+export const ANALYSIS_DATA_INCLUDE = {
+  apiData: true,
+  databaseData: { include: { database: true } },
+} satisfies Prisma.AnalysisInclude;
 
 export type AnalysisWithData = Prisma.AnalysisGetPayload<{ include: typeof ANALYSIS_DATA_INCLUDE }>;
 

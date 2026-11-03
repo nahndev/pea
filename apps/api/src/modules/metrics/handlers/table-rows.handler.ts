@@ -27,7 +27,7 @@ export class TableRowsHandler implements MetricHandler {
   async handle(_metric: Metric, analysis: AnalysisWithData): Promise<MetricMeasurement[]> {
     if (!analysis.databaseData) return [];
 
-    const connection = this.databaseConnectionsService.decrypt(analysis.databaseData.connection);
+    const connection = this.databaseConnectionsService.decrypt(analysis.databaseData.database.connection);
     return this.databaseConnectionsService.withClient(connection, async (client) => {
       const { rows: tables } = await client.query<{ schema: string; name: string }>(READABLE_TABLES_SQL);
       const measurements: MetricMeasurement[] = [];

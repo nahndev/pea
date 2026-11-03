@@ -8,7 +8,6 @@ const messages = (input: unknown) => {
   return result.success ? [] : result.error.issues.map(({ path, message }) => `${path.join('.')}:${message}`);
 };
 const base = { branch: 'a', title: 'Release 1' };
-const database = { ...base, schema: 'DATABASE', connectionMode: 'FIELDS', host: 'db', database: 'shop', user: 'reader' };
 
 describe('createAnalysisSchema', () => {
   it('accepts a branch with a file and trims the branch and the title', () => {
@@ -43,30 +42,13 @@ describe('createAnalysisSchema', () => {
   });
 
   describe('database', () => {
-    it('accepts connection fields without a file and an empty port', () => {
-      const parsed = createAnalysisSchema.parse({ ...database, port: '' });
-
-      expect(parsed).toMatchObject({ schema: 'DATABASE', host: 'db', port: undefined });
+    it('accepts a database without a file', () => {
+      expect(createAnalysisSchema.parse({ ...base, schema: 'DATABASE', databaseId: 'db-1' })).toMatchObject({ schema: 'DATABASE', databaseId: 'db-1' });
     });
 
-    it('coerces and bounds the port', () => {
-      expect(createAnalysisSchema.parse({ ...database, port: '6543' })).toMatchObject({ port: 6543 });
-      expect(messages({ ...database, port: '0' })).toContain('port:invalid_port');
-      expect(messages({ ...database, port: '70000' })).toContain('port:invalid_port');
-    });
-
-    it('requires host, database and user', () => {
-      const errors = messages({ ...base, schema: 'DATABASE', connectionMode: 'FIELDS' });
-      expect(errors).toEqual(expect.arrayContaining(['host:required', 'database:required', 'user:required']));
-    });
-
-    it('accepts a postgres connection string only', () => {
-      const url = { ...base, schema: 'DATABASE', connectionMode: 'URL' };
-      expect(createAnalysisSchema.parse({ ...url, connectionString: ' postgresql://u:p@db/shop ' })).toMatchObject({
-        connectionString: 'postgresql://u:p@db/shop',
-      });
-      expect(messages({ ...url, connectionString: 'mysql://u@db/shop' })).toContain('connectionString:invalid_connection_string');
-      expect(messages(url)).toContain('connectionString:required');
+    it('requires a database', () => {
+      expect(messages({ ...base, schema: 'DATABASE' })).toContain('databaseId:required');
+      expect(messages({ ...base, schema: 'DATABASE', databaseId: '' })).toContain('databaseId:required');
     });
   });
 });

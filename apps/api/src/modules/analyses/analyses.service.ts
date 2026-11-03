@@ -25,9 +25,7 @@ import type {
 import type { Analysis } from "../../generated/client";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { BranchesService } from "../branches/branches.service";
-import { DEFAULT_DATABASE_PORT } from "../database-connections/database-connections.constants";
-import { DatabaseConnectionsService } from "../database-connections/database-connections.service";
-import type { DatabaseConnection } from "../database-connections/database-connections.types";
+import { DatabasesService } from "../databases/databases.service";
 import { StorageService } from "../files/storage.service";
 import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
@@ -41,22 +39,16 @@ export class AnalysesService {
     private readonly analysesRepository: AnalysesRepository,
     private readonly branchesService: BranchesService,
     private readonly storageService: StorageService,
-    private readonly databaseConnectionsService: DatabaseConnectionsService,
+    private readonly databasesService: DatabasesService,
   ) {}
 
   @EmitEvent(AnalysisEvent.CREATED)
   async create(dto: CreateAnalysisDto, upload?: Express.Multer.File): Promise<Analysis> {
-    const { branch, schema, title } = dto;
+    const { branch, schema, title, databaseId } = dto;
     if (schema === AnalysisSchema.DATABASE) {
-      const connection = this.toConnection(dto);
-      await this.databaseConnectionsService.verify(connection);
+      await this.databasesService.verify(databaseId!);
       const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
-      return this.analysesRepository.create({
-        branchId,
-        schema,
-        title,
-        connection: this.databaseConnectionsService.encrypt(connection),
-      });
+      return this.analysesRepository.create({ branchId, schema, title, databaseId });
     }
     if (!upload)
       throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
@@ -86,9 +78,7 @@ export class AnalysesService {
       ...this.toSummary(analysis),
       branch: { id: branch.id, name: branch.name },
       file: apiData?.file ?? null,
-      database: databaseData
-        ? this.databaseConnectionsService.describe(this.databaseConnectionsService.decrypt(databaseData.connection))
-        : null,
+      database: databaseData ? this.databasesService.toSummary(databaseData.database) : null,
     };
   }
 
@@ -124,11 +114,6 @@ export class AnalysesService {
     });
 
     return { series: this.sortSeries([...seriesByKey.values()], picks), points };
-  }
-
-  private toConnection({ connectionString, host, port, database, user, password }: CreateAnalysisDto): DatabaseConnection {
-    if (connectionString) return { connectionString };
-    return { host: host!, port: port ?? DEFAULT_DATABASE_PORT, database: database!, user: user!, password };
   }
 
   private parsePick(pick: string): MetricTrendPick {

@@ -27,6 +27,9 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.LOG_FILE_INVALID]: 'The log file is invalid.',
   [ErrorCode.LOG_FILE_DUPLICATED]: 'The log file was already uploaded.',
   [ErrorCode.DATABASE_CONNECTION_FAILED]: 'Unable to connect to the database. Check the connection details.',
+  [ErrorCode.DATABASE_NOT_FOUND]: 'This database does not exist.',
+  [ErrorCode.DATABASE_ALREADY_EXISTS]: 'A database with this name already exists.',
+  [ErrorCode.DATABASE_IN_USE]: 'This database is used by analyses and cannot be deleted.',
 };
 
 export const getErrorMessage = (code: ErrorCode) => ERROR_MESSAGES[code];
