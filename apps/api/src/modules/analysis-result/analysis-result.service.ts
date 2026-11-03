@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type AnalysisSchema, AnalysisResultStatus } from '@tomato/constants';
-import type { IssueView, MetricResultView, Paginated } from '@tomato/types';
+import type { IssueView, MetricResultView, MetricSummaryView, Paginated } from '@tomato/types';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import type { AnalysisResult } from '../../generated/client';
 import type { AnalysisWithData } from '../analyses/analyses.types';
 import { AnalysesService } from '../analyses/analyses.service';
@@ -52,10 +53,16 @@ export class AnalysisResultService {
     return this.issuesService.findPage(result.id, query);
   }
 
-  async listMetrics(analysisId: string): Promise<MetricResultView[]> {
+  async listMetrics(analysisId: string, { limit, offset }: PaginationQueryDto): Promise<Paginated<MetricResultView>> {
+    const result = await this.findLatest(analysisId);
+    if (!result) return { items: [], total: 0 };
+    return this.metricsService.findResultPage(result.id, limit, offset);
+  }
+
+  async listMetricSummaries(analysisId: string): Promise<MetricSummaryView[]> {
     const result = await this.findLatest(analysisId);
     if (!result) return [];
-    return this.metricsService.findResultViews(result.id);
+    return this.metricsService.findSummaries(result.id);
   }
 
   private async findLatest(analysisId: string): Promise<AnalysisResult | null> {

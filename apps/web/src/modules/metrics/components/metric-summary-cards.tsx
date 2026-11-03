@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@tomato/ui';
+import type { MetricSummaryView } from '@tomato/types';
 import { GateStatusBadge } from '@/modules/analyses';
 import { formatDuration } from '@/shared/lib/format';
 import { METRIC_LABEL, VIOLATION_PHRASE } from '../metrics.constants';
-import type { MetricSummary } from '../summarize-metrics';
 
 interface MetricSummaryCardsProps {
-  summaries: MetricSummary[];
+  summaries: MetricSummaryView[];
 }
 
 export function MetricSummaryCards({ summaries }: MetricSummaryCardsProps) {

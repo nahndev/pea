@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
-import type { MetricResultView, MetricView, SubjectView } from '@tomato/types';
-import type { Metric, MetricResult } from '../../generated/client';
+import type { MetricEvaluationView, MetricHistoryItemView, MetricResultView, MetricSummaryView, MetricView, Paginated, SubjectView } from '@tomato/types';
+import type { Metric, MetricEvaluation, MetricResult } from '../../generated/client';
 import type { AnalysisContext } from '../analyses/analyses.types';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
@@ -9,7 +9,9 @@ import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
 import { type SubjectSource, toSubjectView } from '../subjects/subject';
 import { SubjectsService } from '../subjects/subjects.service';
+import { SUMMARY_METRIC_TYPES } from './metrics.constants';
 import { MetricsRepository } from './metrics.repository';
+import { summarizeMetrics } from './summarize-metrics';
 
 @Injectable()
 export class MetricsService {
@@ -78,26 +80,49 @@ export class MetricsService {
     return this.metricResultsRepository.findPassedHistory(filter);
   }
 
-  async findResultViews(analysisResultId: string): Promise<MetricResultView[]> {
-    const results = await this.metricResultsRepository.findDetailedByAnalysisResult(analysisResultId);
-    return results.map(({ id, value, subject, metric, evaluations }) => ({
-      id,
-      value,
-      subject: subject && toSubjectView(subject),
-      metric: {
-        id: metric.id,
-        type: metric.type as MetricType,
-        unit: metric.unit as MetricUnit,
-        description: metric.description,
-      },
-      evaluations: evaluations.map((evaluation) => ({
-        status: evaluation.status as MetricEvaluationStatus,
-        aggregate: evaluation.aggregate as MetricConditionAggregate,
-        baseline: evaluation.baseline,
-        operator: evaluation.operator as MetricConditionOperator,
-        threshold: evaluation.threshold,
+  async findResultPage(analysisResultId: string, limit: number, offset: number): Promise<Paginated<MetricResultView>> {
+    const { items, total } = await this.metricResultsRepository.findDetailedPage(analysisResultId, limit, offset);
+    return {
+      total,
+      items: items.map(({ id, value, subject, metric, evaluations }) => ({
+        id,
+        value,
+        subject: subject && toSubjectView(subject),
+        metric: { id: metric.id, type: metric.type as MetricType, unit: metric.unit as MetricUnit, description: metric.description },
+        evaluations: evaluations.map((evaluation) => this.toEvaluationView(evaluation)),
       })),
-    }));
+    };
+  }
+
+  async findSummaries(analysisResultId: string): Promise<MetricSummaryView[]> {
+    const results = await this.metricResultsRepository.findSummarySources(analysisResultId, SUMMARY_METRIC_TYPES);
+    return summarizeMetrics(SUMMARY_METRIC_TYPES, results);
+  }
+
+  async findHistory(metricId: string, limit: number, offset: number): Promise<Paginated<MetricHistoryItemView>> {
+    await this.getById(metricId);
+    const { items, total } = await this.metricResultsRepository.findHistoryByMetric(metricId, limit, offset);
+    return {
+      total,
+      items: items.map(({ id, value, createdAt, subject, evaluations, analysisResult: { analysis } }) => ({
+        id,
+        value,
+        createdAt: createdAt.toISOString(),
+        subject: subject && toSubjectView(subject),
+        analysis: { id: analysis.id, title: analysis.title, branch: { id: analysis.branch.id, name: analysis.branch.name } },
+        evaluations: evaluations.map((evaluation) => this.toEvaluationView(evaluation)),
+      })),
+    };
+  }
+
+  private toEvaluationView({ status, aggregate, baseline, operator, threshold }: MetricEvaluation): MetricEvaluationView {
+    return {
+      status: status as MetricEvaluationStatus,
+      aggregate: aggregate as MetricConditionAggregate,
+      baseline,
+      operator: operator as MetricConditionOperator,
+      threshold,
+    };
   }
 
   private toView({ id, schema, type, unit, description, isActive, config }: Metric): MetricView {

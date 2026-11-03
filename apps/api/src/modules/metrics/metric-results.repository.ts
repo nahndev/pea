@@ -7,6 +7,22 @@ export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
   include: { metric: true; subject: true; evaluations: true };
 }>;
 
+const HISTORY_INCLUDE = {
+  subject: true,
+  evaluations: { orderBy: { id: 'asc' } },
+  analysisResult: { include: { analysis: { include: { branch: true } } } },
+} satisfies Prisma.MetricResultInclude;
+
+export type MetricResultHistory = Prisma.MetricResultGetPayload<{ include: typeof HISTORY_INCLUDE }>;
+
+const SUMMARY_SELECT = {
+  value: true,
+  metric: { select: { type: true } },
+  evaluations: { select: { status: true, aggregate: true, operator: true, threshold: true }, orderBy: { id: 'asc' } },
+} satisfies Prisma.MetricResultSelect;
+
+export type MetricResultSummarySource = Prisma.MetricResultGetPayload<{ select: typeof SUMMARY_SELECT }>;
+
 export interface MetricResultSource {
   metricId: string;
   subjectUuid: string | null;
@@ -50,15 +66,44 @@ export class MetricResultsRepository {
     });
   }
 
-  findDetailedByAnalysisResult(analysisResultId: string): Promise<MetricResultWithDetails[]> {
+  async findHistoryByMetric(metricId: string, limit: number, offset: number): Promise<{ items: MetricResultHistory[]; total: number }> {
+    const where: Prisma.MetricResultWhereInput = { metricId };
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.metricResult.findMany({
+        where,
+        include: HISTORY_INCLUDE,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit,
+        skip: offset,
+      }),
+      this.prismaService.metricResult.count({ where }),
+    ]);
+    return { items, total };
+  }
+
+  async findDetailedPage(
+    analysisResultId: string,
+    limit: number,
+    offset: number,
+  ): Promise<{ items: MetricResultWithDetails[]; total: number }> {
+    const where: Prisma.MetricResultWhereInput = { analysisResultId };
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.metricResult.findMany({
+        where,
+        orderBy: [{ metric: { type: 'asc' } }, { subject: { description: 'asc' } }, { id: 'asc' }],
+        include: { metric: true, subject: true, evaluations: { orderBy: { id: 'asc' } } },
+        take: limit,
+        skip: offset,
+      }),
+      this.prismaService.metricResult.count({ where }),
+    ]);
+    return { items, total };
+  }
+
+  findSummarySources(analysisResultId: string, types: readonly string[]): Promise<MetricResultSummarySource[]> {
     return this.prismaService.metricResult.findMany({
-      where: { analysisResultId },
-      orderBy: [{ metric: { type: 'asc' } }, { subject: { description: 'asc' } }],
-      include: {
-        metric: true,
-        subject: true,
-        evaluations: { orderBy: { id: 'asc' } },
-      },
+      where: { analysisResultId, metric: { type: { in: [...types] } } },
+      select: SUMMARY_SELECT,
     });
   }
 }

@@ -1,40 +1,67 @@
-import { NotFoundException } from '@nestjs/common';
-import { AnalysisSchema, ErrorCode, SubjectType } from '@tomato/constants';
-import { MetricHandlerFactory } from './handlers/metric-handler.factory';
-import type { MetricHandler } from './handlers/metric-handler.types';
-import { createSubject } from '../subjects/subject';
-import { MetricResultsRepository } from './metric-results.repository';
-import { MetricsRepository } from './metrics.repository';
-import { MetricsService } from './metrics.service';
-import { SubjectsService } from '../subjects/subjects.service';
+import { NotFoundException } from "@nestjs/common";
+import { AnalysisSchema, ErrorCode, SubjectType } from "@tomato/constants";
+import { MetricHandlerFactory } from "./handlers/metric-handler.factory";
+import type { MetricHandler } from "./handlers/metric-handler.types";
+import { createSubject } from "../subjects/subject";
+import { MetricResultsRepository } from "./metric-results.repository";
+import { MetricsRepository } from "./metrics.repository";
+import { MetricsService } from "./metrics.service";
+import { SubjectsService } from "../subjects/subjects.service";
 
-describe('MetricsService', () => {
-  let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById' | 'update'>>;
-  let metricResultsRepository: jest.Mocked<
-    Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
+describe("MetricsService", () => {
+  let metricsRepository: jest.Mocked<
+    Pick<MetricsRepository, "findAll" | "findById" | "update">
   >;
-  let subjectsService: jest.Mocked<Pick<SubjectsService, 'createMany' | 'findByMetric'>>;
-  let metricHandlerFactory: jest.Mocked<Pick<MetricHandlerFactory, 'supports' | 'create'>>;
+  let metricResultsRepository: jest.Mocked<
+    Pick<
+      MetricResultsRepository,
+      | "createMany"
+      | "findByAnalysisResult"
+      | "findDetailedPage"
+      | "findSummarySources"
+      | "findHistoryByMetric"
+    >
+  >;
+  let subjectsService: jest.Mocked<
+    Pick<SubjectsService, "createMany" | "findByMetric">
+  >;
+  let metricHandlerFactory: jest.Mocked<
+    Pick<MetricHandlerFactory, "supports" | "create">
+  >;
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
 
-  const context = { schema: AnalysisSchema.API, logPath: '/uploads/p-1' } as const;
+  const context = {
+    schema: AnalysisSchema.API,
+    logPath: "/uploads/p-1",
+  } as const;
   const metricList = [
-    { id: 'm-1', type: 'P90' },
-    { id: 'm-2', type: 'UNKNOWN' },
+    { id: "m-1", type: "P90" },
+    { id: "m-2", type: "UNKNOWN" },
   ];
 
   beforeEach(() => {
-    metricsRepository = { findAll: jest.fn().mockResolvedValue(metricList), findById: jest.fn(), update: jest.fn() };
-    metricResultsRepository = {
-      createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length),
-      findByAnalysisResult: jest.fn(),
-      findDetailedByAnalysisResult: jest.fn(),
+    metricsRepository = {
+      findAll: jest.fn().mockResolvedValue(metricList),
+      findById: jest.fn(),
+      update: jest.fn(),
     };
-    subjectsService = { createMany: jest.fn().mockResolvedValue(0), findByMetric: jest.fn() };
+    metricResultsRepository = {
+      createMany: jest
+        .fn()
+        .mockImplementation((_, items: unknown[]) => items.length),
+      findByAnalysisResult: jest.fn(),
+      findDetailedPage: jest.fn(),
+      findSummarySources: jest.fn(),
+      findHistoryByMetric: jest.fn(),
+    };
+    subjectsService = {
+      createMany: jest.fn().mockResolvedValue(0),
+      findByMetric: jest.fn(),
+    };
     handler = { handle: jest.fn().mockResolvedValue([{ value: 10 }]) };
     metricHandlerFactory = {
-      supports: jest.fn().mockImplementation((type: string) => type === 'P90'),
+      supports: jest.fn().mockImplementation((type: string) => type === "P90"),
       create: jest.fn().mockReturnValue(handler),
     };
     metricsService = new MetricsService(
@@ -45,39 +72,45 @@ describe('MetricsService', () => {
     );
   });
 
-  it('only measures active metrics of the analysis schema', async () => {
-    await metricsService.measure('res-1', context);
-    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: true, schema: AnalysisSchema.API });
+  it("only measures active metrics of the analysis schema", async () => {
+    await metricsService.measure("res-1", context);
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({
+      isActive: true,
+      schema: AnalysisSchema.API,
+    });
   });
 
-  it('stores a result for every supported metric', async () => {
-    await expect(metricsService.measure('res-1', context)).resolves.toBe(1);
-    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', subjectUuid: null, value: 10 },
+  it("stores a result for every supported metric", async () => {
+    await expect(metricsService.measure("res-1", context)).resolves.toBe(1);
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith("res-1", [
+      { metricId: "m-1", subjectUuid: null, value: 10 },
     ]);
   });
 
-  it('stores one result per measurement when a handler returns several', async () => {
-    const cart = createSubject(SubjectType.API, 'GET /api/cart');
-    const checkout = createSubject(SubjectType.API, 'POST /api/checkout');
+  it("stores one result per measurement when a handler returns several", async () => {
+    const cart = createSubject(SubjectType.API, "GET /api/cart");
+    const checkout = createSubject(SubjectType.API, "POST /api/checkout");
     handler.handle.mockResolvedValueOnce([
       { subject: cart, value: 30 },
       { subject: checkout, value: 20 },
     ]);
 
-    await expect(metricsService.measure('res-1', context)).resolves.toBe(2);
-    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', subjectUuid: cart.uuid, value: 30 },
-      { metricId: 'm-1', subjectUuid: checkout.uuid, value: 20 },
+    await expect(metricsService.measure("res-1", context)).resolves.toBe(2);
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith("res-1", [
+      { metricId: "m-1", subjectUuid: cart.uuid, value: 30 },
+      { metricId: "m-1", subjectUuid: checkout.uuid, value: 20 },
     ]);
   });
 
-  it('saves the subjects before storing the results', async () => {
-    const cart = createSubject(SubjectType.API, 'GET /api/cart');
-    metricsRepository.findAll.mockResolvedValue([metricList[0], { id: 'm-3', type: 'P90' }] as never);
+  it("saves the subjects before storing the results", async () => {
+    const cart = createSubject(SubjectType.API, "GET /api/cart");
+    metricsRepository.findAll.mockResolvedValue([
+      metricList[0],
+      { id: "m-3", type: "P90" },
+    ] as never);
     handler.handle.mockResolvedValue([{ subject: cart, value: 30 }]);
 
-    await metricsService.measure('res-1', context);
+    await metricsService.measure("res-1", context);
 
     expect(subjectsService.createMany).toHaveBeenCalledWith([cart, cart]);
     expect(subjectsService.createMany.mock.invocationCallOrder[0]).toBeLessThan(
@@ -85,12 +118,18 @@ describe('MetricsService', () => {
     );
   });
 
-  it('only stores the subjects a metric includes and does not exclude', async () => {
-    const [cart, health, orders] = ['GET /api/cart', 'GET /api/health', 'GET /api/orders'].map((description) =>
-      createSubject(SubjectType.API, description),
-    );
+  it("only stores the subjects a metric includes and does not exclude", async () => {
+    const [cart, health, orders] = [
+      "GET /api/cart",
+      "GET /api/health",
+      "GET /api/orders",
+    ].map((description) => createSubject(SubjectType.API, description));
     metricsRepository.findAll.mockResolvedValue([
-      { id: 'm-1', type: 'P90', config: { include: [cart.uuid, health.uuid], exclude: [health.uuid] } },
+      {
+        id: "m-1",
+        type: "P90",
+        config: { include: [cart.uuid, health.uuid], exclude: [health.uuid] },
+      },
     ] as never);
     handler.handle.mockResolvedValueOnce([
       { subject: cart, value: 1 },
@@ -98,151 +137,390 @@ describe('MetricsService', () => {
       { subject: orders, value: 3 },
     ]);
 
-    await expect(metricsService.measure('res-1', context)).resolves.toBe(1);
+    await expect(metricsService.measure("res-1", context)).resolves.toBe(1);
     expect(subjectsService.createMany).toHaveBeenCalledWith([cart]);
-    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
-      { metricId: 'm-1', subjectUuid: cart.uuid, value: 1 },
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith("res-1", [
+      { metricId: "m-1", subjectUuid: cart.uuid, value: 1 },
     ]);
   });
 
-  it('passes the analysis result to the handler', async () => {
-    await metricsService.measure('res-1', context);
-    expect(handler.handle).toHaveBeenCalledWith(metricList[0], context, 'res-1');
+  it("passes the analysis result to the handler", async () => {
+    await metricsService.measure("res-1", context);
+    expect(handler.handle).toHaveBeenCalledWith(
+      metricList[0],
+      context,
+      "res-1",
+    );
   });
 
-  it('skips metrics whose type has no handler', async () => {
-    await metricsService.measure('res-1', context);
-    expect(metricHandlerFactory.create).not.toHaveBeenCalledWith('UNKNOWN');
+  it("skips metrics whose type has no handler", async () => {
+    await metricsService.measure("res-1", context);
+    expect(metricHandlerFactory.create).not.toHaveBeenCalledWith("UNKNOWN");
   });
 
-  it('skips metrics the handler did not measure', async () => {
+  it("skips metrics the handler did not measure", async () => {
     handler.handle.mockResolvedValueOnce([]);
-    await metricsService.measure('res-1', context);
-    expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', []);
+    await metricsService.measure("res-1", context);
+    expect(metricResultsRepository.createMany).toHaveBeenCalledWith(
+      "res-1",
+      [],
+    );
   });
 
-  it('returns the results of an analysis result', async () => {
-    metricResultsRepository.findByAnalysisResult.mockResolvedValue([{ id: 'mr-1' }] as never);
-    await expect(metricsService.findResults('res-1')).resolves.toEqual([{ id: 'mr-1' }]);
-  });
-
-  it('exposes the unit and the subject of each result', async () => {
-    metricResultsRepository.findDetailedByAnalysisResult.mockResolvedValue([
-      {
-        id: 'mr-1',
-        value: 3,
-        subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart', createdAt: new Date() },
-        metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
-        evaluations: [],
-      },
-      { id: 'mr-2', value: 4, subject: null, metric: { id: 'm-9', type: 'P50', unit: 'MILLISECOND', description: 'P50' }, evaluations: [] },
+  it("returns the results of an analysis result", async () => {
+    metricResultsRepository.findByAnalysisResult.mockResolvedValue([
+      { id: "mr-1" },
     ] as never);
-
-    await expect(metricsService.findResultViews('res-1')).resolves.toEqual([
-      {
-        id: 'mr-1',
-        value: 3,
-        subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
-        metric: { id: 'm-9', type: 'HIGH_ISSUE_COUNT', unit: 'COUNT', description: 'High issues' },
-        evaluations: [],
-      },
-      { id: 'mr-2', value: 4, subject: null, metric: { id: 'm-9', type: 'P50', unit: 'MILLISECOND', description: 'P50' }, evaluations: [] },
+    await expect(metricsService.findResults("res-1")).resolves.toEqual([
+      { id: "mr-1" },
     ]);
   });
 
-  it('lists the metrics with their unit', async () => {
+  it("exposes the unit and the subject of each result in a page", async () => {
+    metricResultsRepository.findDetailedPage.mockResolvedValue({
+      total: 12,
+      items: [
+        {
+          id: "mr-1",
+          value: 3,
+          subject: {
+            uuid: "su-1",
+            type: "API",
+            description: "GET /api/cart",
+            createdAt: new Date(),
+          },
+          metric: {
+            id: "m-9",
+            type: "HIGH_ISSUE_COUNT",
+            unit: "COUNT",
+            description: "High issues",
+          },
+          evaluations: [],
+        },
+        {
+          id: "mr-2",
+          value: 4,
+          subject: null,
+          metric: {
+            id: "m-9",
+            type: "P50",
+            unit: "MILLISECOND",
+            description: "P50",
+          },
+          evaluations: [],
+        },
+      ],
+    } as never);
+
+    await expect(
+      metricsService.findResultPage("res-1", 20, 40),
+    ).resolves.toEqual({
+      total: 12,
+      items: [
+        {
+          id: "mr-1",
+          value: 3,
+          subject: { uuid: "su-1", type: "API", description: "GET /api/cart" },
+          metric: {
+            id: "m-9",
+            type: "HIGH_ISSUE_COUNT",
+            unit: "COUNT",
+            description: "High issues",
+          },
+          evaluations: [],
+        },
+        {
+          id: "mr-2",
+          value: 4,
+          subject: null,
+          metric: {
+            id: "m-9",
+            type: "P50",
+            unit: "MILLISECOND",
+            description: "P50",
+          },
+          evaluations: [],
+        },
+      ],
+    });
+    expect(metricResultsRepository.findDetailedPage).toHaveBeenCalledWith(
+      "res-1",
+      20,
+      40,
+    );
+  });
+
+  it("summarizes the duration metrics of an analysis result", async () => {
+    metricResultsRepository.findSummarySources.mockResolvedValue([
+      {
+        value: 300,
+        metric: { type: "P90" },
+        evaluations: [
+          {
+            status: "FAILED",
+            aggregate: "NONE",
+            operator: "GT",
+            threshold: 200,
+          },
+        ],
+      },
+    ] as never);
+
+    await expect(metricsService.findSummaries("res-1")).resolves.toEqual([
+      {
+        type: "P90",
+        worstValue: 300,
+        gateStatus: "FAILED",
+        limit: { operator: "GT", threshold: 200 },
+      },
+    ]);
+    expect(metricResultsRepository.findSummarySources).toHaveBeenCalledWith(
+      "res-1",
+      ["P50", "P90", "P95"],
+    );
+  });
+
+  it("lists the metrics with their unit", async () => {
     metricsRepository.findAll.mockResolvedValue([
-      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, config: {} },
+      {
+        id: "m-1",
+        schema: "API",
+        type: "P90",
+        unit: "MILLISECOND",
+        description: "P90 duration",
+        isActive: false,
+        config: {},
+      },
     ] as never);
 
-    await expect(metricsService.findAll({ isActive: false, schema: AnalysisSchema.API })).resolves.toEqual([
-      { id: 'm-1', schema: 'API', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: false, include: [], exclude: [] },
+    await expect(
+      metricsService.findAll({ isActive: false, schema: AnalysisSchema.API }),
+    ).resolves.toEqual([
+      {
+        id: "m-1",
+        schema: "API",
+        type: "P90",
+        unit: "MILLISECOND",
+        description: "P90 duration",
+        isActive: false,
+        include: [],
+        exclude: [],
+      },
     ]);
-    expect(metricsRepository.findAll).toHaveBeenCalledWith({ isActive: false, schema: AnalysisSchema.API });
+    expect(metricsRepository.findAll).toHaveBeenCalledWith({
+      isActive: false,
+      schema: AnalysisSchema.API,
+    });
   });
 
-  it('returns one metric, or null when it does not exist', async () => {
-    metricsRepository.findById.mockResolvedValueOnce({ id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'd', isActive: true } as never);
+  it("returns one metric, or null when it does not exist", async () => {
+    metricsRepository.findById.mockResolvedValueOnce({
+      id: "m-1",
+      type: "P90",
+      unit: "MILLISECOND",
+      description: "d",
+      isActive: true,
+    } as never);
     metricsRepository.findById.mockResolvedValueOnce(null);
 
-    await expect(metricsService.findOne('m-1')).resolves.toEqual({
-      id: 'm-1',
-      type: 'P90',
-      unit: 'MILLISECOND',
-      description: 'd',
+    await expect(metricsService.findOne("m-1")).resolves.toEqual({
+      id: "m-1",
+      type: "P90",
+      unit: "MILLISECOND",
+      description: "d",
       isActive: true,
       include: [],
       exclude: [],
     });
-    await expect(metricsService.findOne('missing')).resolves.toBeNull();
+    await expect(metricsService.findOne("missing")).resolves.toBeNull();
   });
 
-  describe('findSubjects', () => {
-    it('lists the subjects that have results for the metric', async () => {
-      metricsRepository.findById.mockResolvedValue({ id: 'm-1', type: 'ENDPOINT_P95' } as never);
-      subjectsService.findByMetric.mockResolvedValue([{ uuid: 'su-1', type: SubjectType.API, description: 'GET /api/cart' }]);
-
-      await expect(metricsService.findSubjects('m-1')).resolves.toEqual([
-        { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
+  describe("findSubjects", () => {
+    it("lists the subjects that have results for the metric", async () => {
+      metricsRepository.findById.mockResolvedValue({
+        id: "m-1",
+        type: "ENDPOINT_P95",
+      } as never);
+      subjectsService.findByMetric.mockResolvedValue([
+        { uuid: "su-1", type: SubjectType.API, description: "GET /api/cart" },
       ]);
-      expect(subjectsService.findByMetric).toHaveBeenCalledWith('m-1');
+
+      await expect(metricsService.findSubjects("m-1")).resolves.toEqual([
+        { uuid: "su-1", type: "API", description: "GET /api/cart" },
+      ]);
+      expect(subjectsService.findByMetric).toHaveBeenCalledWith("m-1");
     });
 
-    it('throws METRIC_NOT_FOUND for an unknown metric', async () => {
+    it("throws METRIC_NOT_FOUND for an unknown metric", async () => {
       metricsRepository.findById.mockResolvedValue(null);
 
-      await expect(metricsService.findSubjects('missing')).rejects.toBeInstanceOf(NotFoundException);
+      await expect(
+        metricsService.findSubjects("missing"),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(subjectsService.findByMetric).not.toHaveBeenCalled();
     });
   });
 
-  describe('update', () => {
-    const row = { id: 'm-1', type: 'P90', unit: 'MILLISECOND', description: 'P90 duration', isActive: true, config: {} };
+  describe("findHistory", () => {
+    it("returns a page of results with their analysis and branch", async () => {
+      metricsRepository.findById.mockResolvedValue({
+        id: "m-1",
+        type: "P90",
+      } as never);
+      metricResultsRepository.findHistoryByMetric.mockResolvedValue({
+        total: 7,
+        items: [
+          {
+            id: "mr-1",
+            value: 12,
+            createdAt: new Date("2026-01-02T03:04:05.000Z"),
+            subject: null,
+            evaluations: [
+              {
+                status: "FAILED",
+                aggregate: "NONE",
+                baseline: null,
+                operator: "GT",
+                threshold: 10,
+              },
+            ],
+            analysisResult: {
+              analysis: {
+                id: "a-1",
+                title: "Run 1",
+                branch: { id: "b-1", name: "main" },
+              },
+            },
+          },
+        ],
+      } as never);
 
-    it('updates the description and the active flag', async () => {
+      await expect(metricsService.findHistory("m-1", 20, 40)).resolves.toEqual({
+        total: 7,
+        items: [
+          {
+            id: "mr-1",
+            value: 12,
+            createdAt: "2026-01-02T03:04:05.000Z",
+            subject: null,
+            analysis: {
+              id: "a-1",
+              title: "Run 1",
+              branch: { id: "b-1", name: "main" },
+            },
+            evaluations: [
+              {
+                status: "FAILED",
+                aggregate: "NONE",
+                baseline: null,
+                operator: "GT",
+                threshold: 10,
+              },
+            ],
+          },
+        ],
+      });
+      expect(metricResultsRepository.findHistoryByMetric).toHaveBeenCalledWith(
+        "m-1",
+        20,
+        40,
+      );
+    });
+
+    it("throws METRIC_NOT_FOUND for an unknown metric", async () => {
+      metricsRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        metricsService.findHistory("missing", 20, 0),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(
+        metricResultsRepository.findHistoryByMetric,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("update", () => {
+    const row = {
+      id: "m-1",
+      type: "P90",
+      unit: "MILLISECOND",
+      description: "P90 duration",
+      isActive: true,
+      config: {},
+    };
+
+    it("updates the description and the active flag", async () => {
       metricsRepository.findById.mockResolvedValue(row as never);
-      metricsRepository.update.mockResolvedValue({ ...row, description: 'New', isActive: false } as never);
+      metricsRepository.update.mockResolvedValue({
+        ...row,
+        description: "New",
+        isActive: false,
+      } as never);
 
-      await expect(metricsService.update('m-1', { description: 'New', isActive: false })).resolves.toMatchObject({
-        description: 'New',
+      await expect(
+        metricsService.update("m-1", { description: "New", isActive: false }),
+      ).resolves.toMatchObject({
+        description: "New",
         isActive: false,
       });
-      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', { description: 'New', isActive: false });
-    });
-
-    it('stores include and exclude in the config and keeps the other keys', async () => {
-      metricsRepository.findById.mockResolvedValue({ ...row, config: { other: 1, exclude: ['x'] } } as never);
-      metricsRepository.update.mockResolvedValue({ ...row, config: { other: 1, include: ['a'], exclude: ['x'] } } as never);
-
-      await expect(metricsService.update('m-1', { include: ['a'] })).resolves.toMatchObject({ include: ['a'], exclude: ['x'] });
-      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', {
-        description: undefined,
-        isActive: undefined,
-        config: { other: 1, include: ['a'], exclude: ['x'] },
+      expect(metricsRepository.update).toHaveBeenCalledWith("m-1", {
+        description: "New",
+        isActive: false,
       });
     });
 
-    it('leaves the config alone when only the description changes', async () => {
+    it("stores include and exclude in the config and keeps the other keys", async () => {
+      metricsRepository.findById.mockResolvedValue({
+        ...row,
+        config: { other: 1, exclude: ["x"] },
+      } as never);
+      metricsRepository.update.mockResolvedValue({
+        ...row,
+        config: { other: 1, include: ["a"], exclude: ["x"] },
+      } as never);
+
+      await expect(
+        metricsService.update("m-1", { include: ["a"] }),
+      ).resolves.toMatchObject({ include: ["a"], exclude: ["x"] });
+      expect(metricsRepository.update).toHaveBeenCalledWith("m-1", {
+        description: undefined,
+        isActive: undefined,
+        config: { other: 1, include: ["a"], exclude: ["x"] },
+      });
+    });
+
+    it("leaves the config alone when only the description changes", async () => {
       metricsRepository.findById.mockResolvedValue(row as never);
       metricsRepository.update.mockResolvedValue(row as never);
 
-      await metricsService.update('m-1', { description: 'New' });
-      expect(metricsRepository.update).toHaveBeenCalledWith('m-1', { description: 'New', isActive: undefined, config: undefined });
+      await metricsService.update("m-1", { description: "New" });
+      expect(metricsRepository.update).toHaveBeenCalledWith("m-1", {
+        description: "New",
+        isActive: undefined,
+        config: undefined,
+      });
     });
 
-    it('keeps the metric unchanged when nothing is sent', async () => {
+    it("keeps the metric unchanged when nothing is sent", async () => {
       metricsRepository.findById.mockResolvedValue(row as never);
 
-      await expect(metricsService.update('m-1', {})).resolves.toMatchObject({ id: 'm-1', isActive: true });
+      await expect(metricsService.update("m-1", {})).resolves.toMatchObject({
+        id: "m-1",
+        isActive: true,
+      });
       expect(metricsRepository.update).not.toHaveBeenCalled();
     });
 
-    it('throws METRIC_NOT_FOUND for an unknown id', async () => {
+    it("throws METRIC_NOT_FOUND for an unknown id", async () => {
       metricsRepository.findById.mockResolvedValue(null);
 
-      const error = await metricsService.update('missing', { isActive: false }).catch((e: NotFoundException) => e);
+      const error = await metricsService
+        .update("missing", { isActive: false })
+        .catch((e: NotFoundException) => e);
 
-      expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.METRIC_NOT_FOUND });
+      expect((error as NotFoundException).getResponse()).toEqual({
+        code: ErrorCode.METRIC_NOT_FOUND,
+      });
       expect(metricsRepository.update).not.toHaveBeenCalled();
     });
   });

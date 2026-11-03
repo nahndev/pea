@@ -4,11 +4,21 @@ import { useAnalysisProgress } from '@/modules/analyses';
 import type { UpdateMetricInput } from '../metrics.schemas';
 import { metricsService } from '../services/metrics.service';
 
-export const useMetricResults = (analysisId: string) => {
+export const useMetricResults = (analysisId: string, page: number) => {
   const { isLoaded, version } = useAnalysisProgress(analysisId);
   return useQuery({
-    queryKey: ['metrics', 'results', analysisId, version],
-    queryFn: () => metricsService.listResults(analysisId),
+    queryKey: ['metrics', 'results', analysisId, page, version],
+    queryFn: () => metricsService.listResults(analysisId, page),
+    enabled: isLoaded,
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useMetricSummaries = (analysisId: string) => {
+  const { isLoaded, version } = useAnalysisProgress(analysisId);
+  return useQuery({
+    queryKey: ['metrics', 'summaries', analysisId, version],
+    queryFn: () => metricsService.listSummaries(analysisId),
     enabled: isLoaded,
     placeholderData: keepPreviousData,
   });
@@ -30,6 +40,13 @@ export const useMetric = (metricId: string) =>
 
 export const useMetricSubjects = (metricId: string) =>
   useQuery({ queryKey: ['metrics', 'subjects', metricId], queryFn: () => metricsService.listSubjects(metricId) });
+
+export const useMetricHistory = (metricId: string, page: number) =>
+  useQuery({
+    queryKey: ['metrics', 'history', metricId, page],
+    queryFn: () => metricsService.listHistory(metricId, page),
+    placeholderData: keepPreviousData,
+  });
 
 export const useUpdateMetric = (metricId: string) => {
   const queryClient = useQueryClient();

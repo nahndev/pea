@@ -8,3 +8,9 @@ export const updateMetricSchema = z.object({
 });
 
 export type UpdateMetricInput = z.infer<typeof updateMetricSchema>;
+
+export const metricPageParamsSchema = z.object({
+  page: z.coerce.number().int().min(1).catch(1),
+});
+
+export type MetricPageParams = z.infer<typeof metricPageParamsSchema>;

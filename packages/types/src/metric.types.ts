@@ -44,6 +44,13 @@ export interface MetricResultView {
   evaluations: MetricEvaluationView[];
 }
 
+export interface MetricSummaryView {
+  type: MetricType;
+  worstValue: number;
+  gateStatus: MetricEvaluationStatus | null;
+  limit: { operator: MetricConditionOperator; threshold: number } | null;
+}
+
 export interface MetricTrendSeries {
   /** `<metric id>:<subject uuid>` (empty without a subject); the key used in `MetricTrendPoint.values` */
   key: string;
@@ -61,4 +68,13 @@ export interface MetricTrendPoint {
 export interface MetricTrend {
   series: MetricTrendSeries[];
   points: MetricTrendPoint[];
+}
+
+export interface MetricHistoryItemView {
+  id: string;
+  value: number;
+  createdAt: string;
+  subject: SubjectView | null;
+  analysis: { id: string; title: string; branch: { id: string; name: string } };
+  evaluations: MetricEvaluationView[];
 }

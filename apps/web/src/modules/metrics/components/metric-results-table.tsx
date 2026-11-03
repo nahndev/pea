@@ -1,5 +1,8 @@
+import type { MetricUnit } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import type { MetricResultView } from '@tomato/types';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { GateStatusBadge } from '@/modules/analyses';
 import { formatMetricValue } from '../format-metric-value';
 import { metricSeriesKey, metricSeriesLabel } from '../metric-series';
@@ -7,67 +10,85 @@ import { AGGREGATE_LABEL, METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } fr
 
 interface MetricResultsTableProps {
   results: MetricResultView[];
-  picked: string[];
-  onToggle: (key: string) => void;
+  pickedKeys: string[];
+  pickedUnit: MetricUnit | undefined;
+  onToggle: (result: MetricResultView) => void;
 }
 
-export function MetricResultsTable({ results, picked, onToggle }: MetricResultsTableProps) {
-  const pickedUnit = results.find(({ metric, subject }) => picked.includes(metricSeriesKey(metric.id, subject)))?.metric.unit;
+export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle }: MetricResultsTableProps) {
+  const router = useRouter();
 
   return (
     <div className="rounded-lg border bg-card shadow-card">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
             <TableHead className="w-10">
               <span className="sr-only">Show in trend chart</span>
             </TableHead>
-            <TableHead>Metric</TableHead>
-            <TableHead>Endpoint</TableHead>
-            <TableHead className="text-right">Value</TableHead>
-            <TableHead>Unit</TableHead>
+            <TableHead className="w-1/5">Metric</TableHead>
+            <TableHead className="w-1/4">Endpoint</TableHead>
+            <TableHead className="w-28 text-right">Value</TableHead>
+            <TableHead className="w-16">Unit</TableHead>
             <TableHead>Conditions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {results.map(({ id, metric, subject, value, evaluations }) => {
+          {results.map((result) => {
+            const { id, metric, subject, value, evaluations } = result;
             const key = metricSeriesKey(metric.id, subject);
-            const isPicked = picked.includes(key);
+            const isPicked = pickedKeys.includes(key);
             const isOtherUnit = pickedUnit !== undefined && pickedUnit !== metric.unit;
             return (
-              <TableRow key={id}>
+              <TableRow
+                key={id}
+                className="cursor-pointer"
+                onClick={(event) => {
+                  if (!(event.target as HTMLElement).closest('a, input')) router.push(`/metrics/${metric.id}`);
+                }}
+              >
                 <TableCell>
                   <input
                     type="checkbox"
                     checked={isPicked}
                     disabled={!isPicked && isOtherUnit}
-                    onChange={() => onToggle(key)}
+                    onChange={() => onToggle(result)}
                     aria-label={`Show ${metricSeriesLabel(metric.type, subject)} in the trend chart`}
                     title={!isPicked && isOtherUnit ? 'Metrics with a different unit cannot share a chart' : undefined}
                   />
                 </TableCell>
-                <TableCell className="whitespace-nowrap font-medium">{METRIC_LABEL[metric.type]}</TableCell>
-                <TableCell className="max-w-56 break-all font-mono text-xs">
+                <TableCell className="font-medium">
+                  <Link href={`/metrics/${metric.id}`} title={METRIC_LABEL[metric.type]} className="block truncate hover:underline focus-ring rounded-sm">
+                    {METRIC_LABEL[metric.type]}
+                  </Link>
+                </TableCell>
+                <TableCell className="truncate font-mono text-xs" title={subject?.description}>
                   {subject?.description ?? <span className="font-sans text-muted-foreground">All requests</span>}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{formatMetricValue(metric.unit, value)}</TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">{METRIC_UNIT_LABEL[metric.unit]}</TableCell>
+                <TableCell className="truncate text-right tabular-nums">{formatMetricValue(metric.unit, value)}</TableCell>
+                <TableCell className="truncate text-muted-foreground">{METRIC_UNIT_LABEL[metric.unit]}</TableCell>
                 <TableCell>
                   {evaluations.length === 0 ? (
                     <span className="text-muted-foreground">—</span>
                   ) : (
                     <ul className="flex flex-col gap-1">
-                      {evaluations.map((evaluation) => (
-                        <li key={`${evaluation.aggregate}-${evaluation.operator}-${evaluation.threshold}`} className="flex items-center gap-2 whitespace-nowrap">
-                          <GateStatusBadge status={evaluation.status} />
-                          <span className="text-xs text-muted-foreground">
-                            Fails {VIOLATION_PHRASE[evaluation.operator]} {formatMetricValue(metric.unit, evaluation.threshold)}
-                            {evaluation.baseline !== null
-                              ? ` over ${AGGREGATE_LABEL[evaluation.aggregate].toLowerCase()} of passed runs (${formatMetricValue(metric.unit, evaluation.baseline)})`
-                              : ''}
-                          </span>
-                        </li>
-                      ))}
+                      {evaluations.map((evaluation) => {
+                        const phrase = `Fails ${VIOLATION_PHRASE[evaluation.operator]} ${formatMetricValue(metric.unit, evaluation.threshold)}${
+                          evaluation.baseline !== null
+                            ? ` over ${AGGREGATE_LABEL[evaluation.aggregate].toLowerCase()} of passed runs (${formatMetricValue(metric.unit, evaluation.baseline)})`
+                            : ''
+                        }`;
+                        return (
+                          <li key={`${evaluation.aggregate}-${evaluation.operator}-${evaluation.threshold}`} className="flex min-w-0 items-center gap-2">
+                            <span className="shrink-0">
+                              <GateStatusBadge status={evaluation.status} />
+                            </span>
+                            <span className="truncate text-xs text-muted-foreground" title={phrase}>
+                              {phrase}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </TableCell>
