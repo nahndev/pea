@@ -1,4 +1,4 @@
-import type { IssueStatus, IssueSubjectStatus, RuleType, Severity } from '@tomato/constants';
+import type { IssueSubjectStatus, RuleType, Severity } from '@tomato/constants';
 import type { SubjectView } from './metric.types';
 
 export interface IssueSubjectView {
@@ -8,11 +8,10 @@ export interface IssueSubjectView {
 
 export interface IssueView {
   id: string;
-  status: IssueStatus;
   severity: Severity;
   description: string | null;
   subject: SubjectView;
-  issueSubject: IssueSubjectView | null;
+  issueSubject: IssueSubjectView;
   issueCount: number;
   createdAt: string;
   rule: { id: string; type: RuleType; description: string };

@@ -1,5 +1,4 @@
 export * from './error-code.constants';
-export * from './issue-status.constants';
 export * from './issue-subject-status.constants';
 export * from './severity.constants';
 export * from './rule-type.constants';

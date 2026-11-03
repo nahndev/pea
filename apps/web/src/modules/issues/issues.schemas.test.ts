@@ -7,9 +7,9 @@ describe('issueListParamsSchema', () => {
   });
 
   it('accepts valid filters', () => {
-    expect(issueListParamsSchema.parse({ page: '3', status: 'OPEN', severity: 'HIGH', ruleType: 'P90_FAILURE' })).toEqual({
+    expect(issueListParamsSchema.parse({ page: '3', status: 'PLANNING', severity: 'HIGH', ruleType: 'P90_FAILURE' })).toEqual({
       page: 3,
-      status: 'OPEN',
+      status: 'PLANNING',
       severity: 'HIGH',
       ruleType: 'P90_FAILURE',
     });

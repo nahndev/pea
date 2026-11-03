@@ -18,7 +18,7 @@ export function IssueSubjectStatusSelect({ issueSubject }: IssueSubjectStatusSel
   return (
     <div className="flex flex-col gap-1">
       <Select value={issueSubject.status} onValueChange={(status) => mutate(status as IssueSubjectStatus)} disabled={isPending}>
-        <SelectTrigger aria-label="Subject status" className="w-36">
+        <SelectTrigger aria-label="Status" className="w-36">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

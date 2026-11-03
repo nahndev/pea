@@ -16,10 +16,6 @@ export class IssueSubjectsRepository {
     return count;
   }
 
-  findByKeys(keys: IssueSubjectKey[]): Promise<IssueSubject[]> {
-    return this.prismaService.issueSubject.findMany({ where: { OR: keys } });
-  }
-
   findById(id: string): Promise<IssueSubject | null> {
     return this.prismaService.issueSubject.findUnique({ where: { id } });
   }

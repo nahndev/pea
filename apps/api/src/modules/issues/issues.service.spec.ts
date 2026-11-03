@@ -8,7 +8,7 @@ import { IssuesService } from './issues.service';
 
 describe('IssuesService', () => {
   let issuesRepository: jest.Mocked<Pick<IssuesRepository, 'createMany' | 'countBySeverity' | 'countByKeys' | 'findPage' | 'findById'>>;
-  let issueSubjectsRepository: jest.Mocked<Pick<IssueSubjectsRepository, 'createMany' | 'findByKeys' | 'findById' | 'update'>>;
+  let issueSubjectsRepository: jest.Mocked<Pick<IssueSubjectsRepository, 'createMany' | 'findById' | 'update'>>;
   let subjectsService: jest.Mocked<Pick<SubjectsService, 'createMany'>>;
   let issuesService: IssuesService;
 
@@ -24,7 +24,6 @@ describe('IssuesService', () => {
     };
     issueSubjectsRepository = {
       createMany: jest.fn().mockResolvedValue(0),
-      findByKeys: jest.fn().mockResolvedValue([]),
       findById: jest.fn(),
       update: jest.fn(),
     };
@@ -76,17 +75,17 @@ describe('IssuesService', () => {
     expect(issuesRepository.countBySeverity).toHaveBeenCalledWith('res-1', Severity.HIGH);
   });
 
-  it('forwards the severity filter and exposes the severity of each issue', async () => {
+  it('forwards the filters and exposes the subject status of each issue', async () => {
     issuesRepository.findPage.mockResolvedValue({
       items: [
         {
           id: 'i-1',
           ruleId: 'r-1',
           subjectUuid: 'su-1',
-          status: 'OPEN',
           severity: 'HIGH',
           description: 'slow',
           subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart', createdAt: new Date() },
+          issueSubject: { id: 'is-1', ruleId: 'r-1', subjectUuid: 'su-1', status: 'PLANNING' },
           createdAt: new Date('2026-10-02T10:00:00.000Z'),
           rule: { id: 'r-1', type: 'P90_FAILURE', description: 'P90 failure' },
         },
@@ -94,27 +93,28 @@ describe('IssuesService', () => {
           id: 'i-2',
           ruleId: 'r-2',
           subjectUuid: DEFAULT_SUBJECT.uuid,
-          status: 'OPEN',
           severity: 'HIGH',
           description: 'slow',
           subject: { ...DEFAULT_SUBJECT, createdAt: new Date() },
+          issueSubject: { id: 'is-2', ruleId: 'r-2', subjectUuid: DEFAULT_SUBJECT.uuid, status: 'FIXED' },
           createdAt: new Date('2026-10-02T10:00:00.000Z'),
           rule: { id: 'r-1', type: 'P90_FAILURE', description: 'P90 failure' },
         },
       ] as never,
       total: 2,
     });
-    issueSubjectsRepository.findByKeys.mockResolvedValue([
-      { id: 'is-1', ruleId: 'r-1', subjectUuid: 'su-1', status: 'PLANNING' } as never,
-      { id: 'is-2', ruleId: 'r-2', subjectUuid: DEFAULT_SUBJECT.uuid, status: 'FIXED' } as never,
-    ]);
     issuesRepository.countByKeys.mockResolvedValue([{ ruleId: 'r-1', subjectUuid: 'su-1', count: 5 }]);
 
-    const page = await issuesService.findPage('res-1', { severity: Severity.HIGH, limit: 20, offset: 0 });
+    const page = await issuesService.findPage('res-1', {
+      status: IssueSubjectStatus.PLANNING,
+      severity: Severity.HIGH,
+      limit: 20,
+      offset: 0,
+    });
 
     expect(issuesRepository.findPage).toHaveBeenCalledWith(
       'res-1',
-      { status: undefined, severity: Severity.HIGH, ruleType: undefined },
+      { status: IssueSubjectStatus.PLANNING, severity: Severity.HIGH, ruleType: undefined },
       20,
       0,
     );
@@ -131,12 +131,10 @@ describe('IssuesService', () => {
       issueSubject: { id: 'is-2', status: IssueSubjectStatus.FIXED },
       issueCount: 0,
     });
-    const keys = [
+    expect(issuesRepository.countByKeys).toHaveBeenCalledWith([
       { ruleId: 'r-1', subjectUuid: 'su-1' },
       { ruleId: 'r-2', subjectUuid: DEFAULT_SUBJECT.uuid },
-    ];
-    expect(issueSubjectsRepository.findByKeys).toHaveBeenCalledWith(keys);
-    expect(issuesRepository.countByKeys).toHaveBeenCalledWith(keys);
+    ]);
   });
 
   it('skips the database when there is nothing to create', async () => {
@@ -150,21 +148,17 @@ describe('IssuesService', () => {
         id: 'i-1',
         ruleId: 'r-1',
         subjectUuid: DEFAULT_SUBJECT.uuid,
-        status: 'OPEN',
         severity: 'HIGH',
         description: 'slow',
         subject: { ...DEFAULT_SUBJECT, createdAt: new Date() },
+        issueSubject: { id: 'is-1', ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid, status: 'PLANNING' },
         createdAt: new Date('2026-10-02T10:00:00.000Z'),
         rule: { id: 'r-1', type: 'P90_FAILURE', description: 'P90 failure' },
       } as never);
-      issueSubjectsRepository.findByKeys.mockResolvedValue([
-        { id: 'is-1', ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid, status: 'PLANNING' } as never,
-      ]);
       issuesRepository.countByKeys.mockResolvedValue([{ ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid, count: 3 }]);
 
       await expect(issuesService.findOne('i-1')).resolves.toEqual({
         id: 'i-1',
-        status: 'OPEN',
         severity: 'HIGH',
         description: 'slow',
         subject: DEFAULT_SUBJECT,
@@ -173,7 +167,6 @@ describe('IssuesService', () => {
         rule: { id: 'r-1', type: 'P90_FAILURE', description: 'P90 failure' },
         issueCount: 3,
       });
-      expect(issueSubjectsRepository.findByKeys).toHaveBeenCalledWith([{ ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid }]);
       expect(issuesRepository.countByKeys).toHaveBeenCalledWith([{ ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid }]);
     });
 
@@ -181,7 +174,7 @@ describe('IssuesService', () => {
       issuesRepository.findById.mockResolvedValue(null);
 
       await expect(issuesService.findOne('missing')).rejects.toBeInstanceOf(NotFoundException);
-      expect(issueSubjectsRepository.findByKeys).not.toHaveBeenCalled();
+      expect(issuesRepository.countByKeys).not.toHaveBeenCalled();
     });
   });
 

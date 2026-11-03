@@ -8,7 +8,7 @@ import { StatusBadge } from '@/shared/components/status-badge';
 import { formatDateTime } from '@/shared/lib/format';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssue } from '../hooks/use-issues';
-import { ISSUE_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
+import { RULE_TYPE_LABEL } from '../issues.constants';
 import { IssueSubjectStatusSelect } from './issue-subject-status-select';
 
 interface IssueDetailViewProps {
@@ -45,10 +45,8 @@ export function IssueDetailView({ analysisId, issueId }: IssueDetailViewProps) {
           </dd>
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <StatusBadge style={ISSUE_STATUS_STYLE[data.status]} />
+            <IssueSubjectStatusSelect issueSubject={issueSubject} />
           </dd>
-          <dt className="text-muted-foreground">Subject status</dt>
-          <dd>{issueSubject ? <IssueSubjectStatusSelect issueSubject={issueSubject} /> : <span className="text-muted-foreground">—</span>}</dd>
           <dt className="text-muted-foreground">Count</dt>
           <dd className="tabular-nums">{data.issueCount}</dd>
           <dt className="text-muted-foreground">Raised</dt>

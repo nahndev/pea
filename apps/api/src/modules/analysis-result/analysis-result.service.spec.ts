@@ -212,9 +212,9 @@ describe('AnalysisResultService reads', () => {
   it('lists the issues of the latest result with the filters', async () => {
     analysisResultRepository.findLatestByAnalysis.mockResolvedValue({ id: 'res-2' } as never);
 
-    await analysisResultService.listIssues('an-1', { ...query, status: 'OPEN' });
+    await analysisResultService.listIssues('an-1', { ...query, status: 'PLANNING' });
 
-    expect(issuesService.findPage).toHaveBeenCalledWith('res-2', { ...query, status: 'OPEN' });
+    expect(issuesService.findPage).toHaveBeenCalledWith('res-2', { ...query, status: 'PLANNING' });
   });
 
   it('returns empty pages while the analysis has no result yet', async () => {

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import {
   ErrorCode,
-  type IssueStatus,
   type IssueSubjectStatus,
   type RuleType,
   type Severity,
@@ -97,29 +96,18 @@ export class IssuesService {
   private async toViews(issues: IssueWithRelations[]): Promise<IssueView[]> {
     if (!issues.length) return [];
     const keys = issues.map(({ ruleId, subjectUuid }) => ({ ruleId, subjectUuid }));
-    const [issueSubjects, counts] = await Promise.all([
-      this.issueSubjectsRepository.findByKeys(keys),
-      this.issuesRepository.countByKeys(keys),
-    ]);
-    const issueSubjectByKey = new Map(issueSubjects.map((issueSubject) => [toKey(issueSubject), issueSubject]));
+    const counts = await this.issuesRepository.countByKeys(keys);
     const countByKey = new Map(counts.map(({ count, ...key }) => [toKey(key), count]));
-    return issues.map((issue) =>
-      this.toView(issue, issueSubjectByKey.get(toKey(issue)), countByKey.get(toKey(issue)) ?? 0),
-    );
+    return issues.map((issue) => this.toView(issue, countByKey.get(toKey(issue)) ?? 0));
   }
 
-  private toView(
-    issue: IssueWithRelations,
-    issueSubject: IssueSubject | undefined,
-    issueCount: number,
-  ): IssueView {
+  private toView(issue: IssueWithRelations, issueCount: number): IssueView {
     return {
       id: issue.id,
-      status: issue.status as IssueStatus,
       severity: issue.severity as Severity,
       description: issue.description,
       subject: toSubjectView(issue.subject),
-      issueSubject: issueSubject ? this.toIssueSubjectView(issueSubject) : null,
+      issueSubject: this.toIssueSubjectView(issue.issueSubject),
       issueCount,
       createdAt: issue.createdAt.toISOString(),
       rule: {

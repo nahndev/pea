@@ -1,11 +1,5 @@
-import { IssueStatus, IssueSubjectStatus, RuleType } from '@tomato/constants';
+import { IssueSubjectStatus, RuleType } from '@tomato/constants';
 import type { StatusStyle } from '@/shared/components/status-badge';
-
-export const ISSUE_STATUS_STYLE: Record<IssueStatus, StatusStyle> = {
-  [IssueStatus.OPEN]: { label: 'Open', intent: 'danger' },
-  [IssueStatus.RESOLVED]: { label: 'Resolved', intent: 'success' },
-  [IssueStatus.DISMISSED]: { label: 'Dismissed', intent: 'neutral' },
-};
 
 export const ISSUE_SUBJECT_STATUS_STYLE: Record<IssueSubjectStatus, StatusStyle> = {
   [IssueSubjectStatus.TO_REVIEW]: { label: 'To review', intent: 'warning' },

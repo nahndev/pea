@@ -1,11 +1,11 @@
 import { IsIn, IsOptional } from 'class-validator';
-import { IssueStatus, RuleType, Severity } from '@tomato/constants';
+import { IssueSubjectStatus, RuleType, Severity } from '@tomato/constants';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class ListIssuesQueryDto extends PaginationQueryDto {
   @IsOptional()
-  @IsIn(Object.values(IssueStatus))
-  status?: IssueStatus;
+  @IsIn(Object.values(IssueSubjectStatus))
+  status?: IssueSubjectStatus;
 
   @IsOptional()
   @IsIn(Object.values(Severity))

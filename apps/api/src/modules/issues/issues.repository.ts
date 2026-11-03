@@ -3,7 +3,9 @@ import type { Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { IssueSubjectKey } from './issue-subjects.repository';
 
-export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true; subject: true } }>;
+const ISSUE_INCLUDE = { rule: true, subject: true, issueSubject: true } as const satisfies Prisma.IssueInclude;
+
+export type IssueWithRelations = Prisma.IssueGetPayload<{ include: typeof ISSUE_INCLUDE }>;
 
 export interface IssueSource {
   ruleId: string;
@@ -26,7 +28,7 @@ export class IssuesRepository {
   findById(id: string): Promise<IssueWithRelations | null> {
     return this.prismaService.issue.findUnique({
       where: { id },
-      include: { rule: true, subject: true },
+      include: ISSUE_INCLUDE,
     });
   }
 
@@ -51,14 +53,14 @@ export class IssuesRepository {
   ): Promise<{ items: IssueWithRelations[]; total: number }> {
     const where: Prisma.IssueWhereInput = {
       analysisResultId,
-      status: filters.status,
+      issueSubject: filters.status ? { status: filters.status } : undefined,
       severity: filters.severity,
       rule: filters.ruleType ? { type: filters.ruleType } : undefined,
     };
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.issue.findMany({
         where,
-        include: { rule: true, subject: true },
+        include: ISSUE_INCLUDE,
         orderBy: { id: 'desc' },
         take: limit,
         skip: offset,

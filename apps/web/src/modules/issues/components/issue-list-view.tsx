@@ -12,7 +12,7 @@ import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssues } from '../hooks/use-issues';
-import { ISSUE_STATUS_STYLE, ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
+import { ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
 import { IssueFilters } from './issue-filters';
 
@@ -48,7 +48,6 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                   <TableHead>Subject</TableHead>
                   <TableHead>Details</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Subject status</TableHead>
                   <TableHead className="text-right">Count</TableHead>
                   <TableHead>Raised</TableHead>
                 </TableRow>
@@ -79,14 +78,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <StatusBadge style={ISSUE_STATUS_STYLE[issue.status]} />
-                    </TableCell>
-                    <TableCell>
-                      {issue.issueSubject ? (
-                        <StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issue.issueSubject.status]} />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      <StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issue.issueSubject.status]} />
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{issue.issueCount}</TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(issue.createdAt)}</TableCell>

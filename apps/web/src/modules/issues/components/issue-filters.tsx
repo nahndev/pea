@@ -1,11 +1,11 @@
 'use client';
 
-import { IssueStatus, RuleType, Severity } from '@tomato/constants';
+import { IssueSubjectStatus, RuleType, Severity } from '@tomato/constants';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tomato/ui';
 import { useRouter } from 'next/navigation';
 import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
-import { ALL_FILTER, ISSUE_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
+import { ALL_FILTER, ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
 
 interface IssueFiltersProps {
@@ -25,15 +25,15 @@ export function IssueFilters({ analysisId, params }: IssueFiltersProps) {
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Select value={params.status ?? ALL_FILTER} onValueChange={(value) => update({ status: toFilter(value) as IssueStatus | undefined })}>
+      <Select value={params.status ?? ALL_FILTER} onValueChange={(value) => update({ status: toFilter(value) as IssueSubjectStatus | undefined })}>
         <SelectTrigger aria-label="Filter by status" className="w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL_FILTER}>All statuses</SelectItem>
-          {Object.values(IssueStatus).map((status) => (
+          {Object.values(IssueSubjectStatus).map((status) => (
             <SelectItem key={status} value={status}>
-              {ISSUE_STATUS_STYLE[status].label}
+              {ISSUE_SUBJECT_STATUS_STYLE[status].label}
             </SelectItem>
           ))}
         </SelectContent>
