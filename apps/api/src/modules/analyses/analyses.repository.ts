@@ -70,6 +70,10 @@ export class AnalysesRepository {
     return { items, total };
   }
 
+  countBySchema(branchId: string) {
+    return this.prismaService.analysis.groupBy({ by: ['schema'], where: { branchId }, _count: { _all: true } });
+  }
+
   findRecentByBranch(
     branchId: string,
     schema: AnalysisSchema,

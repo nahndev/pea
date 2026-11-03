@@ -14,6 +14,7 @@ import {
   type SubjectType,
 } from "@tomato/constants";
 import type {
+  AnalysisCountBySchema,
   AnalysisDetail,
   AnalysisResultSummary,
   AnalysisSummary,
@@ -89,6 +90,15 @@ export class AnalysesService {
     await this.branchesService.findOne(branchId);
     const { items, total } = await this.analysesRepository.findPageByBranch(branchId, schema, limit, offset);
     return { items: items.map((analysis) => this.toSummary(analysis)), total };
+  }
+
+  async countByBranch(branchId: string): Promise<AnalysisCountBySchema> {
+    await this.branchesService.findOne(branchId);
+    const groups = await this.analysesRepository.countBySchema(branchId);
+    const counts = Object.fromEntries(Object.values(AnalysisSchema).map((schema) => [schema, 0])) as AnalysisCountBySchema;
+    for (const { schema, _count } of groups)
+      if (schema in counts) counts[schema as AnalysisSchema] = _count._all;
+    return counts;
   }
 
   async getMetricTrend(branchId: string, schema: AnalysisSchema, limit: number, picks: string[] = []): Promise<MetricTrend> {

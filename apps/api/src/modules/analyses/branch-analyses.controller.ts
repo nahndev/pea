@@ -16,6 +16,13 @@ export class BranchAnalysesController {
     return this.analysesService.findByBranch(branchId, query);
   }
 
+  @Get('analysis-counts')
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  countAnalyses(@Param('branchId', ParseUUIDPipe) branchId: string) {
+    return this.analysesService.countByBranch(branchId);
+  }
+
   @Get('metrics/trend')
   @ApiOkResponse()
   @ApiNotFoundResponse()

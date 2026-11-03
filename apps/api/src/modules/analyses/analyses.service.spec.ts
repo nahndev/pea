@@ -155,7 +155,10 @@ describe("AnalysesService reads", () => {
   let analysesRepository: jest.Mocked<
     Pick<
       AnalysesRepository,
-      "findDetailById" | "findPageByBranch" | "findRecentByBranch"
+      | "findDetailById"
+      | "findPageByBranch"
+      | "findRecentByBranch"
+      | "countBySchema"
     >
   >;
   let branchesService: jest.Mocked<Pick<BranchesService, "findOne">>;
@@ -180,6 +183,7 @@ describe("AnalysesService reads", () => {
       findDetailById: jest.fn(),
       findPageByBranch: jest.fn(),
       findRecentByBranch: jest.fn(),
+      countBySchema: jest.fn(),
     };
     branchesService = {
       findOne: jest.fn().mockResolvedValue({ id: "br-1", name: "feat/x" }),
@@ -323,6 +327,34 @@ describe("AnalysesService reads", () => {
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
     expect(analysesRepository.findPageByBranch).not.toHaveBeenCalled();
+  });
+
+  describe("countByBranch", () => {
+    it("counts analyses per schema and fills missing schemas with zero", async () => {
+      analysesRepository.countBySchema.mockResolvedValue([
+        { schema: "API", _count: { _all: 3 } },
+        { schema: "DATABASE", _count: { _all: 1 } },
+      ] as never);
+
+      await expect(analysesService.countByBranch("br-1")).resolves.toEqual({
+        API: 3,
+        QUERY: 0,
+        BUG: 0,
+        DATABASE: 1,
+      });
+      expect(analysesRepository.countBySchema).toHaveBeenCalledWith("br-1");
+    });
+
+    it("rejects counting analyses of an unknown branch", async () => {
+      branchesService.findOne.mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND }),
+      );
+
+      await expect(
+        analysesService.countByBranch("missing"),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(analysesRepository.countBySchema).not.toHaveBeenCalled();
+    });
   });
 
   describe("getMetricTrend", () => {

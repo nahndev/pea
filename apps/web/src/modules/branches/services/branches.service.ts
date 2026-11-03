@@ -1,4 +1,4 @@
-import type { Branch, BranchSummary, Paginated } from '@tomato/types';
+import type { AnalysisCountBySchema, Branch, BranchSummary, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
@@ -19,6 +19,11 @@ export const branchesService = {
 
   async get(id: string) {
     const { data } = await apiClient.get<Branch>(`/branches/${id}`);
+    return data;
+  },
+
+  async countAnalyses(id: string) {
+    const { data } = await apiClient.get<AnalysisCountBySchema>(`/branches/${id}/analysis-counts`);
     return data;
   },
 

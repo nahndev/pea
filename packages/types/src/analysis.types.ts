@@ -22,3 +22,5 @@ export interface AnalysisDetail extends AnalysisSummary {
   file: string | null;
   database: DatabaseSummary | null;
 }
+
+export type AnalysisCountBySchema = Record<AnalysisSchema, number>;

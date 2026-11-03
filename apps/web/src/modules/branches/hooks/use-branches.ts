@@ -8,6 +8,12 @@ export const useBranches = (page: number, search?: string) =>
 export const useBranch = (branchId: string) =>
   useQuery({ queryKey: ['branches', branchId], queryFn: () => branchesService.get(branchId) });
 
+export const useBranchAnalysisCounts = (branchId: string) =>
+  useQuery({
+    queryKey: ['branches', branchId, 'analysis-counts'],
+    queryFn: () => branchesService.countAnalyses(branchId),
+  });
+
 export const useCreateBranch = () => {
   const queryClient = useQueryClient();
   return useMutation({
