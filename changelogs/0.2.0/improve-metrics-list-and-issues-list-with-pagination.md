@@ -11,12 +11,13 @@
 
 ## Acceptance Criteria
 
-- [ ] Page /analyses/id/metrics and /analyses/id/issues update UI support paging
-- [ ] Support api with paging
-- [ ] Every page is 20 items
+- [x] Page /analyses/id/metrics and /analyses/id/issues update UI support paging
+- [x] Support api with paging
+- [x] Every page is 20 items
 
 ## Solutions
 
-- [ ]
-- [ ]
-- [ ]
+- [x] API `GET /analyses/:id/metrics?limit&offset` → `Paginated<MetricResultView>` (stable order: type, subject, id)
+- [x] API `GET /analyses/:id/metrics/summaries` → `MetricSummaryView[]`; summary cards stay over all results, `summarizeMetrics` moved from web to API
+- [x] Web `/analyses/:id/metrics?page=`: `PaginationBar` with `PAGE_SIZE` (20); picked trend series keep their unit and limit across pages
+- [x] Web issues table: `table-fixed` with fixed column widths, rule/subject/details truncated with a `title` tooltip

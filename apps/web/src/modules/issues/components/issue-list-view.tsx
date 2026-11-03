@@ -40,16 +40,15 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
       {data && data.items.length > 0 ? (
         <>
           <div className="rounded-lg border bg-card shadow-card">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Rule</TableHead>
-                  <TableHead>Subject</TableHead>
+                  <TableHead className="w-28">Severity</TableHead>
+                  <TableHead className="w-1/3">Rule</TableHead>
                   <TableHead>Details</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Count</TableHead>
-                  <TableHead>Raised</TableHead>
+                  <TableHead className="w-32">Status</TableHead>
+                  <TableHead className="w-20 text-right">Count</TableHead>
+                  <TableHead className="w-44">Raised</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -64,11 +63,15 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                     <TableCell>
                       <StatusBadge style={SEVERITY_STYLE[issue.severity]} />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap font-medium">{RULE_TYPE_LABEL[issue.rule.type]}</TableCell>
-                    <TableCell className="max-w-56 truncate font-mono text-xs" title={issue.subject.description}>
-                      {issue.subject.description}
+                    <TableCell>
+                      <p className="truncate font-medium" title={RULE_TYPE_LABEL[issue.rule.type]}>
+                        {RULE_TYPE_LABEL[issue.rule.type]}
+                      </p>
+                      <p className="truncate font-mono text-xs text-muted-foreground" title={issue.subject.description}>
+                        {issue.subject.description}
+                      </p>
                     </TableCell>
-                    <TableCell className="max-w-96 text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       <Link
                         href={`${pathname}/${issue.id}`}
                         title={issue.description ?? issue.rule.description}
@@ -81,7 +84,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                       <StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issue.issueSubject.status]} />
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{issue.issueCount}</TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(issue.createdAt)}</TableCell>
+                    <TableCell className="truncate text-muted-foreground">{formatDateTime(issue.createdAt)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
