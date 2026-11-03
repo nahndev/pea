@@ -1,10 +1,11 @@
-import { RuleType } from '@tomato/constants';
+import { RuleType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Analysis, Rule } from '../../../generated/client';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
+import { createSubject } from '../../subjects/subject';
 import { RouteErrorRateHandler } from './route-error-rate.handler';
 
 describe('RouteErrorRateHandler', () => {
@@ -39,9 +40,14 @@ describe('RouteErrorRateHandler', () => {
     await expect(routeErrorRateHandler.handle(rule(), analysis)).resolves.toEqual([
       {
         ruleId: 'r-1',
-        description: 'POST /api/checkout 5xx error rate 100.0% exceeds threshold 10%',
+        description: '5xx error rate 100.0% exceeds threshold 10%',
+        subject: createSubject(SubjectType.API, 'POST /api/checkout'),
       },
-      { ruleId: 'r-1', description: 'GET /api/cart 5xx error rate 33.3% exceeds threshold 10%' },
+      {
+        ruleId: 'r-1',
+        description: '5xx error rate 33.3% exceeds threshold 10%',
+        subject: createSubject(SubjectType.API, 'GET /api/cart'),
+      },
     ]);
   });
 

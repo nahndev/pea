@@ -1,10 +1,11 @@
-import { RuleType } from '@tomato/constants';
+import { RuleType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Analysis, Rule } from '../../../generated/client';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
+import { createSubject } from '../../subjects/subject';
 import { SlowRouteHandler } from './slow-route.handler';
 
 describe('SlowRouteHandler', () => {
@@ -38,9 +39,14 @@ describe('SlowRouteHandler', () => {
     await expect(slowRouteHandler.handle(rule(), analysis)).resolves.toEqual([
       {
         ruleId: 'r-1',
-        description: 'POST /api/checkout P95 995.0ms exceeds threshold 100ms',
+        description: 'P95 995.0ms exceeds threshold 100ms',
+        subject: createSubject(SubjectType.API, 'POST /api/checkout'),
       },
-      { ruleId: 'r-1', description: 'GET /api/cart P95 595.0ms exceeds threshold 100ms' },
+      {
+        ruleId: 'r-1',
+        description: 'P95 595.0ms exceeds threshold 100ms',
+        subject: createSubject(SubjectType.API, 'GET /api/cart'),
+      },
     ]);
   });
 

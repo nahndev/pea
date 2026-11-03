@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SubjectType } from '@tomato/constants';
 import type { Analysis, Rule } from '../../../generated/client';
 import {
   API_METRIC_DURATION_COLUMN,
@@ -7,6 +8,7 @@ import {
 } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
+import { createSubject } from '../../subjects/subject';
 import type { RuleConfig } from '../rules.types';
 import type { RuleHandler, RuleIssue } from './rule-handler.types';
 
@@ -29,7 +31,8 @@ export class SlowApiHandler implements RuleHandler {
 
     return rows.map((row) => ({
       ruleId: rule.id,
-      description: `${String(row.endpoint)} expected less than ${thresholdMs}ms, current max is ${Number(row.value).toFixed(1)}ms`,
+      description: `Expected less than ${thresholdMs}ms, current max is ${Number(row.value).toFixed(1)}ms`,
+      subject: createSubject(SubjectType.API, String(row.endpoint)),
     }));
   }
 }

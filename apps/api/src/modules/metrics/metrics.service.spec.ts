@@ -2,18 +2,18 @@ import { NotFoundException } from '@nestjs/common';
 import { AnalysisSchema, ErrorCode, SubjectType } from '@tomato/constants';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import type { MetricHandler } from './handlers/metric-handler.types';
-import { createMetricSubject } from './metric-subject';
+import { createSubject } from '../subjects/subject';
 import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsRepository } from './metrics.repository';
 import { MetricsService } from './metrics.service';
-import { SubjectsRepository } from './subjects.repository';
+import { SubjectsService } from '../subjects/subjects.service';
 
 describe('MetricsService', () => {
   let metricsRepository: jest.Mocked<Pick<MetricsRepository, 'findAll' | 'findById' | 'update'>>;
   let metricResultsRepository: jest.Mocked<
     Pick<MetricResultsRepository, 'createMany' | 'findByAnalysisResult' | 'findDetailedByAnalysisResult'>
   >;
-  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany' | 'findByMetric'>>;
+  let subjectsService: jest.Mocked<Pick<SubjectsService, 'createMany' | 'findByMetric'>>;
   let metricHandlerFactory: jest.Mocked<Pick<MetricHandlerFactory, 'supports' | 'create'>>;
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
@@ -31,7 +31,7 @@ describe('MetricsService', () => {
       findByAnalysisResult: jest.fn(),
       findDetailedByAnalysisResult: jest.fn(),
     };
-    subjectsRepository = { createMany: jest.fn().mockResolvedValue(0), findByMetric: jest.fn() };
+    subjectsService = { createMany: jest.fn().mockResolvedValue(0), findByMetric: jest.fn() };
     handler = { handle: jest.fn().mockResolvedValue([{ value: 10 }]) };
     metricHandlerFactory = {
       supports: jest.fn().mockImplementation((type: string) => type === 'P90'),
@@ -40,7 +40,7 @@ describe('MetricsService', () => {
     metricsService = new MetricsService(
       metricsRepository as unknown as MetricsRepository,
       metricResultsRepository as unknown as MetricResultsRepository,
-      subjectsRepository as unknown as SubjectsRepository,
+      subjectsService as unknown as SubjectsService,
       metricHandlerFactory as unknown as MetricHandlerFactory,
     );
   });
@@ -58,8 +58,8 @@ describe('MetricsService', () => {
   });
 
   it('stores one result per measurement when a handler returns several', async () => {
-    const cart = createMetricSubject(SubjectType.API, 'GET /api/cart');
-    const checkout = createMetricSubject(SubjectType.API, 'POST /api/checkout');
+    const cart = createSubject(SubjectType.API, 'GET /api/cart');
+    const checkout = createSubject(SubjectType.API, 'POST /api/checkout');
     handler.handle.mockResolvedValueOnce([
       { subject: cart, value: 30 },
       { subject: checkout, value: 20 },
@@ -72,22 +72,22 @@ describe('MetricsService', () => {
     ]);
   });
 
-  it('saves each subject once before storing the results', async () => {
-    const cart = createMetricSubject(SubjectType.API, 'GET /api/cart');
+  it('saves the subjects before storing the results', async () => {
+    const cart = createSubject(SubjectType.API, 'GET /api/cart');
     metricsRepository.findAll.mockResolvedValue([metricList[0], { id: 'm-3', type: 'P90' }] as never);
     handler.handle.mockResolvedValue([{ subject: cart, value: 30 }]);
 
     await metricsService.measure('res-1', analysis);
 
-    expect(subjectsRepository.createMany).toHaveBeenCalledWith([cart]);
-    expect(subjectsRepository.createMany.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(subjectsService.createMany).toHaveBeenCalledWith([cart, cart]);
+    expect(subjectsService.createMany.mock.invocationCallOrder[0]).toBeLessThan(
       metricResultsRepository.createMany.mock.invocationCallOrder[0],
     );
   });
 
   it('only stores the subjects a metric includes and does not exclude', async () => {
     const [cart, health, orders] = ['GET /api/cart', 'GET /api/health', 'GET /api/orders'].map((description) =>
-      createMetricSubject(SubjectType.API, description),
+      createSubject(SubjectType.API, description),
     );
     metricsRepository.findAll.mockResolvedValue([
       { id: 'm-1', type: 'P90', config: { include: [cart.uuid, health.uuid], exclude: [health.uuid] } },
@@ -99,7 +99,7 @@ describe('MetricsService', () => {
     ]);
 
     await expect(metricsService.measure('res-1', analysis)).resolves.toBe(1);
-    expect(subjectsRepository.createMany).toHaveBeenCalledWith([cart]);
+    expect(subjectsService.createMany).toHaveBeenCalledWith([cart]);
     expect(metricResultsRepository.createMany).toHaveBeenCalledWith('res-1', [
       { metricId: 'm-1', subjectUuid: cart.uuid, value: 1 },
     ]);
@@ -180,21 +180,19 @@ describe('MetricsService', () => {
   describe('findSubjects', () => {
     it('lists the subjects that have results for the metric', async () => {
       metricsRepository.findById.mockResolvedValue({ id: 'm-1', type: 'ENDPOINT_P95' } as never);
-      subjectsRepository.findByMetric.mockResolvedValue([
-        { uuid: 'su-1', type: 'API', description: 'GET /api/cart', createdAt: new Date() },
-      ]);
+      subjectsService.findByMetric.mockResolvedValue([{ uuid: 'su-1', type: SubjectType.API, description: 'GET /api/cart' }]);
 
       await expect(metricsService.findSubjects('m-1')).resolves.toEqual([
         { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
       ]);
-      expect(subjectsRepository.findByMetric).toHaveBeenCalledWith('m-1');
+      expect(subjectsService.findByMetric).toHaveBeenCalledWith('m-1');
     });
 
     it('throws METRIC_NOT_FOUND for an unknown metric', async () => {
       metricsRepository.findById.mockResolvedValue(null);
 
       await expect(metricsService.findSubjects('missing')).rejects.toBeInstanceOf(NotFoundException);
-      expect(subjectsRepository.findByMetric).not.toHaveBeenCalled();
+      expect(subjectsService.findByMetric).not.toHaveBeenCalled();
     });
   });
 

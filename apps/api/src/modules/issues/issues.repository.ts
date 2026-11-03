@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
-export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true } }>;
+export type IssueWithRelations = Prisma.IssueGetPayload<{ include: { rule: true; subject: true } }>;
 
 export interface IssueSource {
   ruleId: string;
   description?: string;
   severity: string;
+  subjectUuid: string | null;
 }
 
 @Injectable()
@@ -40,7 +41,7 @@ export class IssuesRepository {
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.issue.findMany({
         where,
-        include: { rule: true },
+        include: { rule: true, subject: true },
         orderBy: { id: 'desc' },
         take: limit,
         skip: offset,

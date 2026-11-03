@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { SubjectType } from '@tomato/constants';
 import type { Analysis, Rule } from '../../../generated/client';
 import { API_METRIC_ENDPOINT_COLUMN, apiMetricRequests } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
+import { createSubject } from '../../subjects/subject';
 import { DEFAULT_MIN_REQUESTS, SERVER_ERROR_CONDITION } from '../rules.constants';
 import type { RuleConfig } from '../rules.types';
 import type { RuleHandler, RuleIssue } from './rule-handler.types';
@@ -27,7 +29,8 @@ export class RouteErrorRateHandler implements RuleHandler {
 
     return rows.map((row) => ({
       ruleId: rule.id,
-      description: `${String(row.endpoint)} 5xx error rate ${Number(row.value).toFixed(1)}% exceeds threshold ${maxPercent}%`,
+      description: `5xx error rate ${Number(row.value).toFixed(1)}% exceeds threshold ${maxPercent}%`,
+      subject: createSubject(SubjectType.API, String(row.endpoint)),
     }));
   }
 }

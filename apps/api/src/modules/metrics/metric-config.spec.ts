@@ -1,6 +1,6 @@
 import { SubjectType } from '@tomato/constants';
 import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-config';
-import { createMetricSubject } from './metric-subject';
+import { createSubject } from '../subjects/subject';
 
 describe('parseMetricConfig', () => {
   it('reads include and exclude, defaulting to empty lists', () => {
@@ -26,9 +26,9 @@ describe('mergeMetricConfig', () => {
 });
 
 describe('filterBySubject', () => {
-  const cart = createMetricSubject(SubjectType.API, 'GET /api/cart');
-  const health = createMetricSubject(SubjectType.API, 'GET /api/health');
-  const orders = createMetricSubject(SubjectType.API, 'GET /api/orders');
+  const cart = createSubject(SubjectType.API, 'GET /api/cart');
+  const health = createSubject(SubjectType.API, 'GET /api/health');
+  const orders = createSubject(SubjectType.API, 'GET /api/orders');
   const measurements = [cart, health, orders].map((subject, index) => ({ subject, value: index }));
   const uuids = (items: typeof measurements) => items.map(({ subject }) => subject.description);
 

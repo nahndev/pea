@@ -50,6 +50,7 @@ model Issue {
   id               String          @id @default(uuid(7)) @db.Uuid
   ruleId           String          @map("rule_id") @db.Uuid
   analysisResultId String?         @map("analysis_result_id") @db.Uuid
+  subjectUuid      String?         @map("subject_uuid") @db.Uuid
   description      String?
   status           String          @default("OPEN") @db.VarChar(20)
   severity         String          @default("MEDIUM") @db.VarChar(20)
@@ -57,9 +58,11 @@ model Issue {
   updatedAt        DateTime        @updatedAt @map("updated_at")
   rule             Rule            @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   analysisResult   AnalysisResult? @relation(fields: [analysisResultId], references: [id], onDelete: Cascade)
+  subject          Subject?        @relation(fields: [subjectUuid], references: [uuid], onDelete: Restrict)
 
   @@index([ruleId])
   @@index([analysisResultId])
+  @@index([subjectUuid])
   @@index([status])
   @@index([severity])
   @@map("issues")
@@ -101,6 +104,7 @@ model Subject {
   description String
   createdAt   DateTime       @default(now()) @map("created_at")
   results     MetricResult[]
+  issues      Issue[]
 
   @@index([type])
   @@map("subjects")
@@ -124,16 +128,16 @@ model MetricResult {
 }
 
 model MetricCondition {
-  id            String             @id @default(uuid(7)) @db.Uuid
-  metricId      String             @map("metric_id") @db.Uuid
-  operator      String             @db.VarChar(10)
-  threshold     Float
-  aggregates    Json               @default("[]") @db.JsonB
-  isActive      Boolean            @default(true) @map("is_active")
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
-  metric        Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
-  evaluations   MetricEvaluation[]
+  id          String             @id @default(uuid(7)) @db.Uuid
+  metricId    String             @map("metric_id") @db.Uuid
+  operator    String             @db.VarChar(10)
+  threshold   Float
+  aggregates  Json               @default("[]") @db.JsonB
+  isActive    Boolean            @default(true) @map("is_active")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+  metric      Metric             @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  evaluations MetricEvaluation[]
 
   @@unique([metricId])
   @@map("metric_conditions")

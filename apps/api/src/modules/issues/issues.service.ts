@@ -1,16 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import type { IssueStatus, RuleType, Severity } from '@tomato/constants';
 import type { IssueView, Paginated } from '@tomato/types';
+import { toSubjectView } from '../subjects/subject';
+import { SubjectsService } from '../subjects/subjects.service';
 import { ListIssuesQueryDto } from './dto/list-issues-query.dto';
-import { IssuesRepository, type IssueSource } from './issues.repository';
+import { IssuesRepository } from './issues.repository';
+import type { NewIssue } from './issues.types';
 
 @Injectable()
 export class IssuesService {
-  constructor(private readonly issuesRepository: IssuesRepository) {}
+  constructor(
+    private readonly issuesRepository: IssuesRepository,
+    private readonly subjectsService: SubjectsService,
+  ) {}
 
-  async createMany(analysisResultId: string, items: IssueSource[]): Promise<number> {
+  async createMany(analysisResultId: string, items: NewIssue[]): Promise<number> {
     if (!items.length) return 0;
-    return this.issuesRepository.createMany(analysisResultId, items);
+    await this.subjectsService.createMany(items.flatMap(({ subject }) => (subject ? [subject] : [])));
+    return this.issuesRepository.createMany(
+      analysisResultId,
+      items.map(({ subject, ...issue }) => ({ ...issue, subjectUuid: subject?.uuid ?? null })),
+    );
   }
 
   countBySeverity(analysisResultId: string, severity: Severity): Promise<number> {
@@ -28,6 +38,7 @@ export class IssuesService {
         status: issue.status as IssueStatus,
         severity: issue.severity as Severity,
         description: issue.description,
+        subject: issue.subject && toSubjectView(issue.subject),
         createdAt: issue.createdAt.toISOString(),
         rule: { type: issue.rule.type as RuleType, description: issue.rule.description },
       })),

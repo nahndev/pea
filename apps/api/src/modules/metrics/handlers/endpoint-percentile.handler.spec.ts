@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import type { Analysis, Metric } from '../../../generated/client';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
-import { createMetricSubject } from '../metric-subject';
+import { createSubject } from '../../subjects/subject';
 import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 
 describe('EndpointPercentileHandler', () => {
@@ -38,7 +38,7 @@ describe('EndpointPercentileHandler', () => {
     const measurements = await endpointPercentileHandler.handle(metric(), analysis);
 
     expect(measurements.map(({ subject }) => subject?.description)).toEqual(['POST /api/checkout', 'GET /api/cart', 'GET /api/orders']);
-    expect(measurements[0].subject).toEqual(createMetricSubject(SubjectType.API, 'POST /api/checkout'));
+    expect(measurements[0].subject).toEqual(createSubject(SubjectType.API, 'POST /api/checkout'));
     expect(measurements[0].value).toBeCloseTo(995);
     expect(measurements[1].value).toBeCloseTo(195);
     expect(measurements[2].value).toBeCloseTo(10);

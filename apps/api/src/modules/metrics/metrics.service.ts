@@ -1,38 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit, type SubjectType } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricResultView, MetricView, SubjectView } from '@tomato/types';
-import type { Analysis, Metric, MetricResult, Subject } from '../../generated/client';
+import type { Analysis, Metric, MetricResult } from '../../generated/client';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-config';
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
-import type { MetricSubject } from './metric-subject';
+import { type SubjectSource, toSubjectView } from '../subjects/subject';
+import { SubjectsService } from '../subjects/subjects.service';
 import { MetricsRepository } from './metrics.repository';
-import { SubjectsRepository } from './subjects.repository';
 
 @Injectable()
 export class MetricsService {
   constructor(
     private readonly metricsRepository: MetricsRepository,
     private readonly metricResultsRepository: MetricResultsRepository,
-    private readonly subjectsRepository: SubjectsRepository,
+    private readonly subjectsService: SubjectsService,
     private readonly metricHandlerFactory: MetricHandlerFactory,
   ) {}
 
   async measure(analysisResultId: string, analysis: Analysis): Promise<number> {
     const metrics = await this.metricsRepository.findAll({ isActive: true, schema: analysis.schema as AnalysisSchema });
     const items: MetricResultSource[] = [];
-    const subjects = new Map<string, MetricSubject>();
+    const subjects: SubjectSource[] = [];
     for (const metric of metrics) {
       if (!this.metricHandlerFactory.supports(metric.type)) continue;
       const handled = await this.metricHandlerFactory.create(metric.type).handle(metric, analysis, analysisResultId);
       const measurements = filterBySubject(handled, parseMetricConfig(metric.config));
       for (const { value, subject } of measurements) {
-        if (subject) subjects.set(subject.uuid, subject);
+        if (subject) subjects.push(subject);
         items.push({ metricId: metric.id, subjectUuid: subject?.uuid ?? null, value });
       }
     }
-    await this.subjectsRepository.createMany([...subjects.values()]);
+    await this.subjectsService.createMany(subjects);
     return this.metricResultsRepository.createMany(analysisResultId, items);
   }
 
@@ -59,8 +59,7 @@ export class MetricsService {
 
   async findSubjects(metricId: string): Promise<SubjectView[]> {
     await this.getById(metricId);
-    const subjects = await this.subjectsRepository.findByMetric(metricId);
-    return subjects.map((subject) => this.toSubjectView(subject));
+    return this.subjectsService.findByMetric(metricId);
   }
 
   async findOne(id: string): Promise<MetricView | null> {
@@ -83,7 +82,7 @@ export class MetricsService {
     return results.map(({ id, value, subject, metric, evaluations }) => ({
       id,
       value,
-      subject: subject && this.toSubjectView(subject),
+      subject: subject && toSubjectView(subject),
       metric: {
         id: metric.id,
         type: metric.type as MetricType,
@@ -98,10 +97,6 @@ export class MetricsService {
         threshold: evaluation.threshold,
       })),
     }));
-  }
-
-  private toSubjectView({ uuid, type, description }: Subject): SubjectView {
-    return { uuid, type: type as SubjectType, description };
   }
 
   private toView({ id, schema, type, unit, description, isActive, config }: Metric): MetricView {

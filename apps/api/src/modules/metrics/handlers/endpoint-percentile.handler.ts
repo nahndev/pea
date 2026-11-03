@@ -8,7 +8,7 @@ import {
 } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
-import { createMetricSubject } from '../metric-subject';
+import { createSubject } from '../../subjects/subject';
 import { PERCENTILE_BY_METRIC_TYPE } from '../metrics.constants';
 import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
 
@@ -28,7 +28,7 @@ export class EndpointPercentileHandler implements MetricHandler {
     `);
 
     return rows.map((row) => ({
-      subject: createMetricSubject(SubjectType.API, String(row.subject)),
+      subject: createSubject(SubjectType.API, String(row.subject)),
       value: Number(row.value),
     }));
   }

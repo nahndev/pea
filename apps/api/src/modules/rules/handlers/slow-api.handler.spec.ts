@@ -1,10 +1,11 @@
-import { RuleType } from '@tomato/constants';
+import { RuleType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Analysis, Rule } from '../../../generated/client';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
+import { createSubject } from '../../subjects/subject';
 import { SlowApiHandler } from './slow-api.handler';
 
 describe('SlowApiHandler', () => {
@@ -36,11 +37,13 @@ describe('SlowApiHandler', () => {
     await expect(slowApiHandler.handle(rule(), analysis)).resolves.toEqual([
       {
         ruleId: 'r-1',
-        description: 'POST /api/checkout expected less than 2000ms, current max is 4000.0ms',
+        description: 'Expected less than 2000ms, current max is 4000.0ms',
+        subject: createSubject(SubjectType.API, 'POST /api/checkout'),
       },
       {
         ruleId: 'r-1',
-        description: 'GET /api/cart expected less than 2000ms, current max is 2500.0ms',
+        description: 'Expected less than 2000ms, current max is 2500.0ms',
+        subject: createSubject(SubjectType.API, 'GET /api/cart'),
       },
     ]);
   });
