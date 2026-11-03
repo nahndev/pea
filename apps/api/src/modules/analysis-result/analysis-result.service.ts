@@ -72,7 +72,7 @@ export class AnalysisResultService {
         );
       }
       await this.metricsService.measure(result.id, analysis);
-      await this.metricConditionsService.evaluate(result.id, schema);
+      await this.metricConditionsService.evaluate(result.id, analysis.id, schema);
     } catch (error) {
       await this.analysisResultRepository.finish(result.id, { status: AnalysisResultStatus.FAILED, issueCount });
       throw error;

@@ -7,7 +7,7 @@ import { StatusBadge } from '@/shared/components/status-badge';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
-import { METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
+import { AGGREGATE_LABEL, METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
 import { useConditions } from '../hooks/use-conditions';
 
 interface ConditionListViewProps {
@@ -33,7 +33,7 @@ export function ConditionListView({ schema }: ConditionListViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map(({ id, metric, operator, threshold, isActive }) => (
+              {data.map(({ id, metric, operator, threshold, aggregates, isActive }) => (
                 <TableRow key={id}>
                   <TableCell className="font-medium">
                     <Link href={`/conditions/${id}`} className="hover:underline focus-ring rounded-sm">
@@ -41,7 +41,15 @@ export function ConditionListView({ schema }: ConditionListViewProps) {
                     </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {VIOLATION_PHRASE[operator]} {formatMetricValue(metric.unit, threshold)}
+                    <div>
+                      {VIOLATION_PHRASE[operator]} {formatMetricValue(metric.unit, threshold)}
+                    </div>
+                    {aggregates.map((limit) => (
+                      <div key={limit.aggregate} className="text-xs">
+                        {VIOLATION_PHRASE[limit.operator]} {formatMetricValue(metric.unit, limit.threshold)} over{' '}
+                        {AGGREGATE_LABEL[limit.aggregate].toLowerCase()} of passed runs
+                      </div>
+                    ))}
                   </TableCell>
                   <TableCell>
                     <StatusBadge

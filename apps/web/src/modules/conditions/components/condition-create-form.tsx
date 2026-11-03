@@ -11,6 +11,7 @@ import { METRIC_LABEL, METRIC_UNIT_LABEL } from '@/modules/metrics';
 import { buildHref } from '@/shared/lib/pagination';
 import { createConditionSchema } from '../conditions.schemas';
 import { useConditions, useCreateCondition, useMetricOptions } from '../hooks/use-conditions';
+import { ConditionAggregateFields, createAggregateDrafts, toAggregateInputs } from './condition-aggregate-fields';
 import { ConditionLimitFields } from './condition-limit-fields';
 
 interface ConditionCreateFormProps {
@@ -23,6 +24,7 @@ export function ConditionCreateForm({ schema }: ConditionCreateFormProps) {
   const conditions = useConditions(schema);
   const { mutate, isPending, error: requestError } = useCreateCondition();
   const [metricId, setMetricId] = useState<string>();
+  const [aggregates, setAggregates] = useState(() => createAggregateDrafts());
   const [operator, setOperator] = useState<MetricConditionOperator>(MetricConditionOperator.GT);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -35,6 +37,7 @@ export function ConditionCreateForm({ schema }: ConditionCreateFormProps) {
     const parsed = createConditionSchema.safeParse({
       metricId: metricId ?? '',
       operator,
+      aggregates: toAggregateInputs(aggregates),
       threshold: new FormData(event.currentTarget).get('threshold'),
     });
     if (!parsed.success) {
@@ -78,6 +81,12 @@ export function ConditionCreateForm({ schema }: ConditionCreateFormProps) {
             onOperatorChange={setOperator}
             unitLabel={selectedMetric ? METRIC_UNIT_LABEL[selectedMetric.unit] : undefined}
             error={errors.threshold ? 'Enter a number of 0 or more.' : undefined}
+          />
+          <ConditionAggregateFields
+            drafts={aggregates}
+            onChange={setAggregates}
+            unitLabel={selectedMetric ? METRIC_UNIT_LABEL[selectedMetric.unit] : undefined}
+            isInvalid={Boolean(errors.aggregates)}
           />
           {requestError ? <ErrorState error={requestError} title="Unable to create condition" /> : null}
           <div className="flex gap-3">

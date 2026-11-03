@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AnalysisSchema, ErrorCode, MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode, MetricConditionAggregate, MetricConditionOperator, MetricEvaluationStatus, MetricType, MetricUnit } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { MetricsService } from '../metrics/metrics.service';
 import { MetricConditionsRepository } from './metric-conditions.repository';
@@ -12,7 +12,7 @@ describe('MetricConditionsService', () => {
     Pick<MetricConditionsRepository, 'findAll' | 'findById' | 'findByMetric' | 'findActiveBySchema' | 'create' | 'update'>
   >;
   let metricEvaluationsRepository: jest.Mocked<Pick<MetricEvaluationsRepository, 'createMany'>>;
-  let metricsService: jest.Mocked<Pick<MetricsService, 'findOne' | 'findResults'>>;
+  let metricsService: jest.Mocked<Pick<MetricsService, 'findOne' | 'findResults' | 'findPassedHistory'>>;
   let metricConditionsService: MetricConditionsService;
 
   const condition: MetricConditionWithRelations = {
@@ -20,6 +20,7 @@ describe('MetricConditionsService', () => {
     metricId: 'm-1',
     operator: MetricConditionOperator.GT,
     threshold: 1000,
+    aggregates: [],
     isActive: true,
     createdAt: new Date('2026-10-01T00:00:00.000Z'),
     updatedAt: new Date('2026-10-01T00:00:00.000Z'),
@@ -38,6 +39,7 @@ describe('MetricConditionsService', () => {
     metric: { id: 'm-1', type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 duration', isActive: true },
     operator: MetricConditionOperator.GT,
     threshold: 1000,
+    aggregates: [],
     isActive: true,
   };
 
@@ -51,7 +53,7 @@ describe('MetricConditionsService', () => {
       update: jest.fn(),
     };
     metricEvaluationsRepository = { createMany: jest.fn().mockResolvedValue(0) };
-    metricsService = { findOne: jest.fn().mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API }), findResults: jest.fn() };
+    metricsService = { findOne: jest.fn().mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API }), findResults: jest.fn(), findPassedHistory: jest.fn() };
     metricConditionsService = new MetricConditionsService(
       metricConditionsRepository as unknown as MetricConditionsRepository,
       metricEvaluationsRepository as unknown as MetricEvaluationsRepository,
@@ -66,7 +68,7 @@ describe('MetricConditionsService', () => {
       metricConditionsRepository.create.mockResolvedValue(condition);
 
       await expect(metricConditionsService.create(input)).resolves.toEqual(view);
-      expect(metricConditionsRepository.create).toHaveBeenCalledWith(input);
+      expect(metricConditionsRepository.create).toHaveBeenCalledWith({ ...input, aggregates: [] });
       expect(view.isActive).toBe(true);
     });
 
@@ -86,6 +88,17 @@ describe('MetricConditionsService', () => {
       expect(error).toBeInstanceOf(BadRequestException);
       expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.METRIC_DISABLED });
       expect(metricConditionsRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('creates a condition with several aggregate limits', async () => {
+      const aggregates = [
+        { aggregate: MetricConditionAggregate.MIN, operator: MetricConditionOperator.GT, threshold: 100 },
+        { aggregate: MetricConditionAggregate.MEDIAN, operator: MetricConditionOperator.GT, threshold: 50 },
+      ];
+      metricConditionsRepository.create.mockResolvedValue({ ...condition, aggregates });
+
+      await expect(metricConditionsService.create({ ...input, aggregates })).resolves.toEqual({ ...view, aggregates });
+      expect(metricConditionsRepository.create).toHaveBeenCalledWith({ ...input, aggregates });
     });
 
     it('throws METRIC_CONDITION_ALREADY_EXISTS when the metric already has a condition', async () => {
@@ -153,6 +166,7 @@ describe('MetricConditionsService', () => {
     expect(metricConditionsRepository.update).toHaveBeenCalledWith('c-1', {
       operator: MetricConditionOperator.GTE,
       threshold: 1500,
+      aggregates: undefined,
     });
     expect(updated).toMatchObject({ operator: MetricConditionOperator.GTE, threshold: 1500 });
   });
@@ -166,6 +180,7 @@ describe('MetricConditionsService', () => {
     expect(metricConditionsRepository.update).toHaveBeenCalledWith('c-1', {
       operator: undefined,
       threshold: undefined,
+      aggregates: undefined,
       isActive: false,
     });
     expect(updated.isActive).toBe(false);
@@ -180,6 +195,7 @@ describe('MetricConditionsService', () => {
     expect(metricConditionsRepository.update).toHaveBeenCalledWith('c-1', {
       operator: undefined,
       threshold: 0,
+      aggregates: undefined,
       isActive: undefined,
     });
   });
@@ -212,19 +228,21 @@ describe('MetricConditionsService', () => {
     });
 
     it('evaluates only the conditions of the given schema', async () => {
-      await metricConditionsService.evaluate('ar-1', AnalysisSchema.API);
+      await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
 
       expect(metricConditionsRepository.findActiveBySchema).toHaveBeenCalledWith(AnalysisSchema.API);
     });
 
     it('creates a PASSED or FAILED evaluation for each result of the condition metric', async () => {
-      await expect(metricConditionsService.evaluate('ar-1', AnalysisSchema.API)).resolves.toBe(2);
+      await expect(metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API)).resolves.toBe(2);
 
       expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
         {
           metricResultId: 'r-1',
           metricConditionId: 'c-1',
           status: MetricEvaluationStatus.FAILED,
+          aggregate: MetricConditionAggregate.NONE,
+          baseline: null,
           operator: MetricConditionOperator.GT,
           threshold: 1000,
         },
@@ -232,6 +250,8 @@ describe('MetricConditionsService', () => {
           metricResultId: 'r-2',
           metricConditionId: 'c-1',
           status: MetricEvaluationStatus.PASSED,
+          aggregate: MetricConditionAggregate.NONE,
+          baseline: null,
           operator: MetricConditionOperator.GT,
           threshold: 1000,
         },
@@ -241,9 +261,112 @@ describe('MetricConditionsService', () => {
     it('creates nothing when the schema has no conditions', async () => {
       metricConditionsRepository.findActiveBySchema.mockResolvedValue([]);
 
-      await metricConditionsService.evaluate('ar-1', AnalysisSchema.QUERY);
+      await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.QUERY);
 
       expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([]);
+    });
+
+    describe('with aggregate limits', () => {
+      const limit = (aggregate: MetricConditionAggregate, threshold: number) => ({
+        aggregate,
+        operator: MetricConditionOperator.GT,
+        threshold,
+      });
+      const withLimits = (aggregates: ReturnType<typeof limit>[]) => ({ ...condition, aggregates });
+      const currentResults = [
+        { id: 'r-1', metricId: 'm-1', subjectUuid: 's-1', value: 180 },
+        { id: 'r-2', metricId: 'm-1', subjectUuid: 's-2', value: 400 },
+      ];
+
+      beforeEach(() => {
+        metricsService.findResults.mockResolvedValue(currentResults as never);
+        metricConditionsRepository.findActiveBySchema.mockResolvedValue([withLimits([limit(MetricConditionAggregate.MIN, 100)])]);
+      });
+
+      it('adds an evaluation per limit next to the plain one, using the history of the same subject', async () => {
+        metricConditionsRepository.findActiveBySchema.mockResolvedValue([
+          withLimits([limit(MetricConditionAggregate.MIN, 100), limit(MetricConditionAggregate.MAX, 50)]),
+        ]);
+        metricsService.findPassedHistory.mockResolvedValue([
+          { subjectUuid: 's-1', value: 120 },
+          { subjectUuid: 's-1', value: 60 },
+          { subjectUuid: 's-2', value: 350 },
+        ]);
+
+        await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
+
+        expect(metricsService.findPassedHistory).toHaveBeenCalledTimes(1);
+        expect(metricsService.findPassedHistory).toHaveBeenCalledWith({
+          analysisId: 'an-1',
+          excludeAnalysisResultId: 'ar-1',
+          metricId: 'm-1',
+          excludeConditionId: 'c-1',
+        });
+        expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+          expect.objectContaining({ metricResultId: 'r-1', aggregate: 'NONE', baseline: null, status: MetricEvaluationStatus.PASSED }),
+          expect.objectContaining({ metricResultId: 'r-1', aggregate: 'MIN', baseline: 60, status: MetricEvaluationStatus.FAILED }),
+          expect.objectContaining({ metricResultId: 'r-1', aggregate: 'MAX', baseline: 120, status: MetricEvaluationStatus.FAILED }),
+          expect.objectContaining({ metricResultId: 'r-2', aggregate: 'NONE', baseline: null, status: MetricEvaluationStatus.PASSED }),
+          expect.objectContaining({ metricResultId: 'r-2', aggregate: 'MIN', baseline: 350, status: MetricEvaluationStatus.PASSED }),
+          expect.objectContaining({ metricResultId: 'r-2', aggregate: 'MAX', baseline: 350, status: MetricEvaluationStatus.PASSED }),
+        ]);
+      });
+
+      it.each([
+        [MetricConditionAggregate.MIN, 60],
+        [MetricConditionAggregate.MAX, 120],
+        [MetricConditionAggregate.AVERAGE, 90],
+        [MetricConditionAggregate.MEDIAN, 90],
+      ])('uses the %s of the history as baseline', async (aggregate, baseline) => {
+        metricConditionsRepository.findActiveBySchema.mockResolvedValue([withLimits([limit(aggregate, 100)])]);
+        metricsService.findResults.mockResolvedValue([currentResults[0]] as never);
+        metricsService.findPassedHistory.mockResolvedValue([
+          { subjectUuid: 's-1', value: 120 },
+          { subjectUuid: 's-1', value: 60 },
+        ]);
+
+        await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
+
+        expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+          expect.objectContaining({ aggregate: 'NONE' }),
+          expect.objectContaining({ aggregate, baseline }),
+        ]);
+      });
+
+      it('takes the middle value as median of an odd history', async () => {
+        metricConditionsRepository.findActiveBySchema.mockResolvedValue([withLimits([limit(MetricConditionAggregate.MEDIAN, 100)])]);
+        metricsService.findResults.mockResolvedValue([currentResults[0]] as never);
+        metricsService.findPassedHistory.mockResolvedValue(
+          [300, 100, 200].map((value) => ({ subjectUuid: 's-1', value })),
+        );
+
+        await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
+
+        expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+          expect.anything(),
+          expect.objectContaining({ baseline: 200 }),
+        ]);
+      });
+
+      it('skips the aggregate limits of a result without passed history', async () => {
+        metricsService.findPassedHistory.mockResolvedValue([{ subjectUuid: 's-2', value: 350 }]);
+
+        await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
+
+        expect(metricEvaluationsRepository.createMany).toHaveBeenCalledWith([
+          expect.objectContaining({ metricResultId: 'r-1', aggregate: 'NONE' }),
+          expect.objectContaining({ metricResultId: 'r-2', aggregate: 'NONE' }),
+          expect.objectContaining({ metricResultId: 'r-2', aggregate: 'MIN' }),
+        ]);
+      });
+
+      it('does not load history for a condition without aggregate limits', async () => {
+        metricConditionsRepository.findActiveBySchema.mockResolvedValue([condition]);
+
+        await metricConditionsService.evaluate('ar-1', 'an-1', AnalysisSchema.API);
+
+        expect(metricsService.findPassedHistory).not.toHaveBeenCalled();
+      });
     });
   });
 });

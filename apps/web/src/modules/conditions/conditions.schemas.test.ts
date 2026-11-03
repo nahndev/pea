@@ -12,6 +12,7 @@ describe('updateConditionSchema', () => {
       operator: 'GT',
       isActive: true,
       threshold: 2500.5,
+      aggregates: [],
     });
   });
 
@@ -38,7 +39,7 @@ describe('createConditionSchema', () => {
   const valid = { metricId: 'm-1', operator: 'GT', threshold: '1000' };
 
   it('accepts a metric, an operator and a threshold', () => {
-    expect(createConditionSchema.parse(valid)).toEqual({ ...valid, threshold: 1000 });
+    expect(createConditionSchema.parse(valid)).toEqual({ ...valid, threshold: 1000, aggregates: [] });
   });
 
   it('requires a metric', () => {
@@ -48,5 +49,30 @@ describe('createConditionSchema', () => {
   it('rejects a negative threshold and an unknown operator', () => {
     expect(createConditionSchema.safeParse({ ...valid, threshold: '-5' }).success).toBe(false);
     expect(createConditionSchema.safeParse({ ...valid, operator: 'EQ' }).success).toBe(false);
+  });
+});
+
+describe('aggregates', () => {
+  const valid = { metricId: 'm-1', operator: 'GT', threshold: '1000' };
+
+  it('coerces the threshold of each aggregate limit', () => {
+    const { aggregates } = createConditionSchema.parse({
+      ...valid,
+      aggregates: [
+        { aggregate: 'MIN', operator: 'GT', threshold: '100' },
+        { aggregate: 'MEDIAN', operator: 'GTE', threshold: '50.5' },
+      ],
+    });
+    expect(aggregates).toEqual([
+      { aggregate: 'MIN', operator: 'GT', threshold: 100 },
+      { aggregate: 'MEDIAN', operator: 'GTE', threshold: 50.5 },
+    ]);
+  });
+
+  it('rejects NONE, a duplicated aggregate and an invalid threshold', () => {
+    const parse = (aggregates: unknown) => createConditionSchema.safeParse({ ...valid, aggregates }).success;
+    expect(parse([{ aggregate: 'NONE', operator: 'GT', threshold: '1' }])).toBe(false);
+    expect(parse([{ aggregate: 'MIN', operator: 'GT', threshold: '1' }, { aggregate: 'MIN', operator: 'LT', threshold: '2' }])).toBe(false);
+    expect(parse([{ aggregate: 'MAX', operator: 'GT', threshold: '' }])).toBe(false);
   });
 });

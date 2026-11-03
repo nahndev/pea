@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { type AnalysisSchema, ErrorCode, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit, type SubjectType } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit, type SubjectType } from '@tomato/constants';
 import type { MetricResultView, MetricView, SubjectView } from '@tomato/types';
 import type { Analysis, Metric, MetricResult, Subject } from '../../generated/client';
 import { UpdateMetricDto } from './dto/update-metric.dto';
@@ -72,6 +72,12 @@ export class MetricsService {
     return this.metricResultsRepository.findByAnalysisResult(analysisResultId);
   }
 
+  findPassedHistory(
+    filter: Parameters<MetricResultsRepository['findPassedHistory']>[0],
+  ): ReturnType<MetricResultsRepository['findPassedHistory']> {
+    return this.metricResultsRepository.findPassedHistory(filter);
+  }
+
   async findResultViews(analysisResultId: string): Promise<MetricResultView[]> {
     const results = await this.metricResultsRepository.findDetailedByAnalysisResult(analysisResultId);
     return results.map(({ id, value, subject, metric, evaluations }) => ({
@@ -86,6 +92,8 @@ export class MetricsService {
       },
       evaluations: evaluations.map((evaluation) => ({
         status: evaluation.status as MetricEvaluationStatus,
+        aggregate: evaluation.aggregate as MetricConditionAggregate,
+        baseline: evaluation.baseline,
         operator: evaluation.operator as MetricConditionOperator,
         threshold: evaluation.threshold,
       })),

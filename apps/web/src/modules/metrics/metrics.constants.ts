@@ -1,4 +1,4 @@
-import { MetricConditionOperator, MetricType, MetricUnit } from '@tomato/constants';
+import { MetricConditionAggregate, MetricConditionOperator, MetricType, MetricUnit } from '@tomato/constants';
 
 export const METRIC_TYPES = [MetricType.P50, MetricType.P90, MetricType.P95] as const;
 
@@ -24,6 +24,14 @@ export const VIOLATION_PHRASE: Record<MetricConditionOperator, string> = {
   [MetricConditionOperator.GTE]: 'at or above',
   [MetricConditionOperator.LT]: 'below',
   [MetricConditionOperator.LTE]: 'at or below',
+};
+
+export const AGGREGATE_LABEL: Record<MetricConditionAggregate, string> = {
+  [MetricConditionAggregate.NONE]: 'Each result',
+  [MetricConditionAggregate.MIN]: 'Min',
+  [MetricConditionAggregate.MAX]: 'Max',
+  [MetricConditionAggregate.AVERAGE]: 'Average',
+  [MetricConditionAggregate.MEDIAN]: 'Median',
 };
 
 export const TREND_LIMIT = 20;

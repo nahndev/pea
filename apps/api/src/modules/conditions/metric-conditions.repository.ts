@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import type { AnalysisSchema, MetricConditionOperator } from '@tomato/constants';
+import type { MetricConditionAggregateLimit } from '@tomato/types';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { MetricConditionWithRelations } from './conditions.types';
 
 const INCLUDE = {
   metric: { select: { id: true, schema: true, type: true, unit: true, description: true, isActive: true } },
 } as const;
+
+const toJson = (limits: MetricConditionAggregateLimit[]) => limits.map((limit) => ({ ...limit }));
 
 @Injectable()
 export class MetricConditionsRepository {
@@ -39,14 +42,28 @@ export class MetricConditionsRepository {
     metricId: string;
     operator: MetricConditionOperator;
     threshold: number;
+    aggregates: MetricConditionAggregateLimit[];
   }): Promise<MetricConditionWithRelations> {
-    return this.prismaService.metricCondition.create({ data, include: INCLUDE });
+    return this.prismaService.metricCondition.create({
+      data: { ...data, aggregates: toJson(data.aggregates) },
+      include: INCLUDE,
+    });
   }
 
   update(
     id: string,
-    data: { operator?: MetricConditionOperator; threshold?: number; isActive?: boolean },
+    data: {
+      operator?: MetricConditionOperator;
+      threshold?: number;
+      aggregates?: MetricConditionAggregateLimit[];
+      isActive?: boolean;
+    },
   ): Promise<MetricConditionWithRelations> {
-    return this.prismaService.metricCondition.update({ where: { id }, data, include: INCLUDE });
+    const { aggregates, ...rest } = data;
+    return this.prismaService.metricCondition.update({
+      where: { id },
+      data: { ...rest, ...(aggregates && { aggregates: toJson(aggregates) }) },
+      include: INCLUDE,
+    });
   }
 }

@@ -70,7 +70,7 @@ describe('AnalysisResultService', () => {
     await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(metricsService.measure).toHaveBeenCalledWith('res-1', analysis);
-    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', AnalysisSchema.API);
+    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', 'an-1', AnalysisSchema.API);
     expect(metricsService.measure.mock.invocationCallOrder[0]).toBeLessThan(
       metricConditionsService.evaluate.mock.invocationCallOrder[0],
     );
@@ -93,7 +93,7 @@ describe('AnalysisResultService', () => {
     await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(rulesService.listBySchema).toHaveBeenCalledWith(AnalysisSchema.QUERY);
-    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', AnalysisSchema.QUERY);
+    expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', 'an-1', AnalysisSchema.QUERY);
   });
 
   it('completes with zero issues when nothing is found', async () => {

@@ -128,6 +128,7 @@ model MetricCondition {
   metricId      String             @map("metric_id") @db.Uuid
   operator      String             @db.VarChar(10)
   threshold     Float
+  aggregates    Json               @default("[]") @db.JsonB
   isActive      Boolean            @default(true) @map("is_active")
   createdAt     DateTime           @default(now()) @map("created_at")
   updatedAt     DateTime           @updatedAt @map("updated_at")
@@ -143,13 +144,15 @@ model MetricEvaluation {
   metricResultId    String          @map("metric_result_id") @db.Uuid
   metricConditionId String          @map("metric_condition_id") @db.Uuid
   status            String          @db.VarChar(20)
+  aggregate         String          @default("NONE") @db.VarChar(10)
+  baseline          Float?
   operator          String          @db.VarChar(10)
   threshold         Float
   createdAt         DateTime        @default(now()) @map("created_at")
   metricResult      MetricResult    @relation(fields: [metricResultId], references: [id], onDelete: Cascade)
   metricCondition   MetricCondition @relation(fields: [metricConditionId], references: [id], onDelete: Cascade)
 
-  @@unique([metricResultId, metricConditionId])
+  @@unique([metricResultId, metricConditionId, aggregate])
   @@index([metricConditionId])
   @@map("metric_evaluations")
 }

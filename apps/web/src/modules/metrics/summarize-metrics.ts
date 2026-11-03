@@ -1,4 +1,4 @@
-import { MetricEvaluationStatus, MetricType } from '@tomato/constants';
+import { MetricConditionAggregate, MetricEvaluationStatus, MetricType } from '@tomato/constants';
 import type { MetricConditionOperator } from '@tomato/constants';
 import type { MetricResultView } from '@tomato/types';
 import { METRIC_TYPES } from './metrics.constants';
@@ -21,7 +21,7 @@ export function summarizeMetrics(results: MetricResultView[]): MetricSummary[] {
       : evaluations.length > 0
         ? MetricEvaluationStatus.PASSED
         : null;
-    const first = evaluations[0];
+    const first = evaluations.find(({ aggregate }) => aggregate === MetricConditionAggregate.NONE);
 
     return [
       {

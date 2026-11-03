@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import {
   type AnalysisSchema,
   ErrorCode,
+  MetricConditionAggregate,
   type MetricConditionOperator,
   MetricEvaluationStatus,
   type MetricType,
@@ -12,8 +13,9 @@ import { type MetricResult, Prisma } from '../../generated/client';
 import { MetricsService } from '../metrics/metrics.service';
 import { CreateMetricConditionDto } from './dto/create-metric-condition.dto';
 import { UpdateMetricConditionDto } from './dto/update-metric-condition.dto';
-import { VIOLATION_BY_OPERATOR } from './conditions.constants';
+import { BASELINE_BY_AGGREGATE, VIOLATION_BY_OPERATOR } from './conditions.constants';
 import type { MetricConditionWithRelations } from './conditions.types';
+import { parseAggregateLimits } from './condition-aggregates';
 import { MetricConditionsRepository } from './metric-conditions.repository';
 import { MetricEvaluationsRepository, type MetricEvaluationSource } from './metric-evaluations.repository';
 
@@ -38,7 +40,7 @@ export class MetricConditionsService {
     return this.toView(condition);
   }
 
-  async create(input: CreateMetricConditionDto): Promise<MetricConditionView> {
+  async create({ aggregates = [], ...input }: CreateMetricConditionDto): Promise<MetricConditionView> {
     const metric = await this.metricsService.findOne(input.metricId);
     if (!metric) throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
     if (!metric.isActive) throw new BadRequestException({ code: ErrorCode.METRIC_DISABLED });
@@ -47,7 +49,7 @@ export class MetricConditionsService {
     }
 
     try {
-      return this.toView(await this.metricConditionsRepository.create(input));
+      return this.toView(await this.metricConditionsRepository.create({ ...input, aggregates }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === UNIQUE_VIOLATION_CODE) {
         throw new ConflictException({ code: ErrorCode.METRIC_CONDITION_ALREADY_EXISTS });
@@ -56,15 +58,20 @@ export class MetricConditionsService {
     }
   }
 
-  async update(id: string, { operator, threshold, isActive }: UpdateMetricConditionDto): Promise<MetricConditionView> {
+  async update(
+    id: string,
+    { operator, threshold, aggregates, isActive }: UpdateMetricConditionDto,
+  ): Promise<MetricConditionView> {
     const condition = await this.metricConditionsRepository.findById(id);
     if (!condition) throw new NotFoundException({ code: ErrorCode.METRIC_CONDITION_NOT_FOUND });
-    if (operator === undefined && threshold === undefined && isActive === undefined) return this.toView(condition);
+    if (operator === undefined && threshold === undefined && aggregates === undefined && isActive === undefined) {
+      return this.toView(condition);
+    }
 
-    return this.toView(await this.metricConditionsRepository.update(id, { operator, threshold, isActive }));
+    return this.toView(await this.metricConditionsRepository.update(id, { operator, threshold, aggregates, isActive }));
   }
 
-  async evaluate(analysisResultId: string, schema: AnalysisSchema): Promise<number> {
+  async evaluate(analysisResultId: string, analysisId: string, schema: AnalysisSchema): Promise<number> {
     const [conditions, results] = await Promise.all([
       this.metricConditionsRepository.findActiveBySchema(schema),
       this.metricsService.findResults(analysisResultId),
@@ -75,23 +82,65 @@ export class MetricConditionsService {
     }
 
     const items: MetricEvaluationSource[] = [];
-    for (const { id, metricId, operator, threshold } of conditions) {
-      const isViolated = VIOLATION_BY_OPERATOR.get(operator);
-      if (!isViolated) continue;
-      for (const result of resultsByMetric.get(metricId) ?? []) {
-        items.push({
-          metricResultId: result.id,
-          metricConditionId: id,
-          status: isViolated(result.value, threshold) ? MetricEvaluationStatus.FAILED : MetricEvaluationStatus.PASSED,
-          operator,
-          threshold,
-        });
+    for (const { id, metricId, operator, threshold, aggregates } of conditions) {
+      const metricResults = resultsByMetric.get(metricId) ?? [];
+      if (!metricResults.length) continue;
+
+      const limits = parseAggregateLimits(aggregates);
+      const historyBySubject = limits.length
+        ? await this.groupHistoryBySubject({ analysisId, excludeAnalysisResultId: analysisResultId, metricId, excludeConditionId: id })
+        : undefined;
+
+      for (const result of metricResults) {
+        const plain = this.toEvaluation(result, id, MetricConditionAggregate.NONE, null, operator, threshold);
+        if (plain) items.push(plain);
+
+        const history = historyBySubject?.get(result.subjectUuid);
+        if (!history) continue;
+        for (const limit of limits) {
+          const baseline = BASELINE_BY_AGGREGATE.get(limit.aggregate)?.(history);
+          if (baseline === undefined) continue;
+          const evaluation = this.toEvaluation(result, id, limit.aggregate, baseline, limit.operator, limit.threshold);
+          if (evaluation) items.push(evaluation);
+        }
       }
     }
     return this.metricEvaluationsRepository.createMany(items);
   }
 
-  private toView({ id, metric, operator, threshold, isActive }: MetricConditionWithRelations): MetricConditionView {
+  private toEvaluation(
+    result: MetricResult,
+    metricConditionId: string,
+    aggregate: MetricConditionAggregate,
+    baseline: number | null,
+    operator: string,
+    threshold: number,
+  ): MetricEvaluationSource | null {
+    const isViolated = VIOLATION_BY_OPERATOR.get(operator);
+    if (!isViolated) return null;
+    return {
+      metricResultId: result.id,
+      metricConditionId,
+      status: isViolated(result.value - (baseline ?? 0), threshold) ? MetricEvaluationStatus.FAILED : MetricEvaluationStatus.PASSED,
+      aggregate,
+      baseline,
+      operator,
+      threshold,
+    };
+  }
+
+  private async groupHistoryBySubject(
+    filter: Parameters<MetricsService['findPassedHistory']>[0],
+  ): Promise<Map<string | null, number[]>> {
+    const history = await this.metricsService.findPassedHistory(filter);
+    const valuesBySubject = new Map<string | null, number[]>();
+    for (const { subjectUuid, value } of history) {
+      valuesBySubject.set(subjectUuid, [...(valuesBySubject.get(subjectUuid) ?? []), value]);
+    }
+    return valuesBySubject;
+  }
+
+  private toView({ id, metric, operator, threshold, aggregates, isActive }: MetricConditionWithRelations): MetricConditionView {
     const { schema, ...rest } = metric;
     return {
       id,
@@ -99,6 +148,7 @@ export class MetricConditionsService {
       metric: { ...rest, type: metric.type as MetricType, unit: metric.unit as MetricUnit },
       operator: operator as MetricConditionOperator,
       threshold,
+      aggregates: parseAggregateLimits(aggregates),
       isActive,
     };
   }

@@ -27,7 +27,7 @@ export function ConditionDetailView({ conditionId }: ConditionDetailViewProps) {
       <PageHeader title={title} description="Changes apply to analyses run from now on. Past results keep the condition they were checked against.">
         <Breadcrumbs entries={[{ label: 'Conditions', href: buildHref('/conditions', { schema: data.schema }) }, { label: title }]} />
       </PageHeader>
-      <ConditionForm key={`${data.operator}:${data.threshold}:${data.isActive}`} condition={data} />
+      <ConditionForm key={`${data.operator}:${data.threshold}:${data.isActive}:${JSON.stringify(data.aggregates)}`} condition={data} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type {
   AnalysisSchema,
+  MetricConditionAggregate,
   MetricConditionOperator,
   MetricEvaluationStatus,
   MetricType,
@@ -28,6 +29,9 @@ export interface MetricView {
 
 export interface MetricEvaluationView {
   status: MetricEvaluationStatus;
+  aggregate: MetricConditionAggregate;
+  /** Aggregate of the passed history the value was compared with; null without an aggregate */
+  baseline: number | null;
   operator: MetricConditionOperator;
   threshold: number;
 }

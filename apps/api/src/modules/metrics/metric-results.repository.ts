@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AnalysisResultStatus, MetricEvaluationStatus } from '@tomato/constants';
 import type { MetricResult, Prisma } from '../../generated/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -25,6 +26,28 @@ export class MetricResultsRepository {
 
   findByAnalysisResult(analysisResultId: string): Promise<MetricResult[]> {
     return this.prismaService.metricResult.findMany({ where: { analysisResultId }, orderBy: { id: 'asc' } });
+  }
+
+  findPassedHistory(filter: {
+    analysisId: string;
+    excludeAnalysisResultId: string;
+    metricId: string;
+    excludeConditionId: string;
+  }): Promise<Pick<MetricResult, 'subjectUuid' | 'value'>[]> {
+    return this.prismaService.metricResult.findMany({
+      where: {
+        metricId: filter.metricId,
+        analysisResult: {
+          analysisId: filter.analysisId,
+          id: { not: filter.excludeAnalysisResultId },
+          status: AnalysisResultStatus.COMPLETED,
+        },
+        evaluations: {
+          none: { status: MetricEvaluationStatus.FAILED, metricConditionId: { not: filter.excludeConditionId } },
+        },
+      },
+      select: { subjectUuid: true, value: true },
+    });
   }
 
   findDetailedByAnalysisResult(analysisResultId: string): Promise<MetricResultWithDetails[]> {

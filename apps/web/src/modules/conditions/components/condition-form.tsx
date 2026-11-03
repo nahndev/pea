@@ -8,6 +8,7 @@ import { ErrorState } from '@/shared/components/error-state';
 import { METRIC_UNIT_LABEL } from '@/modules/metrics';
 import { updateConditionSchema } from '../conditions.schemas';
 import { useUpdateCondition } from '../hooks/use-conditions';
+import { ConditionAggregateFields, createAggregateDrafts, toAggregateInputs } from './condition-aggregate-fields';
 import { ConditionLimitFields } from './condition-limit-fields';
 
 interface ConditionFormProps {
@@ -17,8 +18,10 @@ interface ConditionFormProps {
 export function ConditionForm({ condition }: ConditionFormProps) {
   const { mutate, isPending, error: requestError } = useUpdateCondition(condition.id);
   const [operator, setOperator] = useState<MetricConditionOperator>(condition.operator);
+  const [aggregates, setAggregates] = useState(() => createAggregateDrafts(condition.aggregates));
   const [isActive, setIsActive] = useState(condition.isActive);
   const [thresholdError, setThresholdError] = useState<string>();
+  const [isAggregatesInvalid, setIsAggregatesInvalid] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -27,13 +30,17 @@ export function ConditionForm({ condition }: ConditionFormProps) {
     const parsed = updateConditionSchema.safeParse({
       operator,
       isActive,
+      aggregates: toAggregateInputs(aggregates),
       threshold: new FormData(event.currentTarget).get('threshold'),
     });
     if (!parsed.success) {
-      setThresholdError('Enter a number of 0 or more.');
+      const fields = parsed.error.issues.map(({ path }) => path[0]);
+      setThresholdError(fields.includes('threshold') ? 'Enter a number of 0 or more.' : undefined);
+      setIsAggregatesInvalid(fields.includes('aggregates'));
       return;
     }
     setThresholdError(undefined);
+    setIsAggregatesInvalid(false);
     mutate(parsed.data, { onSuccess: () => setIsSaved(true) });
   };
 
@@ -67,6 +74,15 @@ export function ConditionForm({ condition }: ConditionFormProps) {
         unitLabel={METRIC_UNIT_LABEL[condition.metric.unit]}
         defaultThreshold={condition.threshold}
         error={thresholdError}
+      />
+      <ConditionAggregateFields
+        drafts={aggregates}
+        onChange={(value) => {
+          setAggregates(value);
+          setIsSaved(false);
+        }}
+        unitLabel={METRIC_UNIT_LABEL[condition.metric.unit]}
+        isInvalid={isAggregatesInvalid}
       />
       {requestError ? <ErrorState error={requestError} title="Unable to save condition" /> : null}
       <div className="flex items-center gap-3">

@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import type { MetricEvaluationStatus } from '@tomato/constants';
+import type { MetricConditionAggregate, MetricEvaluationStatus } from '@tomato/constants';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export interface MetricEvaluationSource {
   metricResultId: string;
   metricConditionId: string;
   status: MetricEvaluationStatus;
+  aggregate: MetricConditionAggregate;
+  baseline: number | null;
   operator: string;
   threshold: number;
 }

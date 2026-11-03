@@ -3,7 +3,7 @@ import type { MetricResultView } from '@tomato/types';
 import { GateStatusBadge } from '@/modules/analyses';
 import { formatMetricValue } from '../format-metric-value';
 import { metricSeriesKey, metricSeriesLabel } from '../metric-series';
-import { METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } from '../metrics.constants';
+import { AGGREGATE_LABEL, METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } from '../metrics.constants';
 
 interface MetricResultsTableProps {
   results: MetricResultView[];
@@ -58,10 +58,13 @@ export function MetricResultsTable({ results, picked, onToggle }: MetricResultsT
                   ) : (
                     <ul className="flex flex-col gap-1">
                       {evaluations.map((evaluation) => (
-                        <li key={`${evaluation.operator}-${evaluation.threshold}`} className="flex items-center gap-2 whitespace-nowrap">
+                        <li key={`${evaluation.aggregate}-${evaluation.operator}-${evaluation.threshold}`} className="flex items-center gap-2 whitespace-nowrap">
                           <GateStatusBadge status={evaluation.status} />
                           <span className="text-xs text-muted-foreground">
                             Fails {VIOLATION_PHRASE[evaluation.operator]} {formatMetricValue(metric.unit, evaluation.threshold)}
+                            {evaluation.baseline !== null
+                              ? ` over ${AGGREGATE_LABEL[evaluation.aggregate].toLowerCase()} of passed runs (${formatMetricValue(metric.unit, evaluation.baseline)})`
+                              : ''}
                           </span>
                         </li>
                       ))}
