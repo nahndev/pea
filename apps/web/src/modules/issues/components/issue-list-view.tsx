@@ -57,9 +57,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                       <StatusBadge style={SEVERITY_STYLE[issue.severity]} />
                     </TableCell>
                     <TableCell className="whitespace-nowrap font-medium">{RULE_TYPE_LABEL[issue.rule.type]}</TableCell>
-                    <TableCell className="max-w-56 break-all font-mono text-xs">
-                      {issue.subject?.description ?? <span className="font-sans text-muted-foreground">All requests</span>}
-                    </TableCell>
+                    <TableCell className="max-w-56 break-all font-mono text-xs">{issue.subject.description}</TableCell>
                     <TableCell className="min-w-64 max-w-96 whitespace-normal text-muted-foreground">{issue.description ?? issue.rule.description}</TableCell>
                     <TableCell>
                       <StatusBadge style={ISSUE_STATUS_STYLE[issue.status]} />

@@ -1,4 +1,5 @@
 export const SubjectType = {
+  DEFAULT: 'DEFAULT',
   API: 'API',
   QUERY: 'QUERY',
 } as const;

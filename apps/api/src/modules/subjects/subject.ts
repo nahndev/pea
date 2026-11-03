@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import type { SubjectType } from '@tomato/constants';
+import { SubjectType } from '@tomato/constants';
 import type { SubjectView } from '@tomato/types';
 import type { Subject } from '../../generated/client';
-import { SUBJECT_UUID_NAMESPACE } from './subjects.constants';
+import { DEFAULT_SUBJECT_DESCRIPTION, SUBJECT_UUID_NAMESPACE } from './subjects.constants';
 
 export interface SubjectSource {
   type: SubjectType;
@@ -27,6 +27,9 @@ export const createSubject = (type: SubjectType, description: string): SubjectSo
   uuid: uuidV5(`${type}:${description}`, SUBJECT_UUID_NAMESPACE),
   description,
 });
+
+/** Subject of issues that do not target a specific one. */
+export const DEFAULT_SUBJECT = createSubject(SubjectType.DEFAULT, DEFAULT_SUBJECT_DESCRIPTION);
 
 export const toSubjectView = ({ uuid, type, description }: Subject): SubjectView => ({
   uuid,

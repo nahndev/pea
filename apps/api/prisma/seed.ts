@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { AnalysisSchema, MetricConditionOperator, MetricType, MetricUnit, RuleType, Severity } from '@tomato/constants';
 import { PrismaClient } from '../src/generated/client';
+import { DEFAULT_SUBJECT } from '../src/modules/subjects/subject';
 
 const RULES = [
   { schema: AnalysisSchema.API, type: RuleType.P90_FAILURE, description: 'P90 failure', severity: Severity.HIGH, config: { thresholdMs: 1000 } },
@@ -45,6 +46,8 @@ async function main() {
   });
 
   try {
+    await prismaClient.subject.upsert({ where: { uuid: DEFAULT_SUBJECT.uuid }, create: DEFAULT_SUBJECT, update: {} });
+
     for (const rule of RULES) {
       const { schema, type, description, config } = rule;
       const existing = await prismaClient.rule.findFirst({ where: { schema, type, description }, select: { id: true } });

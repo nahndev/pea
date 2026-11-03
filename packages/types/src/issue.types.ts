@@ -11,7 +11,7 @@ export interface IssueView {
   status: IssueStatus;
   severity: Severity;
   description: string | null;
-  subject: SubjectView | null;
+  subject: SubjectView;
   issueSubject: IssueSubjectView | null;
   createdAt: string;
   rule: { type: RuleType; description: string };

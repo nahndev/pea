@@ -1,6 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { IssueSubjectStatus, Severity, SubjectType } from '@tomato/constants';
-import { createSubject } from '../subjects/subject';
+import { createSubject, DEFAULT_SUBJECT } from '../subjects/subject';
 import { SubjectsService } from '../subjects/subjects.service';
 import { IssueSubjectsRepository } from './issue-subjects.repository';
 import { IssuesRepository } from './issues.repository';
@@ -34,10 +34,10 @@ describe('IssuesService', () => {
     );
   });
 
-  it('creates the issues of an analysis result', async () => {
+  it('gives the default subject to issues without one', async () => {
     await expect(issuesService.createMany('res-1', items)).resolves.toBe(1);
-    expect(issuesRepository.createMany).toHaveBeenCalledWith('res-1', [{ ...items[0], subjectUuid: null }]);
-    expect(issueSubjectsRepository.createMany).not.toHaveBeenCalled();
+    expect(subjectsService.createMany).toHaveBeenCalledWith([DEFAULT_SUBJECT]);
+    expect(issuesRepository.createMany).toHaveBeenCalledWith('res-1', [{ ...items[0], subjectUuid: DEFAULT_SUBJECT.uuid }]);
   });
 
   it('saves the subjects before linking them to the issues', async () => {
@@ -45,10 +45,10 @@ describe('IssuesService', () => {
 
     await issuesService.createMany('res-1', [{ ...items[0], subject: cart }, items[0]]);
 
-    expect(subjectsService.createMany).toHaveBeenCalledWith([cart]);
+    expect(subjectsService.createMany).toHaveBeenCalledWith([cart, DEFAULT_SUBJECT]);
     expect(issuesRepository.createMany).toHaveBeenCalledWith('res-1', [
       { ...items[0], subjectUuid: cart.uuid },
-      { ...items[0], subjectUuid: null },
+      { ...items[0], subjectUuid: DEFAULT_SUBJECT.uuid },
     ]);
     expect(subjectsService.createMany.mock.invocationCallOrder[0]).toBeLessThan(
       issuesRepository.createMany.mock.invocationCallOrder[0],
@@ -60,7 +60,10 @@ describe('IssuesService', () => {
 
     await issuesService.createMany('res-1', [{ ...items[0], subject: cart }, items[0]]);
 
-    expect(issueSubjectsRepository.createMany).toHaveBeenCalledWith([{ ruleId: 'r-1', subjectUuid: cart.uuid }]);
+    expect(issueSubjectsRepository.createMany).toHaveBeenCalledWith([
+      { ruleId: 'r-1', subjectUuid: cart.uuid },
+      { ruleId: 'r-1', subjectUuid: DEFAULT_SUBJECT.uuid },
+    ]);
     expect(subjectsService.createMany.mock.invocationCallOrder[0]).toBeLessThan(
       issueSubjectsRepository.createMany.mock.invocationCallOrder[0],
     );
@@ -88,11 +91,11 @@ describe('IssuesService', () => {
         {
           id: 'i-2',
           ruleId: 'r-2',
-          subjectUuid: null,
+          subjectUuid: DEFAULT_SUBJECT.uuid,
           status: 'OPEN',
           severity: 'HIGH',
           description: 'slow',
-          subject: null,
+          subject: { ...DEFAULT_SUBJECT, createdAt: new Date() },
           createdAt: new Date('2026-10-02T10:00:00.000Z'),
           rule: { type: 'P90_FAILURE', description: 'P90 failure' },
         },
@@ -101,6 +104,7 @@ describe('IssuesService', () => {
     });
     issueSubjectsRepository.findByKeys.mockResolvedValue([
       { id: 'is-1', ruleId: 'r-1', subjectUuid: 'su-1', status: 'PLANNING' } as never,
+      { id: 'is-2', ruleId: 'r-2', subjectUuid: DEFAULT_SUBJECT.uuid, status: 'FIXED' } as never,
     ]);
 
     const page = await issuesService.findPage('res-1', { severity: Severity.HIGH, limit: 20, offset: 0 });
@@ -117,8 +121,15 @@ describe('IssuesService', () => {
       subject: { uuid: 'su-1', type: 'API', description: 'GET /api/cart' },
       issueSubject: { id: 'is-1', status: IssueSubjectStatus.PLANNING },
     });
-    expect(page.items[1]).toMatchObject({ id: 'i-2', subject: null, issueSubject: null });
-    expect(issueSubjectsRepository.findByKeys).toHaveBeenCalledWith([{ ruleId: 'r-1', subjectUuid: 'su-1' }]);
+    expect(page.items[1]).toMatchObject({
+      id: 'i-2',
+      subject: DEFAULT_SUBJECT,
+      issueSubject: { id: 'is-2', status: IssueSubjectStatus.FIXED },
+    });
+    expect(issueSubjectsRepository.findByKeys).toHaveBeenCalledWith([
+      { ruleId: 'r-1', subjectUuid: 'su-1' },
+      { ruleId: 'r-2', subjectUuid: DEFAULT_SUBJECT.uuid },
+    ]);
   });
 
   it('skips the database when there is nothing to create', async () => {

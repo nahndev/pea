@@ -20,6 +20,8 @@
 ## Solutions
 
 - [x] `IssueSubject` (`issue_subjects`): `ruleId` + `subjectUuid` (unique pair), `status` (`IssueSubjectStatus`: `TO_REVIEW`, `PLANNING`, `IN_PROGRESS`, `FIXED`, default `TO_REVIEW`). It outlives analyses: every issue of the same rule and subject, in any analysis, shares the same row and status. Migration `add_issue_subjects` backfills one `TO_REVIEW` row per existing (rule, subject) pair.
-- [x] `IssuesService.createMany` creates the missing pairs (`skipDuplicates`), so an existing status is kept on re-analysis. Issues without a subject (latency, rate rules) have no `IssueSubject`.
+- [x] `IssuesService.createMany` creates the missing pairs (`skipDuplicates`), so an existing status is kept on re-analysis.
+- [x] Issues without a specific subject (latency, rate rules) get `DEFAULT_SUBJECT` (`SubjectType.DEFAULT`, "All requests") instead of `null`, so they have an `IssueSubject` too and `Issue.subjectUuid` is now required. Migration `add_default_subject` creates it and moves existing issues onto it; the seed upserts it.
+- [x] Only one `DEFAULT` subject can exist: partial unique index `subjects_default_type_key` (`WHERE type = 'DEFAULT'`, Prisma preview `partialIndexes`).
 - [x] `IssueView.issueSubject` (`{ id, status }` or `null`), looked up by (rule, subject) for the page of issues; `PATCH /issue-subjects/:id` (`{ status }`) changes the status, `ISSUE_SUBJECT_NOT_FOUND` when unknown.
-- [x] The issues page has a "Subject status" column with a select to change it (`—` when the issue has no subject).
+- [x] The issues page has a "Subject status" column with a select to change it.

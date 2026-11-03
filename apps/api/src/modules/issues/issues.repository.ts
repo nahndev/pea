@@ -8,7 +8,7 @@ export interface IssueSource {
   ruleId: string;
   description?: string;
   severity: string;
-  subjectUuid: string | null;
+  subjectUuid: string;
 }
 
 @Injectable()
