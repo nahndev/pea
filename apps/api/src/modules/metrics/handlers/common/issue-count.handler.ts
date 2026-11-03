@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Metric } from '../../../generated/client';
-import type { AnalysisWithData } from '../../analyses/analyses.types';
-import { IssuesService } from '../../issues/issues.service';
-import { SEVERITY_BY_METRIC_TYPE } from '../metrics.constants';
-import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
+import type { Metric } from '../../../../generated/client';
+import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { IssuesService } from '../../../issues/issues.service';
+import { SEVERITY_BY_METRIC_TYPE } from '../../metrics.constants';
+import type { MetricHandler, MetricMeasurement } from '../metric-handler.types';
 
 @Injectable()
 export class IssueCountHandler implements MetricHandler {

@@ -4,7 +4,7 @@ import { FilesModule } from '../files/files.module';
 import { IssuesModule } from '../issues/issues.module';
 import { SubjectsModule } from '../subjects/subjects.module';
 import { EndpointPercentileHandler } from './handlers/api/endpoint-percentile.handler';
-import { IssueCountHandler } from './handlers/issue-count.handler';
+import { IssueCountHandler } from './handlers/common/issue-count.handler';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { PercentileHandler } from './handlers/api/percentile.handler';
 import { TableRowsHandler } from './handlers/database/table-rows.handler';

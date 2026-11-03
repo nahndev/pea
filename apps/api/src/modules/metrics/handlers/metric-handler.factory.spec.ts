@@ -1,7 +1,7 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { ErrorCode, MetricType } from '@tomato/constants';
 import { EndpointPercentileHandler } from './api/endpoint-percentile.handler';
-import { IssueCountHandler } from './issue-count.handler';
+import { IssueCountHandler } from './common/issue-count.handler';
 import { MetricHandlerFactory } from './metric-handler.factory';
 import { PercentileHandler } from './api/percentile.handler';
 import { TableRowsHandler } from './database/table-rows.handler';
