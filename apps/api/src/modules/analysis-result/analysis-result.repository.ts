@@ -18,6 +18,16 @@ export class AnalysisResultRepository {
     return this.prismaService.analysisResult.update({ where: { id }, data });
   }
 
+  async deleteOlderThan({
+    analysisId,
+    createdAt,
+  }: AnalysisResult): Promise<number> {
+    const { count } = await this.prismaService.analysisResult.deleteMany({
+      where: { analysisId, createdAt: { lt: createdAt } },
+    });
+    return count;
+  }
+
   findLatestByAnalysis(analysisId: string): Promise<AnalysisResult | null> {
     return this.prismaService.analysisResult.findFirst({
       where: { analysisId },

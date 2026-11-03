@@ -11,7 +11,7 @@ import { AnalysisResultRepository } from './analysis-result.repository';
 import { AnalysisResultService } from './analysis-result.service';
 
 describe('AnalysisResultService', () => {
-  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish'>>;
+  let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish' | 'deleteOlderThan'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
   let rulesService: jest.Mocked<Pick<RulesService, 'listBySchema'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
@@ -31,6 +31,7 @@ describe('AnalysisResultService', () => {
     analysisResultRepository = {
       create: jest.fn().mockResolvedValue({ id: 'res-1' }),
       finish: jest.fn().mockImplementation((id, data) => Promise.resolve({ id, ...data })),
+      deleteOlderThan: jest.fn().mockResolvedValue(0),
     };
     analysesService = { findOne: jest.fn().mockResolvedValue(analysis) };
     rulesService = { listBySchema: jest.fn().mockResolvedValue(ruleList) };
@@ -136,6 +137,7 @@ describe('AnalysisResultService', () => {
     await expect(analysisResultService.rerun('an-1')).resolves.toEqual({ id: 'res-1' });
     await new Promise(setImmediate);
     expect(analysisResultRepository.finish).not.toHaveBeenCalled();
+    expect(analysisResultRepository.deleteOlderThan).not.toHaveBeenCalled();
 
     release();
     await new Promise(setImmediate);
@@ -143,6 +145,21 @@ describe('AnalysisResultService', () => {
       status: AnalysisResultStatus.COMPLETED,
       issueCount: 0,
     });
+    expect(analysisResultRepository.deleteOlderThan).toHaveBeenCalledWith({ id: 'res-1' });
+  });
+
+  it('rerun deletes older results only after evaluating conditions', async () => {
+    await analysisResultService.rerun('an-1');
+    await new Promise(setImmediate);
+
+    expect(metricConditionsService.evaluate.mock.invocationCallOrder[0]).toBeLessThan(
+      analysisResultRepository.deleteOlderThan.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('run does not delete older results', async () => {
+    await analysisResultService.run({ analysisId: 'an-1' });
+    expect(analysisResultRepository.deleteOlderThan).not.toHaveBeenCalled();
   });
 
   it('rerun marks the result FAILED without rejecting when the run throws', async () => {
@@ -156,6 +173,7 @@ describe('AnalysisResultService', () => {
       status: AnalysisResultStatus.FAILED,
       issueCount: 0,
     });
+    expect(analysisResultRepository.deleteOlderThan).not.toHaveBeenCalled();
   });
 
   it('rerun does not create a result when the analysis does not exist', async () => {

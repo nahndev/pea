@@ -35,9 +35,11 @@ export class AnalysisResultService {
   async rerun(analysisId: string): Promise<AnalysisResult> {
     const analysis = await this.analysesService.findOne(analysisId);
     const result = await this.analysisResultRepository.create(analysis.id);
-    this.execute(analysis, result).catch((error: unknown) =>
-      this.logger.error(`Re-analysis ${result.id} failed`, error instanceof Error ? error.stack : String(error)),
-    );
+    this.execute(analysis, result)
+      .then(() => this.analysisResultRepository.deleteOlderThan(result))
+      .catch((error: unknown) =>
+        this.logger.error(`Re-analysis ${result.id} failed`, error instanceof Error ? error.stack : String(error)),
+      );
     return result;
   }
 
