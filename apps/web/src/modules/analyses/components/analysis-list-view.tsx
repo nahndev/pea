@@ -1,6 +1,6 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import type { AnalysisSchema } from '@tomato/constants';
 import Link from 'next/link';
 import { EmptyState } from '@/shared/components/empty-state';
@@ -8,6 +8,7 @@ import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
+import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { buildHref } from '@/shared/lib/pagination';
 import { useBranchAnalyses } from '../hooks/use-analyses';
 import { GateStatusBadge, ResultStatusBadge } from './analysis-status-badges';
@@ -39,6 +40,7 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
+                  <TableHead>Schema</TableHead>
                   <TableHead>Merge request</TableHead>
                   <TableHead>Result</TableHead>
                   <TableHead className="text-right">Issues</TableHead>
@@ -50,6 +52,9 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
                 {data.items.map((analysis) => (
                   <TableRow key={analysis.id}>
                     <TableCell className="whitespace-nowrap">{formatDateTime(analysis.createdAt)}</TableCell>
+                    <TableCell>
+                      <Badge>{ANALYSIS_SCHEMA_LABEL[analysis.schema]}</Badge>
+                    </TableCell>
                     <TableCell>{analysis.mergeRequestIid ? `!${analysis.mergeRequestIid}` : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>{analysis.latestResult ? <ResultStatusBadge status={analysis.latestResult.status} /> : <span className="text-muted-foreground">Pending</span>}</TableCell>
                     <TableCell className="text-right tabular-nums">{analysis.latestResult?.issueCount ?? '—'}</TableCell>
