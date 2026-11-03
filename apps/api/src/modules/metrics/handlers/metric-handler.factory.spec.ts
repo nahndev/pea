@@ -4,12 +4,19 @@ import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 import { IssueCountHandler } from './issue-count.handler';
 import { MetricHandlerFactory } from './metric-handler.factory';
 import { PercentileHandler } from './percentile.handler';
+import { TableRowsHandler } from './table-rows.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
   const issueCountHandler = {} as IssueCountHandler;
   const endpointPercentileHandler = {} as EndpointPercentileHandler;
-  const metricHandlerFactory = new MetricHandlerFactory(percentileHandler, issueCountHandler, endpointPercentileHandler);
+  const tableRowsHandler = {} as TableRowsHandler;
+  const metricHandlerFactory = new MetricHandlerFactory(
+    percentileHandler,
+    issueCountHandler,
+    endpointPercentileHandler,
+    tableRowsHandler,
+  );
 
   it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
     expect(metricHandlerFactory.create(type)).toBe(percentileHandler);
@@ -17,6 +24,10 @@ describe('MetricHandlerFactory', () => {
 
   it('returns the endpoint percentile handler for ENDPOINT_P95', () => {
     expect(metricHandlerFactory.create(MetricType.ENDPOINT_P95)).toBe(endpointPercentileHandler);
+  });
+
+  it('returns the table rows handler for TABLE_ROWS', () => {
+    expect(metricHandlerFactory.create(MetricType.TABLE_ROWS)).toBe(tableRowsHandler);
   });
 
   it.each([

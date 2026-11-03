@@ -11,12 +11,14 @@ export interface AnalysisResultSummary {
 export interface AnalysisSummary {
   id: string;
   schema: AnalysisSchema;
-  mergeRequestIid: number | null;
+  title: string;
   createdAt: string;
   latestResult: AnalysisResultSummary | null;
 }
 
 export interface AnalysisDetail extends AnalysisSummary {
   branch: Branch;
-  file: string;
+  file: string | null;
+  /** `user@host:port/database`, without the password */
+  database: string | null;
 }

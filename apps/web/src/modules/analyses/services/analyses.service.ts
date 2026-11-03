@@ -1,9 +1,9 @@
-import type { AnalysisSchema } from '@tomato/constants';
+import { AnalysisSchema } from '@tomato/constants';
 import type { AnalysisDetail, AnalysisSummary, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
-import { LOG_FILE_FIELD } from '../analyses.constants';
+import { DatabaseConnectionMode, LOG_FILE_FIELD } from '../analyses.constants';
 import type { CreateAnalysisInput } from '../analyses.schemas';
 
 export const analysesService = {
@@ -23,8 +23,18 @@ export const analysesService = {
     const body = new FormData();
     body.set('branch', input.branch);
     body.set('schema', input.schema);
-    if (input.mergeRequestIid) body.set('mergeRequestIid', String(input.mergeRequestIid));
-    body.set(LOG_FILE_FIELD.name, input.api_metric);
+    body.set('title', input.title);
+    if (input.schema !== AnalysisSchema.DATABASE) {
+      body.set(LOG_FILE_FIELD.name, input.api_metric);
+    } else if (input.connectionMode === DatabaseConnectionMode.URL) {
+      body.set('connectionString', input.connectionString);
+    } else {
+      body.set('host', input.host);
+      if (input.port) body.set('port', String(input.port));
+      body.set('database', input.database);
+      body.set('user', input.user);
+      if (input.password) body.set('password', input.password);
+    }
     const { data } = await apiClient.post<{ id: string }>('/analyses', body);
     return data;
   },

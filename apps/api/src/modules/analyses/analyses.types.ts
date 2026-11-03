@@ -22,7 +22,7 @@ export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{
   select: {
     id: true;
     createdAt: true;
-    mergeRequestIid: true;
+    title: true;
     results: {
       select: {
         metricResults: {

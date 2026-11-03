@@ -25,6 +25,7 @@ export const ErrorCode = {
   LOG_FILE_REQUIRED: 'LOG_FILE_REQUIRED',
   LOG_FILE_INVALID: 'LOG_FILE_INVALID',
   LOG_FILE_DUPLICATED: 'LOG_FILE_DUPLICATED',
+  DATABASE_CONNECTION_FAILED: 'DATABASE_CONNECTION_FAILED',
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

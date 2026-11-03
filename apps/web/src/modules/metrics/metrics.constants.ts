@@ -12,6 +12,7 @@ export const METRIC_LABEL: Record<MetricType, string> = {
   [MetricType.MEDIUM_ISSUE_COUNT]: 'Medium issues',
   [MetricType.LOW_ISSUE_COUNT]: 'Low issues',
   [MetricType.INFO_ISSUE_COUNT]: 'Info issues',
+  [MetricType.TABLE_ROWS]: 'Rows per table',
 };
 
 export const METRIC_UNIT_LABEL: Record<MetricUnit, string> = {

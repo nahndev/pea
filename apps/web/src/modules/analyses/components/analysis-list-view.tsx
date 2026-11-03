@@ -39,9 +39,9 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Title</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Schema</TableHead>
-                  <TableHead>Merge request</TableHead>
                   <TableHead>Result</TableHead>
                   <TableHead className="text-right">Issues</TableHead>
                   <TableHead>Conditions</TableHead>
@@ -51,11 +51,13 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
               <TableBody>
                 {data.items.map((analysis) => (
                   <TableRow key={analysis.id}>
+                    <TableCell className="max-w-64 truncate font-medium" title={analysis.title}>
+                      {analysis.title}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap">{formatDateTime(analysis.createdAt)}</TableCell>
                     <TableCell>
                       <Badge>{ANALYSIS_SCHEMA_LABEL[analysis.schema]}</Badge>
                     </TableCell>
-                    <TableCell>{analysis.mergeRequestIid ? `!${analysis.mergeRequestIid}` : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>{analysis.latestResult ? <ResultStatusBadge status={analysis.latestResult.status} /> : <span className="text-muted-foreground">Pending</span>}</TableCell>
                     <TableCell className="text-right tabular-nums">{analysis.latestResult?.issueCount ?? '—'}</TableCell>
                     <TableCell>

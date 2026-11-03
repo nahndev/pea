@@ -8,6 +8,7 @@ export const MetricType = {
   MEDIUM_ISSUE_COUNT: 'MEDIUM_ISSUE_COUNT',
   LOW_ISSUE_COUNT: 'LOW_ISSUE_COUNT',
   INFO_ISSUE_COUNT: 'INFO_ISSUE_COUNT',
+  TABLE_ROWS: 'TABLE_ROWS',
 } as const;
 
 export type MetricType = (typeof MetricType)[keyof typeof MetricType];

@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { EventEmitter2 } from '@nestjs/event-emitter';
 import { AnalysisEvent, AnalysisSchema, ErrorCode } from '@tomato/constants';
+import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
 import { StorageService } from '../files/storage.service';
 import type { StoredFile } from '../files/storage.service';
 import { BranchesService } from '../branches/branches.service';
@@ -14,6 +15,7 @@ describe('AnalysesService', () => {
   let analysesRepository: jest.Mocked<Pick<AnalysesRepository, 'create' | 'findById'>>;
   let branchesService: jest.Mocked<Pick<BranchesService, 'findOrCreateByName'>>;
   let storageService: jest.Mocked<Pick<StorageService, 'save' | 'remove'>>;
+  let databaseConnectionsService: jest.Mocked<Pick<DatabaseConnectionsService, 'verify' | 'encrypt'>>;
   let eventEmitter2: jest.Mocked<Pick<EventEmitter2, 'emit'>>;
   let analysesService: AnalysesService;
 
@@ -24,11 +26,13 @@ describe('AnalysesService', () => {
       save: jest.fn().mockResolvedValue(STORED_FILE),
       remove: jest.fn().mockResolvedValue(undefined),
     };
+    databaseConnectionsService = { verify: jest.fn().mockResolvedValue(undefined), encrypt: jest.fn().mockReturnValue('sealed') };
     eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
       branchesService as unknown as BranchesService,
       storageService as unknown as StorageService,
+      databaseConnectionsService as unknown as DatabaseConnectionsService,
     );
     Object.assign(analysesService, { eventEmitter2 });
   });
@@ -42,14 +46,14 @@ describe('AnalysesService', () => {
     const analysis = { id: 'an-1', branchId: 'br-1', ...STORED_FILE };
     analysesRepository.create.mockResolvedValue(analysis as never);
 
-    const result = await analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API, mergeRequestIid: 7 }, UPLOAD);
+    const result = await analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API, title: 'Release 1' }, UPLOAD);
 
     expect(storageService.save).toHaveBeenCalledWith(UPLOAD);
     expect(branchesService.findOrCreateByName).toHaveBeenCalledWith('feat/x');
     expect(analysesRepository.create).toHaveBeenCalledWith({
       branchId: 'br-1',
       schema: AnalysisSchema.API,
-      mergeRequestIid: 7,
+      title: 'Release 1',
       file: STORED_FILE,
     });
     expect(storageService.remove).not.toHaveBeenCalled();
@@ -58,7 +62,7 @@ describe('AnalysesService', () => {
   });
 
   it('rejects a missing file before touching the database or the disk', async () => {
-    await expect(codeOf(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API }))).resolves.toEqual({
+    await expect(codeOf(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API, title: 'Release 1' }))).resolves.toEqual({
       code: ErrorCode.LOG_FILE_REQUIRED,
     });
     expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
@@ -69,9 +73,46 @@ describe('AnalysesService', () => {
   it('removes the stored files when creating the analysis fails', async () => {
     analysesRepository.create.mockRejectedValue(new Error('db down'));
 
-    await expect(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API }, UPLOAD)).rejects.toThrow('db down');
+    await expect(analysesService.create({ branch: 'feat/x', schema: AnalysisSchema.API, title: 'Release 1' }, UPLOAD)).rejects.toThrow('db down');
     expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
+  });
+
+  describe('database analysis', () => {
+    const dto = { branch: 'feat/x', schema: AnalysisSchema.DATABASE, title: 'Nightly', host: 'db', database: 'shop', user: 'reader', password: 'secret' };
+
+    it('verifies and stores the encrypted connection without a file', async () => {
+      const analysis = { id: 'an-1', branchId: 'br-1' };
+      analysesRepository.create.mockResolvedValue(analysis as never);
+
+      await expect(analysesService.create(dto)).resolves.toBe(analysis);
+
+      const connection = { host: 'db', port: 5432, database: 'shop', user: 'reader', password: 'secret' };
+      expect(databaseConnectionsService.verify).toHaveBeenCalledWith(connection);
+      expect(databaseConnectionsService.encrypt).toHaveBeenCalledWith(connection);
+      expect(analysesRepository.create).toHaveBeenCalledWith({
+        branchId: 'br-1',
+        schema: AnalysisSchema.DATABASE,
+        title: 'Nightly',
+        connection: 'sealed',
+      });
+      expect(storageService.save).not.toHaveBeenCalled();
+      expect(eventEmitter2.emit).toHaveBeenCalledWith(AnalysisEvent.CREATED, analysis);
+    });
+
+    it('prefers the connection string', async () => {
+      await analysesService.create({ ...dto, connectionString: 'postgresql://reader@db/shop' });
+
+      expect(databaseConnectionsService.verify).toHaveBeenCalledWith({ connectionString: 'postgresql://reader@db/shop' });
+    });
+
+    it('creates nothing when the database is unreachable', async () => {
+      databaseConnectionsService.verify.mockRejectedValue(new Error('unreachable'));
+
+      await expect(analysesService.create(dto)).rejects.toThrow('unreachable');
+      expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
+      expect(analysesRepository.create).not.toHaveBeenCalled();
+    });
   });
 
   it('throws when the analysis does not exist', async () => {
@@ -104,6 +145,7 @@ describe('AnalysesService reads', () => {
       analysesRepository as unknown as AnalysesRepository,
       branchesService as unknown as BranchesService,
       {} as StorageService,
+      {} as DatabaseConnectionsService,
     );
   });
 
@@ -121,7 +163,7 @@ describe('AnalysesService reads', () => {
     [['PASSED', 'FAILED'], 'FAILED'],
   ])('derives the gate status from evaluations %j as %s', async (evaluationStatuses, expected) => {
     analysesRepository.findPageByBranch.mockResolvedValue({
-      items: [{ id: 'an-1', schema: 'API', mergeRequestIid: 3, createdAt, results: [result(evaluationStatuses)] }] as never,
+      items: [{ id: 'an-1', schema: 'API', title: 'Release 3', createdAt, results: [result(evaluationStatuses)] }] as never,
       total: 1,
     });
 
@@ -131,7 +173,7 @@ describe('AnalysesService reads', () => {
     expect(page.items[0]).toEqual({
       id: 'an-1',
       schema: 'API',
-      mergeRequestIid: 3,
+      title: 'Release 3',
       createdAt: createdAt.toISOString(),
       latestResult: { id: 'res-1', status: 'COMPLETED', issueCount: 2, gateStatus: expected },
     });
@@ -139,7 +181,7 @@ describe('AnalysesService reads', () => {
 
   it('returns a null latest result when the analysis has not been evaluated', async () => {
     analysesRepository.findPageByBranch.mockResolvedValue({
-      items: [{ id: 'an-1', schema: 'API', mergeRequestIid: null, createdAt, results: [] }] as never,
+      items: [{ id: 'an-1', schema: 'API', title: 'Untitled', createdAt, results: [] }] as never,
       total: 1,
     });
 
@@ -171,11 +213,11 @@ describe('AnalysesService reads', () => {
 
     it('keys values by metric and subject and orders the trend oldest first', async () => {
       analysesRepository.findRecentByBranch.mockResolvedValue([
-        { id: 'an-2', createdAt, mergeRequestIid: null, results: [result([['m-90', 'P90', null, 400]])] },
+        { id: 'an-2', createdAt, title: 'Untitled', results: [result([['m-90', 'P90', null, 400]])] },
         {
           id: 'an-1',
           createdAt,
-          mergeRequestIid: 5,
+          title: 'Release 5',
           results: [result([['m-90', 'P90', null, 200], ['m-50', 'P50', null, 50]])],
         },
       ] as never);
@@ -199,7 +241,7 @@ describe('AnalysesService reads', () => {
         {
           id: 'an-1',
           createdAt,
-          mergeRequestIid: null,
+          title: 'Untitled',
           results: [result([[m1, 'ENDPOINT_P95', cart, 900], [m2, 'P50', null, 10], [m1, 'ENDPOINT_P95', orders, 300]])],
         },
       ] as never);

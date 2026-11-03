@@ -26,6 +26,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.LOG_FILE_REQUIRED]: 'A log file is required.',
   [ErrorCode.LOG_FILE_INVALID]: 'The log file is invalid.',
   [ErrorCode.LOG_FILE_DUPLICATED]: 'The log file was already uploaded.',
+  [ErrorCode.DATABASE_CONNECTION_FAILED]: 'Unable to connect to the database. Check the connection details.',
 };
 
 export const getErrorMessage = (code: ErrorCode) => ERROR_MESSAGES[code];

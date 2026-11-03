@@ -4,6 +4,7 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive(),
   DATABASE_URL: z.string().min(1),
   UPLOAD_DIR: z.string().min(1),
+  DATABASE_CONNECTION_KEY: z.string().min(32),
 });
 
 export type Env = z.infer<typeof envSchema>;

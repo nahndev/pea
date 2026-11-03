@@ -18,15 +18,17 @@ model Branch {
 }
 
 model Analysis {
-  id              String           @id @default(uuid(7)) @db.Uuid
-  branchId        String           @map("branch_id") @db.Uuid
-  schema          String           @db.VarChar(20)
-  mergeRequestIid Int?             @map("merge_request_iid")
-  file            String           @db.VarChar(255)
-  path            String           @db.VarChar(300)
-  createdAt       DateTime         @default(now()) @map("created_at")
-  branch          Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  results         AnalysisResult[]
+  id         String           @id @default(uuid(7)) @db.Uuid
+  branchId   String           @map("branch_id") @db.Uuid
+  schema     String           @db.VarChar(20)
+  title      String           @db.VarChar(255)
+  file       String?          @db.VarChar(255)
+  path       String?          @db.VarChar(300)
+  /// AES-256-GCM encrypted database connection of a `DATABASE` analysis
+  connection String?
+  createdAt  DateTime         @default(now()) @map("created_at")
+  branch     Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  results    AnalysisResult[]
 
   @@index([branchId, schema, createdAt(sort: Desc)])
   @@map("analyses")

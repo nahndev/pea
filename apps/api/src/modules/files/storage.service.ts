@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '@tomato/config';
+import { ErrorCode } from '@tomato/constants';
 import { randomUUID } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -41,7 +42,8 @@ export class StorageService {
     return storedFiles;
   }
 
-  resolve(path: string): string {
+  resolve(path: string | null): string {
+    if (path === null) throw new UnprocessableEntityException({ code: ErrorCode.LOG_FILE_REQUIRED });
     return join(this.rootDir, path);
   }
 

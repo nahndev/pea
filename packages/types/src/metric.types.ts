@@ -54,7 +54,7 @@ export interface MetricTrendSeries {
 export interface MetricTrendPoint {
   analysisId: string;
   createdAt: string;
-  mergeRequestIid: number | null;
+  title: string;
   values: Record<string, number>;
 }
 

@@ -4,6 +4,7 @@ import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 import { IssueCountHandler } from './issue-count.handler';
 import type { MetricHandler } from './metric-handler.types';
 import { PercentileHandler } from './percentile.handler';
+import { TableRowsHandler } from './table-rows.handler';
 
 @Injectable()
 export class MetricHandlerFactory {
@@ -13,6 +14,7 @@ export class MetricHandlerFactory {
     percentileHandler: PercentileHandler,
     issueCountHandler: IssueCountHandler,
     endpointPercentileHandler: EndpointPercentileHandler,
+    tableRowsHandler: TableRowsHandler,
   ) {
     this.handlers = new Map<string, MetricHandler>([
       [MetricType.P50, percentileHandler],
@@ -24,6 +26,7 @@ export class MetricHandlerFactory {
       [MetricType.MEDIUM_ISSUE_COUNT, issueCountHandler],
       [MetricType.LOW_ISSUE_COUNT, issueCountHandler],
       [MetricType.INFO_ISSUE_COUNT, issueCountHandler],
+      [MetricType.TABLE_ROWS, tableRowsHandler],
     ]);
   }
 

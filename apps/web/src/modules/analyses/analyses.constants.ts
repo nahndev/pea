@@ -20,5 +20,15 @@ export const LOG_FILE_FIELD = {
   hint: 'NDJSON, one request per line: {"method","route","status","ms"}. Used for metrics and issues.',
 } as const;
 
+export const DatabaseConnectionMode = {
+  FIELDS: 'FIELDS',
+  URL: 'URL',
+} as const;
+
+export type DatabaseConnectionMode = (typeof DatabaseConnectionMode)[keyof typeof DatabaseConnectionMode];
+
+export const DEFAULT_DATABASE_PORT = 5432;
+export const POSTGRES_URL_PATTERN = /^postgres(ql)?:\/\//;
+
 export const POLL_INTERVAL_MS = 2000;
 export const POLL_TIMEOUT_MS = 5 * 60 * 1000;

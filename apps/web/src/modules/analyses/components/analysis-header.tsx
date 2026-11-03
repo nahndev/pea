@@ -29,13 +29,12 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-24 w-full max-w-md" />;
 
-  const { branch, schema, latestResult, mergeRequestIid, createdAt, file } = data;
-  const title = `Analysis of ${formatDateTime(createdAt)}`;
+  const { branch, schema, title, latestResult, createdAt, file, database } = data;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageHeader title={title}>
+        <PageHeader title={title} description={`Analysed on ${formatDateTime(createdAt)}`}>
           <Breadcrumbs
             entries={[
               { label: 'Branches', href: '/branches' },
@@ -54,12 +53,6 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           <dt className="text-muted-foreground">Branch</dt>
           <dd className="break-all font-medium">{branch.name}</dd>
         </div>
-        {mergeRequestIid ? (
-          <div className="flex items-center gap-2">
-            <dt className="text-muted-foreground">Merge request</dt>
-            <dd className="font-medium">!{mergeRequestIid}</dd>
-          </div>
-        ) : null}
         <div className="flex items-center gap-2">
           <dt className="text-muted-foreground">Result</dt>
           <dd>{latestResult ? <ResultStatusBadge status={latestResult.status} /> : 'Pending'}</dd>
@@ -71,10 +64,18 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
             <GateStatusBadge status={latestResult?.gateStatus ?? null} />
           </dd>
         </div>
-        <div className="flex items-center gap-2">
-          <dt className="text-muted-foreground">File</dt>
-          <dd className="break-all font-mono text-xs font-medium">{file}</dd>
-        </div>
+        {file ? (
+          <div className="flex items-center gap-2">
+            <dt className="text-muted-foreground">File</dt>
+            <dd className="break-all font-mono text-xs font-medium">{file}</dd>
+          </div>
+        ) : null}
+        {database ? (
+          <div className="flex items-center gap-2">
+            <dt className="text-muted-foreground">Database</dt>
+            <dd className="break-all font-mono text-xs font-medium">{database}</dd>
+          </div>
+        ) : null}
       </dl>
       <Tabs value={activeTab}>
         <TabsList aria-label="Analysis sections">

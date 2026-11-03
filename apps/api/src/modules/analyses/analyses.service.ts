@@ -6,7 +6,7 @@ import {
 import {
   AnalysisEvent,
   type AnalysisResultStatus,
-  type AnalysisSchema,
+  AnalysisSchema,
   ErrorCode,
   MetricEvaluationStatus,
   type MetricType,
@@ -25,6 +25,9 @@ import type {
 import type { Analysis } from "../../generated/client";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { BranchesService } from "../branches/branches.service";
+import { DEFAULT_DATABASE_PORT } from "../database-connections/database-connections.constants";
+import { DatabaseConnectionsService } from "../database-connections/database-connections.service";
+import type { DatabaseConnection } from "../database-connections/database-connections.types";
 import { StorageService } from "../files/storage.service";
 import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
@@ -38,19 +41,29 @@ export class AnalysesService {
     private readonly analysesRepository: AnalysesRepository,
     private readonly branchesService: BranchesService,
     private readonly storageService: StorageService,
+    private readonly databaseConnectionsService: DatabaseConnectionsService,
   ) {}
 
   @EmitEvent(AnalysisEvent.CREATED)
-  async create(
-    { branch, schema, mergeRequestIid }: CreateAnalysisDto,
-    upload?: Express.Multer.File,
-  ): Promise<Analysis> {
+  async create(dto: CreateAnalysisDto, upload?: Express.Multer.File): Promise<Analysis> {
+    const { branch, schema, title } = dto;
+    if (schema === AnalysisSchema.DATABASE) {
+      const connection = this.toConnection(dto);
+      await this.databaseConnectionsService.verify(connection);
+      const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
+      return this.analysesRepository.create({
+        branchId,
+        schema,
+        title,
+        connection: this.databaseConnectionsService.encrypt(connection),
+      });
+    }
     if (!upload)
       throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
     const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
     const file = await this.storageService.save(upload);
     try {
-      return await this.analysesRepository.create({ branchId, schema, mergeRequestIid, file });
+      return await this.analysesRepository.create({ branchId, schema, title, file });
     } catch (error) {
       await this.storageService.remove([file]).catch(() => undefined);
       throw error;
@@ -68,11 +81,14 @@ export class AnalysesService {
     const analysis = await this.analysesRepository.findDetailById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
-    const { branch, file } = analysis;
+    const { branch, file, connection } = analysis;
     return {
       ...this.toSummary(analysis),
       branch: { id: branch.id, name: branch.name },
       file,
+      database: connection
+        ? this.databaseConnectionsService.describe(this.databaseConnectionsService.decrypt(connection))
+        : null,
     };
   }
 
@@ -91,7 +107,7 @@ export class AnalysesService {
     const analyses = await this.analysesRepository.findRecentByBranch(branchId, schema, limit, pickList);
 
     const seriesByKey = new Map<string, MetricTrendSeries>();
-    const points = analyses.reverse().map(({ id, createdAt, mergeRequestIid, results }) => {
+    const points = analyses.reverse().map(({ id, createdAt, title, results }) => {
       const values: MetricTrendPoint["values"] = {};
       for (const { value, subject, metric } of results[0]?.metricResults ?? []) {
         const key = `${metric.id}:${subject?.uuid ?? ""}`;
@@ -104,10 +120,15 @@ export class AnalysesService {
         }
         values[key] = value;
       }
-      return { analysisId: id, createdAt: createdAt.toISOString(), mergeRequestIid, values };
+      return { analysisId: id, createdAt: createdAt.toISOString(), title, values };
     });
 
     return { series: this.sortSeries([...seriesByKey.values()], picks), points };
+  }
+
+  private toConnection({ connectionString, host, port, database, user, password }: CreateAnalysisDto): DatabaseConnection {
+    if (connectionString) return { connectionString };
+    return { host: host!, port: port ?? DEFAULT_DATABASE_PORT, database: database!, user: user!, password };
   }
 
   private parsePick(pick: string): MetricTrendPick {
@@ -128,7 +149,7 @@ export class AnalysesService {
     return {
       id: analysis.id,
       schema: analysis.schema as AnalysisSchema,
-      mergeRequestIid: analysis.mergeRequestIid,
+      title: analysis.title,
       createdAt: analysis.createdAt.toISOString(),
       latestResult: result ? this.toResultSummary(result) : null,
     };

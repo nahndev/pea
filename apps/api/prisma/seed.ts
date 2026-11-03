@@ -29,6 +29,7 @@ const METRICS = [
   { schema: AnalysisSchema.API, type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
   { schema: AnalysisSchema.API, type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
   { schema: AnalysisSchema.API, type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
+  { schema: AnalysisSchema.DATABASE, type: MetricType.TABLE_ROWS, unit: MetricUnit.COUNT, description: 'Rows per table' },
 ];
 
 const CONDITIONS = [

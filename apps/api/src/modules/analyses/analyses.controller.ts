@@ -34,12 +34,18 @@ export class AnalysesController {
   @ApiBody({
     schema: {
       type: "object",
-      required: ["branch", "schema", LOG_FILE_FIELD],
+      required: ["branch", "schema", "title"],
       properties: {
         branch: { type: "string", minLength: 1, maxLength: 255 },
         schema: { type: "string", enum: Object.values(AnalysisSchema) },
-        mergeRequestIid: { type: "integer", minimum: 1 },
-        [LOG_FILE_FIELD]: { type: "string", format: "binary" },
+        title: { type: "string", minLength: 1, maxLength: 255 },
+        [LOG_FILE_FIELD]: { type: "string", format: "binary", description: "Required unless schema is DATABASE" },
+        connectionString: { type: "string", example: "postgresql://user:password@host:5432/database" },
+        host: { type: "string" },
+        port: { type: "integer", minimum: 1, maximum: 65535, default: 5432 },
+        database: { type: "string" },
+        user: { type: "string" },
+        password: { type: "string", format: "password" },
       },
     },
   })

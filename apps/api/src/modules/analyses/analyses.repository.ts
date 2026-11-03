@@ -16,16 +16,17 @@ import {
 interface CreateAnalysisData {
   branchId: string;
   schema: AnalysisSchema;
-  mergeRequestIid?: number;
-  file: StoredFile;
+  title: string;
+  file?: StoredFile;
+  connection?: string;
 }
 
 @Injectable()
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, schema, mergeRequestIid, file }: CreateAnalysisData): Promise<Analysis> {
-    return this.prismaService.analysis.create({ data: { branchId, schema, mergeRequestIid, ...file } });
+  create({ branchId, schema, title, file, connection }: CreateAnalysisData): Promise<Analysis> {
+    return this.prismaService.analysis.create({ data: { branchId, schema, title, connection, ...file } });
   }
 
   findById(id: string): Promise<Analysis | null> {
@@ -75,7 +76,7 @@ export class AnalysesRepository {
       select: {
         id: true,
         createdAt: true,
-        mergeRequestIid: true,
+        title: true,
         results: {
           orderBy: LATEST_RESULT_ORDER_BY,
           take: 1,
