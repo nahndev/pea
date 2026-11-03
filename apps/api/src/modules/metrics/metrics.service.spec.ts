@@ -18,7 +18,7 @@ describe('MetricsService', () => {
   let handler: jest.Mocked<MetricHandler>;
   let metricsService: MetricsService;
 
-  const analysis = { id: 'an-1', schema: AnalysisSchema.API, file: 'a.jsonl', path: 'p-1' } as never;
+  const analysis = { id: 'an-1', schema: AnalysisSchema.API, apiData: { file: 'a.jsonl', path: 'p-1' } } as never;
   const metricList = [
     { id: 'm-1', type: 'P90' },
     { id: 'm-2', type: 'UNKNOWN' },

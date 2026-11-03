@@ -21,7 +21,7 @@ describe('AnalysisResultService', () => {
   let handler: jest.Mocked<RuleHandler>;
   let analysisResultService: AnalysisResultService;
 
-  const analysis = { id: 'an-1', schema: AnalysisSchema.API, file: 'a.jsonl', path: 'p-1' };
+  const analysis = { id: 'an-1', schema: AnalysisSchema.API, apiData: { file: 'a.jsonl', path: 'p-1' } };
   const ruleList = [
     { id: 'r-1', type: 'P90_FAILURE', severity: 'HIGH' },
     { id: 'r-2', type: 'P95_FAILURE', severity: 'LOW' },

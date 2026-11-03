@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubjectType } from '@tomato/constants';
 import { escapeIdentifier } from 'pg';
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { DatabaseConnectionsService } from '../../database-connections/database-connections.service';
 import { createSubject } from '../../subjects/subject';
 import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
@@ -23,10 +24,10 @@ const READABLE_TABLES_SQL = `
 export class TableRowsHandler implements MetricHandler {
   constructor(private readonly databaseConnectionsService: DatabaseConnectionsService) {}
 
-  async handle(_metric: Metric, analysis: Analysis): Promise<MetricMeasurement[]> {
-    if (!analysis.connection) return [];
+  async handle(_metric: Metric, analysis: AnalysisWithData): Promise<MetricMeasurement[]> {
+    if (!analysis.databaseData) return [];
 
-    const connection = this.databaseConnectionsService.decrypt(analysis.connection);
+    const connection = this.databaseConnectionsService.decrypt(analysis.databaseData.connection);
     return this.databaseConnectionsService.withClient(connection, async (client) => {
       const { rows: tables } = await client.query<{ schema: string; name: string }>(READABLE_TABLES_SQL);
       const measurements: MetricMeasurement[] = [];

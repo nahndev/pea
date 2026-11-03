@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { Analysis, Rule } from '../../../generated/client';
+import type { Rule } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
@@ -11,13 +12,13 @@ import type { RuleHandler, RuleIssue } from './rule-handler.types';
 export class LatencyHandler implements RuleHandler {
   constructor(private readonly storageService: StorageService) {}
 
-  async handle(rule: Rule, analysis: Analysis): Promise<RuleIssue[]> {
+  async handle(rule: Rule, analysis: AnalysisWithData): Promise<RuleIssue[]> {
     const stat = LATENCY_STAT_BY_RULE_TYPE.get(rule.type);
     const { thresholdMs } = rule.config as RuleConfig;
     if (!stat || typeof thresholdMs !== 'number') return [];
 
     const [row] = await queryRows(
-      `SELECT ${stat.sql(API_METRIC_DURATION_COLUMN)} AS value FROM ${apiMetricRequests(this.storageService.resolve(analysis.path))}`,
+      `SELECT ${stat.sql(API_METRIC_DURATION_COLUMN)} AS value FROM ${apiMetricRequests(this.storageService.resolve(analysis.apiData?.path ?? null))}`,
     );
     if (row?.value === null || row?.value === undefined) return [];
 

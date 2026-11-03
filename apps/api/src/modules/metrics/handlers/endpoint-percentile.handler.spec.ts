@@ -2,7 +2,8 @@ import { MetricType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { createSubject } from '../../subjects/subject';
@@ -13,7 +14,7 @@ describe('EndpointPercentileHandler', () => {
   let endpointPercentileHandler: EndpointPercentileHandler;
 
   const metric = (type: string = MetricType.ENDPOINT_P95) => ({ id: 'm-1', type, description: '', config: {} }) as Metric;
-  const analysis = { id: 'an-1', file: 'api_metric.log', path: 'api_metric.log' } as Analysis;
+  const analysis = { id: 'an-1', apiData: { file: 'api_metric.log', path: 'api_metric.log' } } as AnalysisWithData;
 
   const writeLog = (requests: ApiRequestFixture[]) =>
     writeFile(join(dir, 'api_metric.log'), requests.map(apiRequestLine).join('\n'));

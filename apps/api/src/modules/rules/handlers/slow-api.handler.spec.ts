@@ -2,7 +2,8 @@ import { RuleType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Analysis, Rule } from '../../../generated/client';
+import type { Rule } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { type ApiRequestFixture, apiRequestLine } from '../../files/api-metric.fixtures';
 import { StorageService } from '../../files/storage.service';
 import { createSubject } from '../../subjects/subject';
@@ -13,7 +14,7 @@ describe('SlowApiHandler', () => {
   let slowApiHandler: SlowApiHandler;
 
   const rule = (config: object = { thresholdMs: 2000 }) => ({ id: 'r-1', type: RuleType.SLOW_API, config }) as Rule;
-  const analysis = { id: 'an-1', file: 'api_metric.log', path: 'api_metric.log' } as Analysis;
+  const analysis = { id: 'an-1', apiData: { file: 'api_metric.log', path: 'api_metric.log' } } as AnalysisWithData;
 
   const writeLog = (requests: ApiRequestFixture[]) =>
     writeFile(join(dir, 'api_metric.log'), requests.map(apiRequestLine).join('\n'));

@@ -31,7 +31,7 @@ import type { DatabaseConnection } from "../database-connections/database-connec
 import { StorageService } from "../files/storage.service";
 import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
-import type { AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
+import type { AnalysisWithData, AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 import { ListBranchAnalysesQueryDto } from "./dto/list-branch-analyses-query.dto";
 
@@ -70,7 +70,7 @@ export class AnalysesService {
     }
   }
 
-  async findOne(id: string): Promise<Analysis> {
+  async findOne(id: string): Promise<AnalysisWithData> {
     const analysis = await this.analysesRepository.findById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
@@ -81,13 +81,13 @@ export class AnalysesService {
     const analysis = await this.analysesRepository.findDetailById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
-    const { branch, file, connection } = analysis;
+    const { branch, apiData, databaseData } = analysis;
     return {
       ...this.toSummary(analysis),
       branch: { id: branch.id, name: branch.name },
-      file,
-      database: connection
-        ? this.databaseConnectionsService.describe(this.databaseConnectionsService.decrypt(connection))
+      file: apiData?.file ?? null,
+      database: databaseData
+        ? this.databaseConnectionsService.describe(this.databaseConnectionsService.decrypt(databaseData.connection))
         : null,
     };
   }

@@ -12,6 +12,13 @@
 
 ## Acceptance Criteria
 
-- [ ] Create `ApiAnalysisData` include `file` and `path`
-- [ ] Create `DatabaseAnalysisData` include `connection`
-- [ ] `ApiAnalysisData` and `DatabaseAnalysisData` link to `Analysis`
+- [x] Create `ApiAnalysisData` include `file` and `path`
+- [x] Create `DatabaseAnalysisData` include `connection`
+- [x] `ApiAnalysisData` and `DatabaseAnalysisData` link to `Analysis`
+
+## Solutions
+
+- [x] `ApiAnalysisData` (`api_analysis_data`) and `DatabaseAnalysisData` (`database_analysis_data`): 1-1 with `Analysis`, `analysis_id` as primary key, cascade delete; options are non-null there
+- [x] Migration `split_analysis_data` copies existing `file`/`path`/`connection` into the new tables before dropping the columns
+- [x] `AnalysesRepository.create` creates the data row through a nested write; `findById`/`findDetailById` include it (`AnalysisWithData`)
+- [x] Rule/metric handlers receive `AnalysisWithData` and read `apiData.path` / `databaseData.connection`; `AnalysisDetail` API response unchanged

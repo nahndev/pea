@@ -12,10 +12,14 @@ export const LATEST_RESULT_INCLUDE = {
 
 export const LATEST_RESULT_ORDER_BY = LATEST_RESULT_ORDER;
 
+export const ANALYSIS_DATA_INCLUDE = { apiData: true, databaseData: true } satisfies Prisma.AnalysisInclude;
+
+export type AnalysisWithData = Prisma.AnalysisGetPayload<{ include: typeof ANALYSIS_DATA_INCLUDE }>;
+
 export type AnalysisWithLatestResult = Prisma.AnalysisGetPayload<{ include: typeof LATEST_RESULT_INCLUDE }>;
 
 export type AnalysisDetailRecord = Prisma.AnalysisGetPayload<{
-  include: typeof LATEST_RESULT_INCLUDE & { branch: true };
+  include: typeof LATEST_RESULT_INCLUDE & typeof ANALYSIS_DATA_INCLUDE & { branch: true };
 }>;
 
 export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{

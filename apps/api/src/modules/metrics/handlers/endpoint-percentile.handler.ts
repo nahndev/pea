@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SubjectType } from '@tomato/constants';
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import {
   API_METRIC_DURATION_COLUMN,
   API_METRIC_ENDPOINT_COLUMN,
@@ -16,13 +17,13 @@ import type { MetricHandler, MetricMeasurement } from './metric-handler.types';
 export class EndpointPercentileHandler implements MetricHandler {
   constructor(private readonly storageService: StorageService) {}
 
-  async handle(metric: Metric, analysis: Analysis): Promise<MetricMeasurement[]> {
+  async handle(metric: Metric, analysis: AnalysisWithData): Promise<MetricMeasurement[]> {
     const percentile = PERCENTILE_BY_METRIC_TYPE.get(metric.type);
     if (percentile === undefined) return [];
 
     const rows = await queryRows(`
       SELECT ${API_METRIC_ENDPOINT_COLUMN} AS subject, quantile_cont(${API_METRIC_DURATION_COLUMN}, ${percentile}) AS value
-      FROM ${apiMetricRequests(this.storageService.resolve(analysis.path))}
+      FROM ${apiMetricRequests(this.storageService.resolve(analysis.apiData?.path ?? null))}
       GROUP BY ${API_METRIC_ENDPOINT_COLUMN}
       ORDER BY value DESC, subject ASC
     `);

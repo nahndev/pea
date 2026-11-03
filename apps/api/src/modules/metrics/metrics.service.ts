@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricResultView, MetricView, SubjectView } from '@tomato/types';
-import type { Analysis, Metric, MetricResult } from '../../generated/client';
+import type { Metric, MetricResult } from '../../generated/client';
+import type { AnalysisWithData } from '../analyses/analyses.types';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
 import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-config';
@@ -19,7 +20,7 @@ export class MetricsService {
     private readonly metricHandlerFactory: MetricHandlerFactory,
   ) {}
 
-  async measure(analysisResultId: string, analysis: Analysis): Promise<number> {
+  async measure(analysisResultId: string, analysis: AnalysisWithData): Promise<number> {
     const metrics = await this.metricsRepository.findAll({ isActive: true, schema: analysis.schema as AnalysisSchema });
     const items: MetricResultSource[] = [];
     const subjects: SubjectSource[] = [];

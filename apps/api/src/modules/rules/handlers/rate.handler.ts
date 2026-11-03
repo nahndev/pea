@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { Analysis, Rule } from '../../../generated/client';
+import type { Rule } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { apiMetricRequests } from '../../files/api-metric-requests';
 import { queryRows } from '../../files/duckdb-query';
 import { StorageService } from '../../files/storage.service';
@@ -11,14 +12,14 @@ import type { RuleHandler, RuleIssue } from './rule-handler.types';
 export class RateHandler implements RuleHandler {
   constructor(private readonly storageService: StorageService) {}
 
-  async handle(rule: Rule, analysis: Analysis): Promise<RuleIssue[]> {
+  async handle(rule: Rule, analysis: AnalysisWithData): Promise<RuleIssue[]> {
     const rate = RATE_BY_RULE_TYPE.get(rule.type);
     const config = rule.config as RuleConfig;
     const condition = rate?.condition(config);
     if (!rate || !condition || typeof config.maxPercent !== 'number') return [];
 
     const [row] = await queryRows(
-      `SELECT count(*) AS total, count(*) FILTER (WHERE ${condition}) AS matched FROM ${apiMetricRequests(this.storageService.resolve(analysis.path))}`,
+      `SELECT count(*) AS total, count(*) FILTER (WHERE ${condition}) AS matched FROM ${apiMetricRequests(this.storageService.resolve(analysis.apiData?.path ?? null))}`,
     );
     const total = Number(row?.total ?? 0);
     if (total === 0) return [];

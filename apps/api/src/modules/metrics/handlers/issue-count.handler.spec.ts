@@ -1,5 +1,6 @@
 import { MetricType } from '@tomato/constants';
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { IssuesService } from '../../issues/issues.service';
 import { IssueCountHandler } from './issue-count.handler';
 
@@ -8,7 +9,7 @@ describe('IssueCountHandler', () => {
   let issueCountHandler: IssueCountHandler;
 
   const metric = (type: string) => ({ id: 'm-1', type }) as Metric;
-  const analysis = { id: 'an-1' } as Analysis;
+  const analysis = { id: 'an-1' } as AnalysisWithData;
 
   beforeEach(() => {
     issuesService = { countBySeverity: jest.fn().mockResolvedValue(3) };

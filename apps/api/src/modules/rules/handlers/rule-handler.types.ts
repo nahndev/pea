@@ -1,4 +1,5 @@
-import type { Analysis, Rule } from '../../../generated/client';
+import type { Rule } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import type { SubjectSource } from '../../subjects/subject';
 
 export interface RuleIssue {
@@ -8,5 +9,5 @@ export interface RuleIssue {
 }
 
 export interface RuleHandler {
-  handle(rule: Rule, analysis: Analysis): Promise<RuleIssue[]>;
+  handle(rule: Rule, analysis: AnalysisWithData): Promise<RuleIssue[]>;
 }

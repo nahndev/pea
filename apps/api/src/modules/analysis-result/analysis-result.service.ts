@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type AnalysisSchema, AnalysisResultStatus } from '@tomato/constants';
 import type { IssueView, MetricResultView, Paginated } from '@tomato/types';
-import type { Analysis, AnalysisResult } from '../../generated/client';
+import type { AnalysisResult } from '../../generated/client';
+import type { AnalysisWithData } from '../analyses/analyses.types';
 import { AnalysesService } from '../analyses/analyses.service';
 import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
@@ -60,7 +61,7 @@ export class AnalysisResultService {
     return this.analysisResultRepository.findLatestByAnalysis(analysisId);
   }
 
-  private async execute(analysis: Analysis, result: AnalysisResult): Promise<AnalysisResult> {
+  private async execute(analysis: AnalysisWithData, result: AnalysisResult): Promise<AnalysisResult> {
     const schema = analysis.schema as AnalysisSchema;
     let issueCount = 0;
     try {

@@ -158,6 +158,29 @@ describe('AnalysesService reads', () => {
   });
 
   it.each([
+    [{ apiData: { file: 'a.jsonl', path: 'p-1' }, databaseData: null }, { file: 'a.jsonl', database: null }],
+    [{ apiData: null, databaseData: { connection: 'sealed' } }, { file: null, database: 'reader@db:5432/shop' }],
+  ])('maps the analysis data into the detail', async (data, expected) => {
+    const connection = { host: 'db', port: 5432, database: 'shop', user: 'reader' };
+    const databaseConnectionsService = {
+      decrypt: jest.fn().mockReturnValue(connection),
+      describe: DatabaseConnectionsService.prototype.describe,
+    };
+    Object.assign(analysesService, { databaseConnectionsService });
+    analysesRepository.findDetailById.mockResolvedValue({
+      id: 'an-1',
+      schema: 'API',
+      title: 'Release 1',
+      createdAt,
+      results: [],
+      branch: { id: 'br-1', name: 'feat/x' },
+      ...data,
+    } as never);
+
+    await expect(analysesService.findDetail('an-1')).resolves.toMatchObject(expected);
+  });
+
+  it.each([
     [[], null],
     [['PASSED', 'PASSED'], 'PASSED'],
     [['PASSED', 'FAILED'], 'FAILED'],

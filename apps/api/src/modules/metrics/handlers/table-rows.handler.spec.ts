@@ -1,6 +1,7 @@
 import { SubjectType } from '@tomato/constants';
 import type { Client } from 'pg';
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import { DatabaseConnectionsService } from '../../database-connections/database-connections.service';
 import { createSubject } from '../../subjects/subject';
 import { TableRowsHandler } from './table-rows.handler';
@@ -26,7 +27,7 @@ describe('TableRowsHandler', () => {
   });
 
   it('counts the rows of every readable table, one subject per table', async () => {
-    const measurements = await tableRowsHandler.handle(metric, { connection: 'sealed' } as Analysis);
+    const measurements = await tableRowsHandler.handle(metric, { databaseData: { connection: 'sealed' } } as AnalysisWithData);
 
     expect(databaseConnectionsService.decrypt).toHaveBeenCalledWith('sealed');
     expect(databaseConnectionsService.withClient).toHaveBeenCalledWith(connection, expect.any(Function));
@@ -39,7 +40,7 @@ describe('TableRowsHandler', () => {
   });
 
   it('measures nothing without a connection', async () => {
-    await expect(tableRowsHandler.handle(metric, { connection: null } as Analysis)).resolves.toEqual([]);
+    await expect(tableRowsHandler.handle(metric, { databaseData: null } as AnalysisWithData)).resolves.toEqual([]);
     expect(databaseConnectionsService.withClient).not.toHaveBeenCalled();
   });
 });

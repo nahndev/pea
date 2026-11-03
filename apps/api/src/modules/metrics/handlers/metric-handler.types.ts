@@ -1,4 +1,5 @@
-import type { Analysis, Metric } from '../../../generated/client';
+import type { Metric } from '../../../generated/client';
+import type { AnalysisWithData } from '../../analyses/analyses.types';
 import type { SubjectSource } from '../../subjects/subject';
 
 export interface MetricMeasurement {
@@ -7,5 +8,5 @@ export interface MetricMeasurement {
 }
 
 export interface MetricHandler {
-  handle(metric: Metric, analysis: Analysis, analysisResultId: string): Promise<MetricMeasurement[]>;
+  handle(metric: Metric, analysis: AnalysisWithData, analysisResultId: string): Promise<MetricMeasurement[]>;
 }

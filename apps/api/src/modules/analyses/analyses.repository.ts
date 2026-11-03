@@ -5,11 +5,13 @@ import type { StoredFile } from '../files/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DEFAULT_TREND_METRIC_TYPES } from './analyses.constants';
 import {
+  ANALYSIS_DATA_INCLUDE,
   LATEST_RESULT_INCLUDE,
   LATEST_RESULT_ORDER_BY,
   type AnalysisDetailRecord,
   type AnalysisTrendRecord,
   type MetricTrendPick,
+  type AnalysisWithData,
   type AnalysisWithLatestResult,
 } from './analyses.types';
 
@@ -26,17 +28,25 @@ export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   create({ branchId, schema, title, file, connection }: CreateAnalysisData): Promise<Analysis> {
-    return this.prismaService.analysis.create({ data: { branchId, schema, title, connection, ...file } });
+    return this.prismaService.analysis.create({
+      data: {
+        branchId,
+        schema,
+        title,
+        apiData: file ? { create: file } : undefined,
+        databaseData: connection ? { create: { connection } } : undefined,
+      },
+    });
   }
 
-  findById(id: string): Promise<Analysis | null> {
-    return this.prismaService.analysis.findUnique({ where: { id } });
+  findById(id: string): Promise<AnalysisWithData | null> {
+    return this.prismaService.analysis.findUnique({ where: { id }, include: ANALYSIS_DATA_INCLUDE });
   }
 
   findDetailById(id: string): Promise<AnalysisDetailRecord | null> {
     return this.prismaService.analysis.findUnique({
       where: { id },
-      include: { ...LATEST_RESULT_INCLUDE, branch: true },
+      include: { ...LATEST_RESULT_INCLUDE, ...ANALYSIS_DATA_INCLUDE, branch: true },
     });
   }
 
