@@ -1,21 +1,20 @@
 import { DuckDBInstance } from '@duckdb/node-api';
 import { Injectable } from '@nestjs/common';
+import { AnalysisSchema } from '@tomato/constants';
 import type { Metric } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import type { AnalysisContext } from '../../../analyses/analyses.types';
 import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../../files/api-metric-requests';
-import { StorageService } from '../../../files/storage.service';
 import { PERCENTILE_BY_METRIC_TYPE } from '../../metrics.constants';
 import type { MetricHandler, MetricMeasurement } from '../metric-handler.types';
 
 @Injectable()
 export class PercentileHandler implements MetricHandler {
-  constructor(private readonly storageService: StorageService) {}
-
-  async handle(metric: Metric, analysis: AnalysisWithData): Promise<MetricMeasurement[]> {
+  async handle(metric: Metric, context: AnalysisContext): Promise<MetricMeasurement[]> {
+    if (context.schema === AnalysisSchema.DATABASE) return [];
     const percentile = PERCENTILE_BY_METRIC_TYPE.get(metric.type);
     if (percentile === undefined) return [];
 
-    const value = await this.percentile(this.storageService.resolve(analysis.apiData?.path ?? null), percentile);
+    const value = await this.percentile(context.logPath, percentile);
     return value === null ? [] : [{ value }];
   }
 

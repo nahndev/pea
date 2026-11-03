@@ -2,6 +2,9 @@ export interface RuleConfig {
   thresholdMs?: number;
   maxPercent?: number;
   minRequests?: number;
+  minCalls?: number;
+  minRows?: number;
+  minPercent?: number;
 }
 
 export interface LatencyStat {

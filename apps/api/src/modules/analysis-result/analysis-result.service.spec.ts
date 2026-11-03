@@ -1,6 +1,7 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { AnalysisResultStatus, AnalysisSchema, ErrorCode } from '@tomato/constants';
 import { AnalysesService } from '../analyses/analyses.service';
+import { AnalysisContextFactory } from '../analyses/analysis-context.factory';
 import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { IssuesService } from '../issues/issues.service';
 import { MetricsService } from '../metrics/metrics.service';
@@ -13,6 +14,7 @@ import { AnalysisResultService } from './analysis-result.service';
 describe('AnalysisResultService', () => {
   let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'create' | 'finish' | 'deleteOlderThan'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
+  let analysisContextFactory: jest.Mocked<Pick<AnalysisContextFactory, 'create'>>;
   let rulesService: jest.Mocked<Pick<RulesService, 'listBySchema'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'createMany'>>;
   let ruleHandlerFactory: jest.Mocked<Pick<RuleHandlerFactory, 'supports' | 'create'>>;
@@ -22,6 +24,7 @@ describe('AnalysisResultService', () => {
   let analysisResultService: AnalysisResultService;
 
   const analysis = { id: 'an-1', schema: AnalysisSchema.API, apiData: { file: 'a.jsonl', path: 'p-1' } };
+  const context = { schema: AnalysisSchema.API, logPath: '/uploads/p-1' };
   const ruleList = [
     { id: 'r-1', type: 'P90_FAILURE', severity: 'HIGH' },
     { id: 'r-2', type: 'P95_FAILURE', severity: 'LOW' },
@@ -34,6 +37,7 @@ describe('AnalysisResultService', () => {
       deleteOlderThan: jest.fn().mockResolvedValue(0),
     };
     analysesService = { findOne: jest.fn().mockResolvedValue(analysis) };
+    analysisContextFactory = { create: jest.fn().mockResolvedValue(context) };
     rulesService = { listBySchema: jest.fn().mockResolvedValue(ruleList) };
     issuesService = { createMany: jest.fn().mockImplementation((_, items: unknown[]) => items.length) };
     metricsService = { measure: jest.fn().mockResolvedValue(0) };
@@ -46,6 +50,7 @@ describe('AnalysisResultService', () => {
     analysisResultService = new AnalysisResultService(
       analysisResultRepository as unknown as AnalysisResultRepository,
       analysesService as unknown as AnalysesService,
+      analysisContextFactory as unknown as AnalysisContextFactory,
       rulesService as unknown as RulesService,
       issuesService as unknown as IssuesService,
       ruleHandlerFactory as unknown as RuleHandlerFactory,
@@ -60,7 +65,8 @@ describe('AnalysisResultService', () => {
     const result = await analysisResultService.run({ analysisId: 'an-1' });
 
     expect(handler.handle).toHaveBeenCalledTimes(1);
-    expect(handler.handle).toHaveBeenCalledWith(ruleList[0], analysis);
+    expect(analysisContextFactory.create).toHaveBeenCalledWith(analysis);
+    expect(handler.handle).toHaveBeenCalledWith(ruleList[0], context);
     expect(issuesService.createMany).toHaveBeenCalledWith('res-1', [
       { ruleId: 'r-1', description: 'failed', severity: 'HIGH' },
     ]);
@@ -70,7 +76,7 @@ describe('AnalysisResultService', () => {
   it('measures metrics then evaluates conditions for the result', async () => {
     await analysisResultService.run({ analysisId: 'an-1' });
 
-    expect(metricsService.measure).toHaveBeenCalledWith('res-1', analysis);
+    expect(metricsService.measure).toHaveBeenCalledWith('res-1', context);
     expect(metricConditionsService.evaluate).toHaveBeenCalledWith('res-1', 'an-1', AnalysisSchema.API);
     expect(metricsService.measure.mock.invocationCallOrder[0]).toBeLessThan(
       metricConditionsService.evaluate.mock.invocationCallOrder[0],
@@ -201,6 +207,7 @@ describe('AnalysisResultService reads', () => {
     analysisResultService = new AnalysisResultService(
       analysisResultRepository as unknown as AnalysisResultRepository,
       analysesService as unknown as AnalysesService,
+      {} as AnalysisContextFactory,
       {} as RulesService,
       issuesService as unknown as IssuesService,
       {} as RuleHandlerFactory,

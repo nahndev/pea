@@ -1,11 +1,10 @@
-import { MetricType, SubjectType } from '@tomato/constants';
+import { AnalysisSchema, MetricType, SubjectType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Metric } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
 import { type ApiRequestFixture, apiRequestLine } from '../../../files/api-metric.fixtures';
-import { StorageService } from '../../../files/storage.service';
 import { createSubject } from '../../../subjects/subject';
 import { EndpointPercentileHandler } from './endpoint-percentile.handler';
 
@@ -14,15 +13,14 @@ describe('EndpointPercentileHandler', () => {
   let endpointPercentileHandler: EndpointPercentileHandler;
 
   const metric = (type: string = MetricType.ENDPOINT_P95) => ({ id: 'm-1', type, description: '', config: {} }) as Metric;
-  const analysis = { id: 'an-1', apiData: { file: 'api_metric.log', path: 'api_metric.log' } } as AnalysisWithData;
+  const context = (): ApiAnalysisContext => ({ schema: AnalysisSchema.API, logPath: join(dir, 'api_metric.log') });
 
   const writeLog = (requests: ApiRequestFixture[]) =>
     writeFile(join(dir, 'api_metric.log'), requests.map(apiRequestLine).join('\n'));
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'endpoint-percentile-'));
-    const storageService = { resolve: (path: string) => join(dir, path) };
-    endpointPercentileHandler = new EndpointPercentileHandler(storageService as unknown as StorageService);
+    endpointPercentileHandler = new EndpointPercentileHandler();
   });
 
   afterEach(() => rm(dir, { recursive: true, force: true }));
@@ -36,7 +34,7 @@ describe('EndpointPercentileHandler', () => {
       { durationMs: 10, route: '/api/orders' },
     ]);
 
-    const measurements = await endpointPercentileHandler.handle(metric(), analysis);
+    const measurements = await endpointPercentileHandler.handle(metric(), context());
 
     expect(measurements.map(({ subject }) => subject?.description)).toEqual(['POST /api/checkout', 'GET /api/cart', 'GET /api/orders']);
     expect(measurements[0].subject).toEqual(createSubject(SubjectType.API, 'POST /api/checkout'));
@@ -47,12 +45,12 @@ describe('EndpointPercentileHandler', () => {
 
   it('returns no measurement for an empty log', async () => {
     await writeLog([]);
-    await expect(endpointPercentileHandler.handle(metric(), analysis)).resolves.toEqual([]);
+    await expect(endpointPercentileHandler.handle(metric(), context())).resolves.toEqual([]);
   });
 
 
   it('ignores a metric type without a percentile', async () => {
     await writeLog([{ durationMs: 1000 }]);
-    await expect(endpointPercentileHandler.handle(metric('UNKNOWN'), analysis)).resolves.toEqual([]);
+    await expect(endpointPercentileHandler.handle(metric('UNKNOWN'), context())).resolves.toEqual([]);
   });
 });

@@ -1,11 +1,10 @@
-import { RuleType } from '@tomato/constants';
+import { AnalysisSchema, RuleType } from '@tomato/constants';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Rule } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
 import { apiRequestLine } from '../../../files/api-metric.fixtures';
-import { StorageService } from '../../../files/storage.service';
 import { LatencyHandler } from './latency.handler';
 
 describe('LatencyHandler', () => {
@@ -14,7 +13,7 @@ describe('LatencyHandler', () => {
 
   const rule = (config: object = { thresholdMs: 100 }, type: string = RuleType.P90_FAILURE) =>
     ({ id: 'r-1', type, config }) as Rule;
-  const analysis = { id: 'an-1', apiData: { file: 'api_metric.log', path: 'api_metric.log' } } as AnalysisWithData;
+  const context = (): ApiAnalysisContext => ({ schema: AnalysisSchema.API, logPath: join(dir, 'api_metric.log') });
 
   const writeLog = (durations: number[]) =>
     writeFile(
@@ -24,15 +23,14 @@ describe('LatencyHandler', () => {
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'latency-'));
-    const storageService = { resolve: (path: string) => join(dir, path) };
-    latencyHandler = new LatencyHandler(storageService as unknown as StorageService);
+    latencyHandler = new LatencyHandler();
   });
 
   afterEach(() => rm(dir, { recursive: true, force: true }));
 
   it('returns an issue linked to the rule when p90 exceeds the threshold', async () => {
     await writeLog([10, 20, 30, 40, 50, 60, 70, 80, 900, 1000]);
-    await expect(latencyHandler.handle(rule(), analysis)).resolves.toEqual([
+    await expect(latencyHandler.handle(rule(), context())).resolves.toEqual([
       {
         ruleId: 'r-1',
         description: 'P90 910.0ms exceeds threshold 100ms',
@@ -42,18 +40,18 @@ describe('LatencyHandler', () => {
 
   it('returns no issue when p90 is within the threshold', async () => {
     await writeLog([10, 20, 30, 40, 50, 60, 70, 80, 90, 95]);
-    await expect(latencyHandler.handle(rule(), analysis)).resolves.toEqual([]);
+    await expect(latencyHandler.handle(rule(), context())).resolves.toEqual([]);
   });
 
   it('returns no issue for an empty log', async () => {
     await writeLog([]);
-    await expect(latencyHandler.handle(rule(), analysis)).resolves.toEqual([]);
+    await expect(latencyHandler.handle(rule(), context())).resolves.toEqual([]);
   });
 
 
   it('returns no issue when the rule has no threshold', async () => {
     await writeLog([1000]);
-    await expect(latencyHandler.handle(rule({}), analysis)).resolves.toEqual([]);
+    await expect(latencyHandler.handle(rule({}), context())).resolves.toEqual([]);
   });
 
   it.each([
@@ -64,12 +62,12 @@ describe('LatencyHandler', () => {
     [RuleType.MAX_LATENCY, 'Max 1000.0ms'],
   ])('measures %s', async (type, measured) => {
     await writeLog([10, 20, 30, 40, 50, 60, 70, 80, 900, 1000]);
-    const [issue] = await latencyHandler.handle(rule({ thresholdMs: 1 }, type), analysis);
+    const [issue] = await latencyHandler.handle(rule({ thresholdMs: 1 }, type), context());
     expect(issue.description).toBe(`${measured} exceeds threshold 1ms`);
   });
 
   it('returns no issue for an unknown rule type', async () => {
     await writeLog([1000]);
-    await expect(latencyHandler.handle(rule({ thresholdMs: 1 }, 'UNKNOWN'), analysis)).resolves.toEqual([]);
+    await expect(latencyHandler.handle(rule({ thresholdMs: 1 }, 'UNKNOWN'), context())).resolves.toEqual([]);
   });
 });

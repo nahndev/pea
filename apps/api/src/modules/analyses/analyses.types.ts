@@ -1,4 +1,6 @@
+import type { AnalysisSchema } from '@tomato/constants';
 import type { Prisma } from '../../generated/client';
+import type { DatabaseConnection } from '../database-connections/database-connections.types';
 
 const LATEST_RESULT_ORDER = [{ createdAt: 'desc' }, { id: 'desc' }] satisfies Prisma.AnalysisResultOrderByWithRelationInput[];
 
@@ -48,3 +50,19 @@ export interface MetricTrendPick {
   metricId: string;
   subjectUuid: string | null;
 }
+
+export interface ApiAnalysisContext {
+  schema: Exclude<AnalysisSchema, typeof AnalysisSchema.DATABASE>;
+  /** Absolute path of the uploaded API metric log */
+  logPath: string;
+}
+
+export interface DatabaseAnalysisContext {
+  schema: typeof AnalysisSchema.DATABASE;
+  connection: DatabaseConnection;
+  /** `pg_stat_statements` is installed and preloaded */
+  isPgStatStatements: boolean;
+}
+
+/** What rule and metric handlers read from an analysis, built once per run */
+export type AnalysisContext = ApiAnalysisContext | DatabaseAnalysisContext;

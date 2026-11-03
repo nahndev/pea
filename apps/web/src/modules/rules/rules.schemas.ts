@@ -8,6 +8,9 @@ const FIELD_SCHEMAS = {
   thresholdMs: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
   maxPercent: numeric.pipe(z.number('invalid').min(0, 'invalid').max(100, 'invalid')),
   minRequests: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
+  minCalls: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
+  minRows: numeric.pipe(z.number('invalid').int('invalid').min(0, 'invalid')),
+  minPercent: numeric.pipe(z.number('invalid').min(0, 'invalid').max(100, 'invalid')),
 } satisfies Record<RuleConfigField, z.ZodType>;
 
 export const buildRuleConfigSchema = (fields: string[]) =>

@@ -4,6 +4,7 @@ import type { IssueView, MetricResultView, Paginated } from '@tomato/types';
 import type { AnalysisResult } from '../../generated/client';
 import type { AnalysisWithData } from '../analyses/analyses.types';
 import { AnalysesService } from '../analyses/analyses.service';
+import { AnalysisContextFactory } from '../analyses/analysis-context.factory';
 import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { IssuesService } from '../issues/issues.service';
@@ -20,6 +21,7 @@ export class AnalysisResultService {
   constructor(
     private readonly analysisResultRepository: AnalysisResultRepository,
     private readonly analysesService: AnalysesService,
+    private readonly analysisContextFactory: AnalysisContextFactory,
     private readonly rulesService: RulesService,
     private readonly issuesService: IssuesService,
     private readonly ruleHandlerFactory: RuleHandlerFactory,
@@ -65,16 +67,17 @@ export class AnalysisResultService {
     const schema = analysis.schema as AnalysisSchema;
     let issueCount = 0;
     try {
+      const context = await this.analysisContextFactory.create(analysis);
       const rules = await this.rulesService.listBySchema(schema);
       for (const rule of rules) {
         if (!this.ruleHandlerFactory.supports(rule.type)) continue;
-        const issues = await this.ruleHandlerFactory.create(rule.type).handle(rule, analysis);
+        const issues = await this.ruleHandlerFactory.create(rule.type).handle(rule, context);
         issueCount += await this.issuesService.createMany(
           result.id,
           issues.map((issue) => ({ ...issue, severity: rule.severity })),
         );
       }
-      await this.metricsService.measure(result.id, analysis);
+      await this.metricsService.measure(result.id, context);
       await this.metricConditionsService.evaluate(result.id, analysis.id, schema);
     } catch (error) {
       await this.analysisResultRepository.finish(result.id, { status: AnalysisResultStatus.FAILED, issueCount });

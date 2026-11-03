@@ -1,6 +1,6 @@
 import { MetricType } from '@tomato/constants';
 import type { Metric } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import { API_CONTEXT } from '../../../database-connections/database-connections.fixtures';
 import { IssuesService } from '../../../issues/issues.service';
 import { IssueCountHandler } from './issue-count.handler';
 
@@ -9,7 +9,6 @@ describe('IssueCountHandler', () => {
   let issueCountHandler: IssueCountHandler;
 
   const metric = (type: string) => ({ id: 'm-1', type }) as Metric;
-  const analysis = { id: 'an-1' } as AnalysisWithData;
 
   beforeEach(() => {
     issuesService = { countBySeverity: jest.fn().mockResolvedValue(3) };
@@ -17,7 +16,7 @@ describe('IssueCountHandler', () => {
   });
 
   it('counts the issues of the result with the severity of the metric', async () => {
-    await expect(issueCountHandler.handle(metric(MetricType.BLOCKER_ISSUE_COUNT), analysis, 'res-1')).resolves.toEqual([
+    await expect(issueCountHandler.handle(metric(MetricType.BLOCKER_ISSUE_COUNT), API_CONTEXT, 'res-1')).resolves.toEqual([
       { value: 3 },
     ]);
     expect(issuesService.countBySeverity).toHaveBeenCalledWith('res-1', 'BLOCKER');
@@ -25,13 +24,13 @@ describe('IssueCountHandler', () => {
 
   it('returns zero when no issue matches', async () => {
     issuesService.countBySeverity.mockResolvedValue(0);
-    await expect(issueCountHandler.handle(metric(MetricType.LOW_ISSUE_COUNT), analysis, 'res-1')).resolves.toEqual([
+    await expect(issueCountHandler.handle(metric(MetricType.LOW_ISSUE_COUNT), API_CONTEXT, 'res-1')).resolves.toEqual([
       { value: 0 },
     ]);
   });
 
   it('ignores metrics that are not issue counts', async () => {
-    await expect(issueCountHandler.handle(metric(MetricType.P90), analysis, 'res-1')).resolves.toEqual([]);
+    await expect(issueCountHandler.handle(metric(MetricType.P90), API_CONTEXT, 'res-1')).resolves.toEqual([]);
     expect(issuesService.countBySeverity).not.toHaveBeenCalled();
   });
 });

@@ -5,17 +5,26 @@ import { IssueCountHandler } from './common/issue-count.handler';
 import { MetricHandlerFactory } from './metric-handler.factory';
 import { PercentileHandler } from './api/percentile.handler';
 import { TableRowsHandler } from './database/table-rows.handler';
+import { DatabaseStatHandler } from './database/database-stat.handler';
+import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
+import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
   const issueCountHandler = {} as IssueCountHandler;
   const endpointPercentileHandler = {} as EndpointPercentileHandler;
   const tableRowsHandler = {} as TableRowsHandler;
+  const databaseStatHandler = {} as DatabaseStatHandler;
+  const tableDeadTuplesHandler = {} as TableDeadTuplesHandler;
+  const queryMeanDurationHandler = {} as QueryMeanDurationHandler;
   const metricHandlerFactory = new MetricHandlerFactory(
     percentileHandler,
     issueCountHandler,
     endpointPercentileHandler,
     tableRowsHandler,
+    databaseStatHandler,
+    tableDeadTuplesHandler,
+    queryMeanDurationHandler,
   );
 
   it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
@@ -28,6 +37,19 @@ describe('MetricHandlerFactory', () => {
 
   it('returns the table rows handler for TABLE_ROWS', () => {
     expect(metricHandlerFactory.create(MetricType.TABLE_ROWS)).toBe(tableRowsHandler);
+  });
+
+  it.each([
+    [MetricType.CACHE_HIT_RATIO, databaseStatHandler],
+    [MetricType.CONNECTIONS, databaseStatHandler],
+    [MetricType.WAITING_LOCKS, databaseStatHandler],
+    [MetricType.DEADLOCKS, databaseStatHandler],
+    [MetricType.TEMP_FILES, databaseStatHandler],
+    [MetricType.REPLICATION_LAG, databaseStatHandler],
+    [MetricType.TABLE_DEAD_TUPLES, tableDeadTuplesHandler],
+    [MetricType.QUERY_MEAN_DURATION, queryMeanDurationHandler],
+  ])('returns the database handler of %s', (type, handler) => {
+    expect(metricHandlerFactory.create(type)).toBe(handler);
   });
 
   it.each([

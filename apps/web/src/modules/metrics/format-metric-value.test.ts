@@ -12,4 +12,8 @@ describe('formatMetricValue', () => {
     expect(formatMetricValue(MetricUnit.COUNT, 3)).toBe('3');
     expect(formatMetricValue(MetricUnit.COUNT, 0)).toBe('0');
   });
+
+  it('formats percents with one decimal', () => {
+    expect(formatMetricValue(MetricUnit.PERCENT, 99.7764)).toBe('99.8%');
+  });
 });

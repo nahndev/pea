@@ -29,6 +29,11 @@ describe('buildRuleConfigSchema', () => {
     expect(messages(['maxPercent'], { maxPercent: '101' })).toEqual(['maxPercent:invalid']);
     expect(messages(['maxPercent'], { maxPercent: '0' })).toEqual([]);
     expect(messages(['minRequests'], { minRequests: '0' })).toEqual(['minRequests:invalid']);
+    expect(messages(['minCalls'], { minCalls: '0' })).toEqual(['minCalls:invalid']);
+    expect(messages(['minRows'], { minRows: '0' })).toEqual([]);
+    expect(messages(['minRows'], { minRows: '-1' })).toEqual(['minRows:invalid']);
+    expect(messages(['minPercent'], { minPercent: '99.5' })).toEqual([]);
+    expect(messages(['minPercent'], { minPercent: '101' })).toEqual(['minPercent:invalid']);
   });
 });
 

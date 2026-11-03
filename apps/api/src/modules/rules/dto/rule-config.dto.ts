@@ -16,4 +16,20 @@ export class RuleConfigDto {
   @IsInt()
   @Min(1)
   minRequests?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minCalls?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  minRows?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  minPercent?: number;
 }

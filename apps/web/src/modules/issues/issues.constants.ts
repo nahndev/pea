@@ -21,6 +21,13 @@ export const RULE_TYPE_LABEL: Record<RuleType, string> = {
   [RuleType.SLOW_ROUTE]: 'Slow route',
   [RuleType.SLOW_API]: 'Slow API',
   [RuleType.ROUTE_ERROR_RATE]: 'Route 5xx error rate',
+  [RuleType.SLOW_QUERY]: 'Slow query',
+  [RuleType.LONG_RUNNING_QUERY]: 'Long-running query',
+  [RuleType.LOCK_WAIT]: 'Lock wait',
+  [RuleType.DEAD_TUPLE_RATE]: 'Dead tuple rate',
+  [RuleType.SEQ_SCAN_RATE]: 'Sequential scan rate',
+  [RuleType.UNUSED_INDEX]: 'Unused index',
+  [RuleType.LOW_CACHE_HIT_RATIO]: 'Low cache hit ratio',
 };
 
 export const ALL_FILTER = 'all';

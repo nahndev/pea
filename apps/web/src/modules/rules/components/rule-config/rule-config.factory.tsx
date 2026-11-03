@@ -8,6 +8,13 @@ import { RouteErrorRateRuleConfig } from './route-error-rate-rule-config';
 import { SlowApiRuleConfig } from './slow-api-rule-config';
 import { SlowRequestRateRuleConfig } from './slow-request-rate-rule-config';
 import { SlowRouteRuleConfig } from './slow-route-rule-config';
+import { SlowQueryRuleConfig } from './slow-query-rule-config';
+import { LongRunningQueryRuleConfig } from './long-running-query-rule-config';
+import { LockWaitRuleConfig } from './lock-wait-rule-config';
+import { DeadTupleRateRuleConfig } from './dead-tuple-rate-rule-config';
+import { SeqScanRateRuleConfig } from './seq-scan-rate-rule-config';
+import { UnusedIndexRuleConfig } from './unused-index-rule-config';
+import { LowCacheHitRatioRuleConfig } from './low-cache-hit-ratio-rule-config';
 
 const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProps>>> = {
   [RuleType.P50_FAILURE]: LatencyRuleConfig,
@@ -22,6 +29,13 @@ const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProp
   [RuleType.SLOW_ROUTE]: SlowRouteRuleConfig,
   [RuleType.ROUTE_ERROR_RATE]: RouteErrorRateRuleConfig,
   [RuleType.SLOW_API]: SlowApiRuleConfig,
+  [RuleType.SLOW_QUERY]: SlowQueryRuleConfig,
+  [RuleType.LONG_RUNNING_QUERY]: LongRunningQueryRuleConfig,
+  [RuleType.LOCK_WAIT]: LockWaitRuleConfig,
+  [RuleType.DEAD_TUPLE_RATE]: DeadTupleRateRuleConfig,
+  [RuleType.SEQ_SCAN_RATE]: SeqScanRateRuleConfig,
+  [RuleType.UNUSED_INDEX]: UnusedIndexRuleConfig,
+  [RuleType.LOW_CACHE_HIT_RATIO]: LowCacheHitRatioRuleConfig,
 };
 
 export function createRuleConfig(rule: RuleView): ReactElement | null {

@@ -1,5 +1,10 @@
 import { MetricUnit } from '@tomato/constants';
-import { formatDuration, formatNumber } from '@/shared/lib/format';
+import { formatDuration, formatNumber, formatPercent } from '@/shared/lib/format';
 
-export const formatMetricValue = (unit: MetricUnit, value: number) =>
-  unit === MetricUnit.COUNT ? formatNumber(value) : formatDuration(value);
+const FORMAT_BY_UNIT: Record<MetricUnit, (value: number) => string> = {
+  [MetricUnit.MILLISECOND]: formatDuration,
+  [MetricUnit.COUNT]: formatNumber,
+  [MetricUnit.PERCENT]: formatPercent,
+};
+
+export const formatMetricValue = (unit: MetricUnit, value: number) => FORMAT_BY_UNIT[unit](value);

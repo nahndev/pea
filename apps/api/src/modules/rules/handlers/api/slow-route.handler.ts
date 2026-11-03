@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { SubjectType } from '@tomato/constants';
+import { AnalysisSchema, SubjectType } from '@tomato/constants';
 import type { Rule } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
+import type { AnalysisContext } from '../../../analyses/analyses.types';
 import {
   API_METRIC_DURATION_COLUMN,
   API_METRIC_ENDPOINT_COLUMN,
   apiMetricRequests,
 } from '../../../files/api-metric-requests';
 import { queryRows } from '../../../files/duckdb-query';
-import { StorageService } from '../../../files/storage.service';
 import { createSubject } from '../../../subjects/subject';
 import { DEFAULT_MIN_REQUESTS, ROUTE_PERCENTILE } from '../../rules.constants';
 import type { RuleConfig } from '../../rules.types';
@@ -16,16 +15,15 @@ import type { RuleHandler, RuleIssue } from '../rule-handler.types';
 
 @Injectable()
 export class SlowRouteHandler implements RuleHandler {
-  constructor(private readonly storageService: StorageService) {}
-
-  async handle(rule: Rule, analysis: AnalysisWithData): Promise<RuleIssue[]> {
+  async handle(rule: Rule, context: AnalysisContext): Promise<RuleIssue[]> {
+    if (context.schema === AnalysisSchema.DATABASE) return [];
     const { thresholdMs, minRequests = DEFAULT_MIN_REQUESTS } = rule.config as RuleConfig;
     if (typeof thresholdMs !== 'number' || typeof minRequests !== 'number') return [];
 
     const rows = await queryRows(`
       SELECT * FROM (
         SELECT ${API_METRIC_ENDPOINT_COLUMN} AS endpoint, count(*) AS total, quantile_cont(${API_METRIC_DURATION_COLUMN}, ${ROUTE_PERCENTILE}) AS value
-        FROM ${apiMetricRequests(this.storageService.resolve(analysis.apiData?.path ?? null))}
+        FROM ${apiMetricRequests(context.logPath)}
         GROUP BY ${API_METRIC_ENDPOINT_COLUMN}
       )
       WHERE total >= ${minRequests} AND value > ${thresholdMs}

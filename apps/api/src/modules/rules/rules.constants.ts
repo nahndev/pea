@@ -4,6 +4,8 @@ import type { LatencyStat, RateDefinition, RuleConfig } from './rules.types';
 
 export const DEFAULT_MIN_REQUESTS = 10;
 export const ROUTE_PERCENTILE = 0.95;
+/** Issues created per database rule, worst first */
+export const MAX_DATABASE_ISSUES = 100;
 
 export const SERVER_ERROR_CONDITION = `${API_METRIC_STATUS_CODE_COLUMN} BETWEEN 500 AND 599`;
 const CLIENT_ERROR_CONDITION = `${API_METRIC_STATUS_CODE_COLUMN} BETWEEN 400 AND 499`;
@@ -43,4 +45,11 @@ export const CONFIG_FIELDS_BY_RULE_TYPE: Readonly<Record<RuleType, readonly (key
   [RuleType.SLOW_ROUTE]: ['thresholdMs', 'minRequests'],
   [RuleType.SLOW_API]: ['thresholdMs'],
   [RuleType.ROUTE_ERROR_RATE]: ['maxPercent', 'minRequests'],
+  [RuleType.SLOW_QUERY]: ['thresholdMs', 'minCalls'],
+  [RuleType.LONG_RUNNING_QUERY]: ['thresholdMs'],
+  [RuleType.LOCK_WAIT]: ['thresholdMs'],
+  [RuleType.DEAD_TUPLE_RATE]: ['maxPercent', 'minRows'],
+  [RuleType.SEQ_SCAN_RATE]: ['maxPercent', 'minRows'],
+  [RuleType.UNUSED_INDEX]: ['minRows'],
+  [RuleType.LOW_CACHE_HIT_RATIO]: ['minPercent'],
 };

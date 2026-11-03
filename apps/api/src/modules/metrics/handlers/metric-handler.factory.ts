@@ -5,6 +5,9 @@ import { IssueCountHandler } from './common/issue-count.handler';
 import type { MetricHandler } from './metric-handler.types';
 import { PercentileHandler } from './api/percentile.handler';
 import { TableRowsHandler } from './database/table-rows.handler';
+import { DatabaseStatHandler } from './database/database-stat.handler';
+import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
+import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
 
 @Injectable()
 export class MetricHandlerFactory {
@@ -15,6 +18,9 @@ export class MetricHandlerFactory {
     issueCountHandler: IssueCountHandler,
     endpointPercentileHandler: EndpointPercentileHandler,
     tableRowsHandler: TableRowsHandler,
+    databaseStatHandler: DatabaseStatHandler,
+    tableDeadTuplesHandler: TableDeadTuplesHandler,
+    queryMeanDurationHandler: QueryMeanDurationHandler,
   ) {
     this.handlers = new Map<string, MetricHandler>([
       [MetricType.P50, percentileHandler],
@@ -27,6 +33,14 @@ export class MetricHandlerFactory {
       [MetricType.LOW_ISSUE_COUNT, issueCountHandler],
       [MetricType.INFO_ISSUE_COUNT, issueCountHandler],
       [MetricType.TABLE_ROWS, tableRowsHandler],
+      [MetricType.CACHE_HIT_RATIO, databaseStatHandler],
+      [MetricType.CONNECTIONS, databaseStatHandler],
+      [MetricType.WAITING_LOCKS, databaseStatHandler],
+      [MetricType.DEADLOCKS, databaseStatHandler],
+      [MetricType.TEMP_FILES, databaseStatHandler],
+      [MetricType.REPLICATION_LAG, databaseStatHandler],
+      [MetricType.TABLE_DEAD_TUPLES, tableDeadTuplesHandler],
+      [MetricType.QUERY_MEAN_DURATION, queryMeanDurationHandler],
     ]);
   }
 

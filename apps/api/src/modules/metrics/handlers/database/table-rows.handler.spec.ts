@@ -1,16 +1,15 @@
 import { SubjectType } from '@tomato/constants';
 import type { Client } from 'pg';
 import type { Metric } from '../../../../generated/client';
-import type { AnalysisWithData } from '../../../analyses/analyses.types';
 import { DatabaseConnectionsService } from '../../../database-connections/database-connections.service';
+import { API_CONTEXT, DATABASE_CONTEXT } from '../../../database-connections/database-connections.fixtures';
 import { createSubject } from '../../../subjects/subject';
 import { TableRowsHandler } from './table-rows.handler';
 
 describe('TableRowsHandler', () => {
   const metric = { id: 'm-1', type: 'TABLE_ROWS' } as Metric;
-  const connection = { connectionString: 'postgresql://reader@db/shop' };
   let query: jest.Mock;
-  let databaseConnectionsService: jest.Mocked<Pick<DatabaseConnectionsService, 'decrypt' | 'withClient'>>;
+  let databaseConnectionsService: jest.Mocked<Pick<DatabaseConnectionsService, 'withClient'>>;
   let tableRowsHandler: TableRowsHandler;
 
   beforeEach(() => {
@@ -20,17 +19,15 @@ describe('TableRowsHandler', () => {
       .mockResolvedValueOnce({ rows: [{ count: '42' }] })
       .mockResolvedValueOnce({ rows: [{ count: '0' }] });
     databaseConnectionsService = {
-      decrypt: jest.fn().mockReturnValue(connection),
       withClient: jest.fn((_connection, use) => use({ query } as unknown as Client)) as never,
     };
     tableRowsHandler = new TableRowsHandler(databaseConnectionsService as unknown as DatabaseConnectionsService);
   });
 
   it('counts the rows of every readable table, one subject per table', async () => {
-    const measurements = await tableRowsHandler.handle(metric, { databaseData: { database: { connection: 'sealed' } } } as AnalysisWithData);
+    const measurements = await tableRowsHandler.handle(metric, DATABASE_CONTEXT);
 
-    expect(databaseConnectionsService.decrypt).toHaveBeenCalledWith('sealed');
-    expect(databaseConnectionsService.withClient).toHaveBeenCalledWith(connection, expect.any(Function));
+    expect(databaseConnectionsService.withClient).toHaveBeenCalledWith(DATABASE_CONTEXT.connection, expect.any(Function));
     expect(query).toHaveBeenNthCalledWith(2, 'SELECT count(*) AS count FROM "public"."orders"');
     expect(query).toHaveBeenNthCalledWith(3, 'SELECT count(*) AS count FROM "sales"."Weird""Name"');
     expect(measurements).toEqual([
@@ -39,8 +36,8 @@ describe('TableRowsHandler', () => {
     ]);
   });
 
-  it('measures nothing without a connection', async () => {
-    await expect(tableRowsHandler.handle(metric, { databaseData: null } as AnalysisWithData)).resolves.toEqual([]);
+  it('measures nothing for another schema', async () => {
+    await expect(tableRowsHandler.handle(metric, API_CONTEXT)).resolves.toEqual([]);
     expect(databaseConnectionsService.withClient).not.toHaveBeenCalled();
   });
 });
