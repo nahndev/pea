@@ -51,6 +51,7 @@
 - MUST comment only when truly necessary
 - MUST keep comments as short as possible
 
+- MUST NOT create migration file, using pnpm command
 - MUST NOT hard-code error messages
 - MUST NOT import internal files of another web module (NestJS modules are exempt)
 - MUST NOT call the API directly in Next.js components; go through `services/` (using the axios instance in `shared/lib`)
