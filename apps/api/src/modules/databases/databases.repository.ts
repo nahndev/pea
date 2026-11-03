@@ -15,6 +15,10 @@ export class DatabasesRepository {
     return this.prismaService.database.findUnique({ where: { id }, include: DATABASE_INCLUDE });
   }
 
+  findByName(name: string): Promise<{ id: string } | null> {
+    return this.prismaService.database.findUnique({ where: { name }, select: { id: true } });
+  }
+
   create(data: { name: string; connection: string }): Promise<DatabaseWithCount> {
     return this.prismaService.database.create({ data, include: DATABASE_INCLUDE });
   }

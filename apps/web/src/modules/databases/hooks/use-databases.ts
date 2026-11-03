@@ -7,6 +7,17 @@ export const useDatabases = () => useQuery({ queryKey: ['databases', 'list'], qu
 export const useDatabase = (databaseId: string) =>
   useQuery({ queryKey: ['databases', databaseId], queryFn: () => databasesService.get(databaseId) });
 
+/** Not cached: the input holds the password. */
+export const useDatabaseInspection = (input: DatabaseInput | null) =>
+  useQuery({
+    queryKey: ['databases', 'inspection', input],
+    queryFn: () => databasesService.inspect(input!),
+    enabled: input !== null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+
 export const useCreateDatabase = () => {
   const queryClient = useQueryClient();
   return useMutation({

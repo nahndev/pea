@@ -1,16 +1,20 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '@tomato/config';
-import { ErrorCode } from '@tomato/constants';
+import { DatabaseCheckStatus, DatabaseCheckType, ErrorCode } from '@tomato/constants';
+import type { DatabaseCheck } from '@tomato/types';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { Client } from 'pg';
 import {
   CONNECTION_CIPHER,
   CONNECTION_IV_LENGTH,
   CONNECTION_TIMEOUT_MS,
+  SERVER_CHECK_TYPES,
   STATEMENT_TIMEOUT_MS,
 } from './database-connections.constants';
 import type { DatabaseConnection } from './database-connections.types';
+import { toConnectionErrorCode } from './postgres-errors';
+import { inspectServer, skippedCheck } from './postgres-inspection';
 
 @Injectable()
 export class DatabaseConnectionsService {
@@ -47,7 +51,20 @@ export class DatabaseConnectionsService {
     await this.withClient(connection, (client) => client.query('SELECT 1'));
   }
 
-  /** Runs `use` on a read-only client; connection failures become `DATABASE_CONNECTION_FAILED`. */
+  async inspect(connection: DatabaseConnection): Promise<DatabaseCheck[]> {
+    try {
+      return await this.withClient(connection, async (client) => [
+        { type: DatabaseCheckType.CONNECTION, status: DatabaseCheckStatus.PASSED },
+        ...(await inspectServer(client)),
+      ]);
+    } catch (error) {
+      if (!(error instanceof UnprocessableEntityException)) throw error;
+      const { code } = error.getResponse() as { code: ErrorCode };
+      return [{ type: DatabaseCheckType.CONNECTION, status: DatabaseCheckStatus.FAILED, code }, ...SERVER_CHECK_TYPES.map(skippedCheck)];
+    }
+  }
+
+  /** Runs `use` on a read-only client; connection failures become an `UnprocessableEntityException` with their cause. */
   async withClient<T>(connection: DatabaseConnection, use: (client: Client) => Promise<T>): Promise<T> {
     const client = new Client({
       ...connection,
@@ -57,9 +74,9 @@ export class DatabaseConnectionsService {
     });
     try {
       await client.connect();
-    } catch {
+    } catch (error) {
       await client.end().catch(() => undefined);
-      throw new UnprocessableEntityException({ code: ErrorCode.DATABASE_CONNECTION_FAILED });
+      throw new UnprocessableEntityException({ code: toConnectionErrorCode(error) });
     }
     try {
       return await use(client);

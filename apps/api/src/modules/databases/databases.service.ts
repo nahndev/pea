@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseConnectionMode, ErrorCode } from '@tomato/constants';
-import type { DatabaseSummary, DatabaseView } from '@tomato/types';
+import { DatabaseCheckStatus, DatabaseCheckType, DatabaseConnectionMode, ErrorCode } from '@tomato/constants';
+import type { DatabaseInspection, DatabaseSummary, DatabaseView } from '@tomato/types';
 import { type Database, Prisma } from '../../generated/client';
 import { DEFAULT_DATABASE_PORT } from '../database-connections/database-connections.constants';
 import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
@@ -8,6 +8,7 @@ import type { DatabaseConnection, QueryStat, QueryStatsSnapshot, SubjectQuerySta
 import { DatabasesRepository } from './databases.repository';
 import type { DatabaseWithCount } from './databases.types';
 import { CreateDatabaseDto } from './dto/create-database.dto';
+import { InspectDatabaseDto } from './dto/inspect-database.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
 
 const UNIQUE_VIOLATION_CODE = 'P2002';
@@ -30,7 +31,16 @@ export class DatabasesService {
     return this.toView(await this.findRecord(id));
   }
 
+  async inspect({ name, ...input }: InspectDatabaseDto): Promise<DatabaseInspection> {
+    const isNameTaken = await this.isNameTaken(name);
+    const nameCheck = isNameTaken
+      ? { type: DatabaseCheckType.NAME, status: DatabaseCheckStatus.FAILED, code: ErrorCode.DATABASE_ALREADY_EXISTS }
+      : { type: DatabaseCheckType.NAME, status: DatabaseCheckStatus.PASSED };
+    return { checks: [nameCheck, ...(await this.databaseConnectionsService.inspect(this.toConnection(input)!))] };
+  }
+
   async create({ name, ...input }: CreateDatabaseDto): Promise<DatabaseView> {
+    await this.assertNameAvailable(name);
     const connection = this.toConnection(input)!;
     await this.databaseConnectionsService.verify(connection);
     return this.toView(
@@ -42,6 +52,7 @@ export class DatabasesService {
     const database = await this.findRecord(id);
     const connection = this.toConnection(input, this.databaseConnectionsService.decrypt(database.connection));
     if (name === undefined && !connection) return this.toView(database);
+    if (name !== undefined) await this.assertNameAvailable(name, id);
     if (connection) await this.databaseConnectionsService.verify(connection);
     return this.toView(
       await this.save(() =>
@@ -80,6 +91,16 @@ export class DatabasesService {
     const database = await this.databasesRepository.findById(id);
     if (!database) throw new NotFoundException({ code: ErrorCode.DATABASE_NOT_FOUND });
     return database;
+  }
+
+  private async isNameTaken(name: string, exceptId?: string): Promise<boolean> {
+    const database = await this.databasesRepository.findByName(name);
+    return Boolean(database && database.id !== exceptId);
+  }
+
+  /** Before connecting; the unique violation in `save` still covers races. */
+  private async assertNameAvailable(name: string, exceptId?: string): Promise<void> {
+    if (await this.isNameTaken(name, exceptId)) throw new ConflictException({ code: ErrorCode.DATABASE_ALREADY_EXISTS });
   }
 
   private async save(write: () => Promise<DatabaseWithCount>): Promise<DatabaseWithCount> {

@@ -77,13 +77,17 @@ export const CACHE_HIT_RATIO_SQL = `
 
 /** Whether `pg_stat_statements` is installed and preloaded, i.e. readable. */
 export async function hasPgStatStatements(client: Client): Promise<boolean> {
+  return (await readPgStatStatementsState(client)).isPreloaded;
+}
+
+export async function readPgStatStatementsState(client: Client): Promise<{ isInstalled: boolean; isPreloaded: boolean }> {
   const { rows } = await client.query<{ isInstalled: boolean }>(`SELECT to_regclass('pg_stat_statements') IS NOT NULL AS "isInstalled"`);
-  if (!rows[0]?.isInstalled) return false;
+  if (!rows[0]?.isInstalled) return { isInstalled: false, isPreloaded: false };
   try {
     await client.query('SELECT 1 FROM pg_stat_statements LIMIT 1');
-    return true;
+    return { isInstalled: true, isPreloaded: true };
   } catch (error) {
-    if ((error as { code?: string }).code === OBJECT_NOT_IN_PREREQUISITE_STATE) return false;
+    if ((error as { code?: string }).code === OBJECT_NOT_IN_PREREQUISITE_STATE) return { isInstalled: true, isPreloaded: false };
     throw error;
   }
 }

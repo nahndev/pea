@@ -8,9 +8,10 @@ import { useState, type FormEvent } from 'react';
 import { ErrorState } from '@/shared/components/error-state';
 import { FieldError } from '@/shared/components/field-error';
 import { DATABASE_FIELD_ERRORS } from '../databases.constants';
-import { buildDatabaseSchema } from '../databases.schemas';
-import { useCreateDatabase, useUpdateDatabase } from '../hooks/use-databases';
+import { buildDatabaseSchema, type DatabaseInput } from '../databases.schemas';
+import { useUpdateDatabase } from '../hooks/use-databases';
 import { DatabaseConnectionFields } from './database-connection-fields';
+import { InspectDatabaseDialog } from './inspect-database-dialog';
 
 interface DatabaseFormProps {
   database?: DatabaseView;
@@ -18,12 +19,11 @@ interface DatabaseFormProps {
 
 export function DatabaseForm({ database }: DatabaseFormProps) {
   const router = useRouter();
-  const create = useCreateDatabase();
-  const update = useUpdateDatabase(database?.id ?? '');
-  const { mutate, isPending, error: requestError } = database ? update : create;
+  const { mutate, isPending, error: requestError } = useUpdateDatabase(database?.id ?? '');
   const [connectionMode, setConnectionMode] = useState<DatabaseConnectionMode>(database?.connection.mode ?? DatabaseConnectionMode.FIELDS);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSaved, setIsSaved] = useState(false);
+  const [inspectInput, setInspectInput] = useState<DatabaseInput | null>(null);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,7 +37,11 @@ export function DatabaseForm({ database }: DatabaseFormProps) {
       return;
     }
     setFieldErrors({});
-    mutate(parsed.data, { onSuccess: () => (database ? setIsSaved(true) : router.push('/databases')) });
+    if (!database) {
+      setInspectInput(parsed.data);
+      return;
+    }
+    mutate(parsed.data, { onSuccess: () => setIsSaved(true) });
   };
 
   return (
@@ -51,7 +55,7 @@ export function DatabaseForm({ database }: DatabaseFormProps) {
       {requestError ? <ErrorState error={requestError} title="Unable to save database" /> : null}
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={isPending}>
-          {isPending ? 'Connecting…' : database ? 'Save' : 'Create database'}
+          {isPending ? 'Connecting…' : database ? 'Save' : 'Inspect database'}
         </Button>
         {database ? null : (
           <Button type="button" variant="ghost" intent="neutral" onClick={() => router.back()} disabled={isPending}>
@@ -64,6 +68,7 @@ export function DatabaseForm({ database }: DatabaseFormProps) {
           </span>
         ) : null}
       </div>
+      <InspectDatabaseDialog input={inspectInput} onClose={() => setInspectInput(null)} />
     </form>
   );
 }

@@ -1,5 +1,5 @@
 import { DatabaseConnectionMode } from '@tomato/constants';
-import type { DatabaseView } from '@tomato/types';
+import type { DatabaseInspection, DatabaseView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import type { DatabaseInput } from '../databases.schemas';
 
@@ -19,6 +19,11 @@ export const databasesService = {
 
   async get(id: string) {
     const { data } = await apiClient.get<DatabaseView>(`/databases/${id}`);
+    return data;
+  },
+
+  async inspect(input: DatabaseInput) {
+    const { data } = await apiClient.post<DatabaseInspection>('/databases/inspections', toBody(input));
     return data;
   },
 

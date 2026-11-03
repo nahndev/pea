@@ -11,6 +11,7 @@ import {
 } from '@nestjs/swagger';
 import { DatabasesService } from './databases.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
+import { InspectDatabaseDto } from './dto/inspect-database.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
 
 @ApiTags('databases')
@@ -31,6 +32,14 @@ export class DatabasesController {
   @ApiUnprocessableEntityResponse()
   create(@Body() dto: CreateDatabaseDto) {
     return this.databasesService.create(dto);
+  }
+
+  @Post('inspections')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse()
+  @ApiBadRequestResponse()
+  inspect(@Body() dto: InspectDatabaseDto) {
+    return this.databasesService.inspect(dto);
   }
 
   @Get(':id')

@@ -1,5 +1,6 @@
 import type { ConfigService } from '@nestjs/config';
 import type { Env } from '@tomato/config';
+import { DatabaseCheckStatus, DatabaseCheckType, ErrorCode } from '@tomato/constants';
 import { DatabaseConnectionsService } from './database-connections.service';
 
 describe('DatabaseConnectionsService', () => {
@@ -31,5 +32,12 @@ describe('DatabaseConnectionsService', () => {
     [{ connectionString: 'postgresql://reader:secret@db:6543/shop?sslmode=require' }, 'reader@db:6543/shop'],
   ])('describes %j without the password', (value, expected) => {
     expect(databaseConnectionsService.describe(value)).toBe(expected);
+  });
+
+  it('fails the connection check with its cause and skips the server checks', async () => {
+    const checks = await databaseConnectionsService.inspect({ connectionString: 'postgresql://reader:secret@127.0.0.1:1/shop' });
+
+    expect(checks[0]).toEqual({ type: DatabaseCheckType.CONNECTION, status: DatabaseCheckStatus.FAILED, code: ErrorCode.DATABASE_HOST_UNREACHABLE });
+    expect(checks.slice(1).every(({ status }) => status === DatabaseCheckStatus.SKIPPED)).toBe(true);
   });
 });

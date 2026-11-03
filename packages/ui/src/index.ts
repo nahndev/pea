@@ -4,6 +4,7 @@ export * from './components/badge';
 export * from './components/breadcrumb';
 export * from './components/button';
 export * from './components/card';
+export * from './components/dialog';
 export * from './components/chart';
 export * from './components/input';
 export * from './components/pagination';

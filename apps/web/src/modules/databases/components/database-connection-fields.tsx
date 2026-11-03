@@ -58,7 +58,9 @@ export function DatabaseConnectionFields({ mode, onModeChange, fieldErrors, conn
           />
         </TabsContent>
       </Tabs>
-      <p className="text-xs text-muted-foreground">Verified on save, connected read-only during analyses and stored encrypted.</p>
+      <p className="text-xs text-muted-foreground">
+        {connection ? 'Verified on save' : 'Inspected before creation'}, connected read-only during analyses and stored encrypted.
+      </p>
     </fieldset>
   );
 }

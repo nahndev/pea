@@ -1,7 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { Env } from '@tomato/config';
-import { ErrorCode } from '@tomato/constants';
+import { DatabaseCheckStatus, DatabaseCheckType, ErrorCode } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
 import type { DatabaseConnection } from '../database-connections/database-connections.types';
@@ -15,7 +15,7 @@ describe('DatabasesService', () => {
   const fields = { host: 'db', port: 5432, database: 'shop', user: 'reader', password: 'secret' };
   const createdAt = new Date('2026-11-01T00:00:00.000Z');
   let databaseConnectionsService: DatabaseConnectionsService;
-  let databasesRepository: jest.Mocked<Pick<DatabasesRepository, 'findAll' | 'findById' | 'create' | 'update' | 'delete' | 'findQueryStats' | 'saveQueryStats'>>;
+  let databasesRepository: jest.Mocked<Pick<DatabasesRepository, 'findAll' | 'findById' | 'findByName' | 'create' | 'update' | 'delete' | 'findQueryStats' | 'saveQueryStats'>>;
   let databasesService: DatabasesService;
 
   const record = (connection: DatabaseConnection, analyses = 0): DatabaseWithCount => ({
@@ -41,6 +41,7 @@ describe('DatabasesService', () => {
     databasesRepository = {
       findAll: jest.fn(),
       findById: jest.fn(),
+      findByName: jest.fn().mockResolvedValue(null),
       create: jest.fn(async ({ connection }) => ({ ...record(fields), connection })),
       update: jest.fn(async (_id, { connection }) => ({ ...record(fields), ...(connection && { connection }) })),
       delete: jest.fn(),
@@ -90,6 +91,35 @@ describe('DatabasesService', () => {
     await expect(codeOf(databasesService.create({ name: 'Shop', ...fields }))).resolves.toEqual({ code: ErrorCode.DATABASE_ALREADY_EXISTS });
   });
 
+  it('rejects a taken name before connecting', async () => {
+    databasesRepository.findByName.mockResolvedValue({ id: 'db-2' });
+
+    await expect(codeOf(databasesService.create({ name: 'Shop', ...fields }))).resolves.toEqual({ code: ErrorCode.DATABASE_ALREADY_EXISTS });
+    expect(databaseConnectionsService.verify).not.toHaveBeenCalled();
+  });
+
+  describe('inspect', () => {
+    const connected = [{ type: DatabaseCheckType.CONNECTION, status: DatabaseCheckStatus.PASSED }];
+
+    beforeEach(() => jest.spyOn(databaseConnectionsService, 'inspect').mockResolvedValue(connected));
+
+    it('checks the name, then the connection', async () => {
+      await expect(databasesService.inspect({ name: 'Shop', ...fields, port: undefined })).resolves.toEqual({
+        checks: [{ type: DatabaseCheckType.NAME, status: DatabaseCheckStatus.PASSED }, ...connected],
+      });
+      expect(databaseConnectionsService.inspect).toHaveBeenCalledWith(fields);
+      expect(databasesRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('fails the name check of a taken name', async () => {
+      databasesRepository.findByName.mockResolvedValue({ id: 'db-2' });
+
+      const { checks } = await databasesService.inspect({ name: 'Shop', ...fields });
+
+      expect(checks[0]).toEqual({ type: DatabaseCheckType.NAME, status: DatabaseCheckStatus.FAILED, code: ErrorCode.DATABASE_ALREADY_EXISTS });
+    });
+  });
+
   it('throws DATABASE_NOT_FOUND for an unknown database', async () => {
     databasesRepository.findById.mockResolvedValue(null);
 
@@ -104,6 +134,15 @@ describe('DatabasesService', () => {
 
       expect(databaseConnectionsService.verify).not.toHaveBeenCalled();
       expect(databasesRepository.update).toHaveBeenCalledWith('db-1', { name: 'Shop replica', connection: undefined });
+    });
+
+    it('keeps its own name, but rejects the name of another database', async () => {
+      databasesRepository.findByName.mockResolvedValue({ id: 'db-1' });
+      await databasesService.update('db-1', { name: 'Shop' });
+      expect(databasesRepository.update).toHaveBeenCalled();
+
+      databasesRepository.findByName.mockResolvedValue({ id: 'db-2' });
+      await expect(codeOf(databasesService.update('db-1', { name: 'Other' }))).resolves.toEqual({ code: ErrorCode.DATABASE_ALREADY_EXISTS });
     });
 
     it('keeps the password of the same server when none is given', async () => {
