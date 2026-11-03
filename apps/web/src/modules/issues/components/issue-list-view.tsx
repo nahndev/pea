@@ -13,6 +13,7 @@ import { useIssues } from '../hooks/use-issues';
 import { ISSUE_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
 import { IssueFilters } from './issue-filters';
+import { IssueSubjectStatusSelect } from './issue-subject-status-select';
 
 interface IssueListViewProps {
   analysisId: string;
@@ -45,6 +46,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                   <TableHead>Subject</TableHead>
                   <TableHead>Details</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Subject status</TableHead>
                   <TableHead>Raised</TableHead>
                 </TableRow>
               </TableHeader>
@@ -61,6 +63,13 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
                     <TableCell className="min-w-64 max-w-96 whitespace-normal text-muted-foreground">{issue.description ?? issue.rule.description}</TableCell>
                     <TableCell>
                       <StatusBadge style={ISSUE_STATUS_STYLE[issue.status]} />
+                    </TableCell>
+                    <TableCell>
+                      {issue.issueSubject ? (
+                        <IssueSubjectStatusSelect issueSubject={issue.issueSubject} />
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{formatDateTime(issue.createdAt)}</TableCell>
                   </TableRow>

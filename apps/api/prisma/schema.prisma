@@ -32,15 +32,16 @@ model Analysis {
 }
 
 model Rule {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  schema      String   @db.VarChar(20)
-  type        String   @db.VarChar(50)
-  description String
-  severity    String   @default("MEDIUM") @db.VarChar(20)
-  config      Json     @default("{}") @db.JsonB
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  issues      Issue[]
+  id            String         @id @default(uuid(7)) @db.Uuid
+  schema        String         @db.VarChar(20)
+  type          String         @db.VarChar(50)
+  description   String
+  severity      String         @default("MEDIUM") @db.VarChar(20)
+  config        Json           @default("{}") @db.JsonB
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  issues        Issue[]
+  issueSubjects IssueSubject[]
 
   @@index([schema, type])
   @@map("rules")
@@ -66,6 +67,21 @@ model Issue {
   @@index([status])
   @@index([severity])
   @@map("issues")
+}
+
+model IssueSubject {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  ruleId      String   @map("rule_id") @db.Uuid
+  subjectUuid String   @map("subject_uuid") @db.Uuid
+  status      String   @default("TO_REVIEW") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  rule        Rule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  subject     Subject  @relation(fields: [subjectUuid], references: [uuid], onDelete: Restrict)
+
+  @@unique([ruleId, subjectUuid])
+  @@index([subjectUuid])
+  @@map("issue_subjects")
 }
 
 model AnalysisResult {
@@ -99,12 +115,13 @@ model Metric {
 }
 
 model Subject {
-  uuid        String         @id @db.Uuid
-  type        String         @db.VarChar(20)
-  description String
-  createdAt   DateTime       @default(now()) @map("created_at")
-  results     MetricResult[]
-  issues      Issue[]
+  uuid          String         @id @db.Uuid
+  type          String         @db.VarChar(20)
+  description   String
+  createdAt     DateTime       @default(now()) @map("created_at")
+  results       MetricResult[]
+  issues        Issue[]
+  issueSubjects IssueSubject[]
 
   @@index([type])
   @@map("subjects")

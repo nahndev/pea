@@ -1,4 +1,5 @@
-import type { IssueView, Paginated } from '@tomato/types';
+import type { IssueSubjectStatus } from '@tomato/constants';
+import type { IssueSubjectView, IssueView, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
@@ -9,6 +10,11 @@ export const issuesService = {
     const { data } = await apiClient.get<Paginated<IssueView>>(`/analyses/${analysisId}/issues`, {
       params: { limit: PAGE_SIZE, offset: toOffset(page), status, severity, ruleType },
     });
+    return data;
+  },
+
+  async updateSubject(id: string, status: IssueSubjectStatus) {
+    const { data } = await apiClient.patch<IssueSubjectView>(`/issue-subjects/${id}`, { status });
     return data;
   },
 };
