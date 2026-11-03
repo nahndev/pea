@@ -4,6 +4,7 @@ import { AnalysisSchema } from '@tomato/constants';
 import type { ComponentType } from 'react';
 import { ApiTrendChart } from './api-trend-chart';
 import { BugTrendChart } from './bug-trend-chart';
+import { DatabaseTrendChart } from './database-trend-chart';
 import type { TrendChartProps } from './metric-trend-chart';
 import { QueryTrendChart } from './query-trend-chart';
 
@@ -11,6 +12,7 @@ const TREND_CHART_BY_SCHEMA: Record<AnalysisSchema, ComponentType<TrendChartProp
   [AnalysisSchema.API]: ApiTrendChart,
   [AnalysisSchema.QUERY]: QueryTrendChart,
   [AnalysisSchema.BUG]: BugTrendChart,
+  [AnalysisSchema.DATABASE]: DatabaseTrendChart,
 };
 
 export function TrendChartBySchema({ schema, ...props }: TrendChartProps & { schema: AnalysisSchema }) {

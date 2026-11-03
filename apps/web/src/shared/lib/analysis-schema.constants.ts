@@ -4,6 +4,7 @@ export const ANALYSIS_SCHEMA_LABEL: Record<AnalysisSchema, string> = {
   [AnalysisSchema.API]: 'API',
   [AnalysisSchema.QUERY]: 'Query',
   [AnalysisSchema.BUG]: 'Bug',
+  [AnalysisSchema.DATABASE]: 'Database',
 };
 
 export const DEFAULT_ANALYSIS_SCHEMA: AnalysisSchema = AnalysisSchema.API;

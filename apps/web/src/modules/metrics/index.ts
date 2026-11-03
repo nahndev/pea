@@ -1,6 +1,7 @@
 export { MetricsView } from './components/metrics-view';
 export { ApiTrendChart } from './components/api-trend-chart';
 export { BugTrendChart } from './components/bug-trend-chart';
+export { DatabaseTrendChart } from './components/database-trend-chart';
 export { QueryTrendChart } from './components/query-trend-chart';
 export { TrendChartBySchema } from './components/trend-chart.factory';
 export { formatMetricValue } from './format-metric-value';
