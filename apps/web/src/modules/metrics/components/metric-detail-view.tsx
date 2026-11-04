@@ -35,7 +35,15 @@ export function MetricDetailView({ metricId, params: { page } }: MetricDetailVie
       <PageHeader title={title} description={`${ANALYSIS_SCHEMA_LABEL[data.schema]} · ${data.type} · measured in ${METRIC_UNIT_LABEL[data.unit]}`}>
         <Breadcrumbs entries={[{ label: 'Metrics', href: buildHref('/metrics', { schema: data.schema }) }, { label: title }]} />
       </PageHeader>
-      <p className="max-w-3xl text-sm text-muted-foreground">{data.description}</p>
+      <section className="flex max-w-2xl flex-col gap-3" aria-labelledby="metric-settings-heading">
+        <div>
+          <h2 id="metric-settings-heading" className="text-lg font-semibold">
+            Settings
+          </h2>
+          <p className="text-sm text-muted-foreground">Past results are kept when a metric is disabled.</p>
+        </div>
+        <MetricForm key={`${data.description}:${data.isActive}:${data.include.join()}:${data.exclude.join()}`} metric={data} />
+      </section>
       <MetricOverview metric={data} total={history.data?.total} />
       <section className="flex flex-col gap-3" aria-labelledby="metric-history-heading">
         <h2 id="metric-history-heading" className="text-lg font-semibold">
@@ -56,15 +64,6 @@ export function MetricDetailView({ metricId, params: { page } }: MetricDetailVie
             />
           </>
         ) : null}
-      </section>
-      <section className="flex max-w-2xl flex-col gap-3" aria-labelledby="metric-settings-heading">
-        <div>
-          <h2 id="metric-settings-heading" className="text-lg font-semibold">
-            Settings
-          </h2>
-          <p className="text-sm text-muted-foreground">Past results are kept when a metric is disabled.</p>
-        </div>
-        <MetricForm key={`${data.description}:${data.isActive}:${data.include.join()}:${data.exclude.join()}`} metric={data} />
       </section>
     </div>
   );
