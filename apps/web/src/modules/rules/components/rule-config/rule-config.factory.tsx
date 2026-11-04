@@ -16,6 +16,9 @@ import { SeqScanRateRuleConfig } from './seq-scan-rate-rule-config';
 import { UnusedIndexRuleConfig } from './unused-index-rule-config';
 import { LowCacheHitRatioRuleConfig } from './low-cache-hit-ratio-rule-config';
 import { PgStatStatementsRuleConfig } from './pg-stat-statements-rule-config';
+import { CriticalErrorRuleConfig } from './critical-error-rule-config';
+import { FrequentErrorRuleConfig } from './frequent-error-rule-config';
+import { ErrorEndpointRuleConfig } from './error-endpoint-rule-config';
 import { PG_STAT_STATEMENTS_RULE_CONFIG } from '../../rules.constants';
 
 const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProps>>> = {
@@ -38,6 +41,9 @@ const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProp
   [RuleType.SEQ_SCAN_RATE]: SeqScanRateRuleConfig,
   [RuleType.UNUSED_INDEX]: UnusedIndexRuleConfig,
   [RuleType.LOW_CACHE_HIT_RATIO]: LowCacheHitRatioRuleConfig,
+  [RuleType.CRITICAL_ERROR]: CriticalErrorRuleConfig,
+  [RuleType.FREQUENT_ERROR]: FrequentErrorRuleConfig,
+  [RuleType.ERROR_ENDPOINT]: ErrorEndpointRuleConfig,
   ...Object.fromEntries(Object.keys(PG_STAT_STATEMENTS_RULE_CONFIG).map((type) => [type, PgStatStatementsRuleConfig])),
 };
 

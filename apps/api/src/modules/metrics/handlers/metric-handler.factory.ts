@@ -8,6 +8,8 @@ import { TableRowsHandler } from './database/table-rows.handler';
 import { DatabaseStatHandler } from './database/database-stat.handler';
 import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
 import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
+import { ErrorCountHandler } from './bug/error-count.handler';
+import { ErrorOccurrencesHandler } from './bug/error-occurrences.handler';
 
 @Injectable()
 export class MetricHandlerFactory {
@@ -21,6 +23,8 @@ export class MetricHandlerFactory {
     databaseStatHandler: DatabaseStatHandler,
     tableDeadTuplesHandler: TableDeadTuplesHandler,
     queryMeanDurationHandler: QueryMeanDurationHandler,
+    errorCountHandler: ErrorCountHandler,
+    errorOccurrencesHandler: ErrorOccurrencesHandler,
   ) {
     this.handlers = new Map<string, MetricHandler>([
       [MetricType.P50, percentileHandler],
@@ -41,6 +45,10 @@ export class MetricHandlerFactory {
       [MetricType.REPLICATION_LAG, databaseStatHandler],
       [MetricType.TABLE_DEAD_TUPLES, tableDeadTuplesHandler],
       [MetricType.QUERY_MEAN_DURATION, queryMeanDurationHandler],
+      [MetricType.ERROR_COUNT, errorCountHandler],
+      [MetricType.CRITICAL_ERROR_COUNT, errorCountHandler],
+      [MetricType.ERROR_GROUP_COUNT, errorCountHandler],
+      [MetricType.ERROR_OCCURRENCES, errorOccurrencesHandler],
     ]);
   }
 

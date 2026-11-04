@@ -5,10 +5,10 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
+import { FileFieldsInterceptor } from "@nestjs/platform-express";
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -20,8 +20,9 @@ import {
 } from "@nestjs/swagger";
 import { AnalysisSchema } from "@tomato/constants";
 import { memoryStorage } from "multer";
-import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from "./analyses.constants";
+import { LogFileField, MAX_LOG_FILE_SIZE } from "./analyses.constants";
 import { AnalysesService } from "./analyses.service";
+import type { UploadedLogFiles } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 
 @ApiTags("analyses")
@@ -39,7 +40,8 @@ export class AnalysesController {
         branch: { type: "string", minLength: 1, maxLength: 255 },
         schema: { type: "string", enum: Object.values(AnalysisSchema) },
         title: { type: "string", minLength: 1, maxLength: 255 },
-        [LOG_FILE_FIELD]: { type: "string", format: "binary", description: "Required unless schema is DATABASE" },
+        [LogFileField.API_METRIC]: { type: "string", format: "binary", description: "Required when schema is API or QUERY" },
+        [LogFileField.BUG_LOG]: { type: "string", format: "binary", description: "Required when schema is BUG" },
         databaseId: { type: "string", format: "uuid", description: "Required when schema is DATABASE" },
       },
     },
@@ -47,16 +49,16 @@ export class AnalysesController {
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @UseInterceptors(
-    FileInterceptor(LOG_FILE_FIELD, {
-      storage: memoryStorage(),
-      limits: { fileSize: MAX_LOG_FILE_SIZE },
-    }),
+    FileFieldsInterceptor(
+      Object.values(LogFileField).map((name) => ({ name, maxCount: 1 })),
+      { storage: memoryStorage(), limits: { fileSize: MAX_LOG_FILE_SIZE } },
+    ),
   )
   create(
     @Body() dto: CreateAnalysisDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: UploadedLogFiles,
   ) {
-    return this.analysesService.create(dto, file);
+    return this.analysesService.create(dto, files);
   }
 
   @Get(":id")

@@ -59,6 +59,9 @@ export const RuleType = {
   QUERY_VARIANTS: 'QUERY_VARIANTS',
   TIME_SHARE_QUERY: 'TIME_SHARE_QUERY',
   READ_WRITE_RATIO: 'READ_WRITE_RATIO',
+  CRITICAL_ERROR: 'CRITICAL_ERROR',
+  FREQUENT_ERROR: 'FREQUENT_ERROR',
+  ERROR_ENDPOINT: 'ERROR_ENDPOINT',
 } as const;
 
 export type RuleType = (typeof RuleType)[keyof typeof RuleType];

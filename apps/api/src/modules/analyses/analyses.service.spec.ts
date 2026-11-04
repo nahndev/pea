@@ -57,7 +57,7 @@ describe("AnalysesService", () => {
 
     const result = await analysesService.create(
       { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
-      UPLOAD,
+      { api_metric: [UPLOAD] },
     );
 
     expect(storageService.save).toHaveBeenCalledWith(UPLOAD);
@@ -93,13 +93,37 @@ describe("AnalysesService", () => {
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
 
+  it("reads the bug log of a BUG analysis", async () => {
+    const bugLog = { fieldname: "bug_log", originalname: "bug_log.log" } as Express.Multer.File;
+    analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
+
+    await analysesService.create(
+      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
+      { api_metric: [UPLOAD], bug_log: [bugLog] },
+    );
+
+    expect(storageService.save).toHaveBeenCalledWith(bugLog);
+  });
+
+  it("rejects a BUG analysis sent with an API metric log only", async () => {
+    await expect(
+      codeOf(
+        analysesService.create(
+          { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
+          { api_metric: [UPLOAD] },
+        ),
+      ),
+    ).resolves.toEqual({ code: ErrorCode.LOG_FILE_REQUIRED });
+    expect(storageService.save).not.toHaveBeenCalled();
+  });
+
   it("removes the stored files when creating the analysis fails", async () => {
     analysesRepository.create.mockRejectedValue(new Error("db down"));
 
     await expect(
       analysesService.create(
         { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
-        UPLOAD,
+        { api_metric: [UPLOAD] },
       ),
     ).rejects.toThrow("db down");
     expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);

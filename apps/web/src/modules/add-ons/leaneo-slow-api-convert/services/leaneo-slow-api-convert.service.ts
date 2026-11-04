@@ -1,6 +1,6 @@
-import { isAxiosError } from 'axios';
 import { AddOnHeader } from '@tomato/constants';
 import { apiClient } from '@/shared/lib/api-client';
+import { decodeBlobError } from '../../services/decode-blob-error';
 import type { ConvertSlowApiResult } from '../leaneo-slow-api-convert.types';
 
 export const leaneoSlowApiConvertService = {
@@ -20,13 +20,3 @@ export const leaneoSlowApiConvertService = {
     }
   },
 };
-
-// With responseType blob, the error body is a Blob too; decode it so getApiError can read the code.
-async function decodeBlobError(error: unknown) {
-  if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) return;
-  try {
-    error.response.data = JSON.parse(await error.response.data.text());
-  } catch {
-    return;
-  }
-}

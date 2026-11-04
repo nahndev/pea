@@ -28,9 +28,9 @@ import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { BranchesService } from "../branches/branches.service";
 import { DatabasesService } from "../databases/databases.service";
 import { StorageService } from "../files/storage.service";
-import { DEFAULT_TREND_METRIC_TYPES } from "./analyses.constants";
+import { DEFAULT_TREND_METRIC_TYPES, LOG_FILE_FIELD_BY_SCHEMA } from "./analyses.constants";
 import { AnalysesRepository } from "./analyses.repository";
-import type { AnalysisWithData, AnalysisWithLatestResult, MetricTrendPick } from "./analyses.types";
+import type { AnalysisWithData, AnalysisWithLatestResult, MetricTrendPick, UploadedLogFiles } from "./analyses.types";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
 import { ListBranchAnalysesQueryDto } from "./dto/list-branch-analyses-query.dto";
 
@@ -44,13 +44,14 @@ export class AnalysesService {
   ) {}
 
   @EmitEvent(AnalysisEvent.CREATED)
-  async create(dto: CreateAnalysisDto, upload?: Express.Multer.File): Promise<Analysis> {
+  async create(dto: CreateAnalysisDto, files: UploadedLogFiles = {}): Promise<Analysis> {
     const { branch, schema, title, databaseId } = dto;
     if (schema === AnalysisSchema.DATABASE) {
       await this.databasesService.verify(databaseId!);
       const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
       return this.analysesRepository.create({ branchId, schema, title, databaseId });
     }
+    const upload = files[LOG_FILE_FIELD_BY_SCHEMA[schema]]?.[0];
     if (!upload)
       throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
     const { id: branchId } = await this.branchesService.findOrCreateByName(branch);

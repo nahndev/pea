@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ErrorCode } from '@tomato/constants';
-import { ID_PLACEHOLDER, ID_SEGMENT, MS_PER_SECOND } from './leaneo-slow-api-convert.constants';
-import type { ConvertResult, SlowApiRecord } from './leaneo-slow-api-convert.types';
+import type { ConvertResult } from '../add-ons.types';
+import { toRoute } from '../to-route';
+import { MS_PER_SECOND } from './leaneo-slow-api-convert.constants';
+import type { SlowApiRecord } from './leaneo-slow-api-convert.types';
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined =>
   typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
@@ -53,17 +55,8 @@ export class LeaneoSlowApiConvertService {
     return JSON.stringify({
       ts: Math.round(endSeconds * MS_PER_SECOND),
       method: method.toUpperCase(),
-      route: this.toRoute(url),
+      route: toRoute(url),
       ms: durationMs,
     });
-  }
-
-  private toRoute(url: string): string {
-    const [path] = url.split('?');
-    const route = path
-      .split('/')
-      .map((segment) => (ID_SEGMENT.test(segment) ? ID_PLACEHOLDER : segment))
-      .join('/');
-    return route || '/';
   }
 }

@@ -19,6 +19,8 @@ import { QuerySnapshotHandler } from './handlers/database/query-snapshot.handler
 import { StatementEvictionHandler } from './handlers/database/statement-eviction.handler';
 import { QueryVariantsHandler } from './handlers/database/query-variants.handler';
 import { ReadWriteRatioHandler } from './handlers/database/read-write-ratio.handler';
+import { ErrorGroupHandler } from './handlers/bug/error-group.handler';
+import { ErrorEndpointHandler } from './handlers/bug/error-endpoint.handler';
 import { RulesController } from './rules.controller';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -47,6 +49,8 @@ import { RulesService } from './rules.service';
     StatementEvictionHandler,
     QueryVariantsHandler,
     ReadWriteRatioHandler,
+    ErrorGroupHandler,
+    ErrorEndpointHandler,
     RuleHandlerFactory,
   ],
   exports: [RulesService, RuleHandlerFactory],

@@ -21,6 +21,10 @@ export const METRIC_LABEL: Record<MetricType, string> = {
   [MetricType.DEADLOCKS]: 'Deadlocks',
   [MetricType.TEMP_FILES]: 'Temp files',
   [MetricType.REPLICATION_LAG]: 'Replication lag',
+  [MetricType.ERROR_COUNT]: 'Errors',
+  [MetricType.CRITICAL_ERROR_COUNT]: 'Critical errors',
+  [MetricType.ERROR_GROUP_COUNT]: 'Distinct errors',
+  [MetricType.ERROR_OCCURRENCES]: 'Occurrences per error',
 };
 
 export const METRIC_UNIT_LABEL: Record<MetricUnit, string> = {

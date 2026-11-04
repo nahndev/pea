@@ -10,6 +10,8 @@ import { TableRowsHandler } from './handlers/database/table-rows.handler';
 import { DatabaseStatHandler } from './handlers/database/database-stat.handler';
 import { TableDeadTuplesHandler } from './handlers/database/table-dead-tuples.handler';
 import { QueryMeanDurationHandler } from './handlers/database/query-mean-duration.handler';
+import { ErrorCountHandler } from './handlers/bug/error-count.handler';
+import { ErrorOccurrencesHandler } from './handlers/bug/error-occurrences.handler';
 import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsController } from './metrics.controller';
 import { MetricsRepository } from './metrics.repository';
@@ -29,6 +31,8 @@ import { MetricsService } from './metrics.service';
     DatabaseStatHandler,
     TableDeadTuplesHandler,
     QueryMeanDurationHandler,
+    ErrorCountHandler,
+    ErrorOccurrencesHandler,
     MetricHandlerFactory,
   ],
   exports: [MetricsService],

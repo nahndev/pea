@@ -10,9 +10,10 @@ import { FieldError } from '@/shared/components/field-error';
 import { PageHeader } from '@/shared/components/page-header';
 import { ANALYSIS_SCHEMA_LABEL, DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { DatabaseSelect } from '@/modules/databases';
-import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from '../analyses.constants';
+import { LOG_FILE_FIELD_BY_SCHEMA, MAX_LOG_FILE_SIZE } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
+import { LogFileInput } from './log-file-input';
 
 interface NewAnalysisFormProps {
   branch?: string;
@@ -87,17 +88,10 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
           <Input id="title" name="title" placeholder="Release 1.2 — checkout refactor" maxLength={255} aria-invalid={Boolean(fieldErrors.title)} aria-describedby="title-error" required />
           <FieldError id="title-error" message={fieldErrors.title} />
         </div>
-        {isDatabase ? (
+        {schema === AnalysisSchema.DATABASE ? (
           <DatabaseSelect value={databaseId} onChange={setDatabaseId} error={fieldErrors.databaseId} />
         ) : (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor={LOG_FILE_FIELD.name}>{LOG_FILE_FIELD.label}</Label>
-            <Input id={LOG_FILE_FIELD.name} name={LOG_FILE_FIELD.name} type="file" accept=".json,.jsonl,.ndjson,.log,.txt" aria-invalid={Boolean(fieldErrors[LOG_FILE_FIELD.name])} aria-describedby={`${LOG_FILE_FIELD.name}-hint ${LOG_FILE_FIELD.name}-error`} />
-            <p id={`${LOG_FILE_FIELD.name}-hint`} className="text-xs text-muted-foreground">
-              {LOG_FILE_FIELD.hint}
-            </p>
-            <FieldError id={`${LOG_FILE_FIELD.name}-error`} message={fieldErrors[LOG_FILE_FIELD.name]} />
-          </div>
+          <LogFileInput key={schema} field={LOG_FILE_FIELD_BY_SCHEMA[schema]} error={fieldErrors[LOG_FILE_FIELD_BY_SCHEMA[schema].name]} />
         )}
         {requestError ? <ErrorState error={requestError} /> : null}
         <div className="flex gap-3">

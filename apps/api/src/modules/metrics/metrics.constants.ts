@@ -1,5 +1,6 @@
 import { MetricType, Severity } from '@tomato/constants';
 import { CACHE_HIT_RATIO_SQL } from '../database-connections/postgres-stats';
+import { BUG_LOG_GROUP_COLUMN, BUG_LOG_IS_CRITICAL_COLUMN } from '../files/bug-log-events';
 
 /** Metric types shown as summary cards on an analysis */
 export const SUMMARY_METRIC_TYPES = [MetricType.P50, MetricType.P90, MetricType.P95] as const;
@@ -7,6 +8,8 @@ export const SUMMARY_METRIC_TYPES = [MetricType.P50, MetricType.P90, MetricType.
 export const MAX_METRIC_SUBJECT_FILTERS = 200;
 /** Query subjects measured per analysis, by total execution time */
 export const MAX_QUERY_SUBJECTS = 50;
+/** Error groups measured per analysis, most frequent first */
+export const MAX_ERROR_SUBJECTS = 50;
 
 export const PERCENTILE_BY_METRIC_TYPE: ReadonlyMap<string, number> = new Map([
   [MetricType.P50, 0.5],
@@ -37,4 +40,11 @@ export const DATABASE_STAT_SQL_BY_METRIC_TYPE: ReadonlyMap<string, string> = new
     'SELECT count(*)::float8 AS value FROM pg_locks l JOIN pg_stat_activity a ON a.pid = l.pid WHERE NOT l.granted AND a.datname = current_database()',
   ],
   [MetricType.REPLICATION_LAG, 'SELECT (extract(epoch FROM max(replay_lag)) * 1000)::float8 AS value FROM pg_stat_replication'],
+]);
+
+/** Aggregate over the bug_log events of an analysis */
+export const BUG_LOG_AGGREGATE_BY_METRIC_TYPE: ReadonlyMap<string, string> = new Map([
+  [MetricType.ERROR_COUNT, 'count(*)'],
+  [MetricType.CRITICAL_ERROR_COUNT, `count(*) FILTER (WHERE ${BUG_LOG_IS_CRITICAL_COLUMN})`],
+  [MetricType.ERROR_GROUP_COUNT, `count(DISTINCT ${BUG_LOG_GROUP_COLUMN})`],
 ]);

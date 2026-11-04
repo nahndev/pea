@@ -19,6 +19,8 @@ import { ReadWriteRatioHandler } from './database/read-write-ratio.handler';
 import type { RuleHandler } from './rule-handler.types';
 import { SlowApiHandler } from './api/slow-api.handler';
 import { SlowRouteHandler } from './api/slow-route.handler';
+import { ErrorGroupHandler } from './bug/error-group.handler';
+import { ErrorEndpointHandler } from './bug/error-endpoint.handler';
 
 @Injectable()
 export class RuleHandlerFactory {
@@ -43,6 +45,8 @@ export class RuleHandlerFactory {
     statementEvictionHandler: StatementEvictionHandler,
     queryVariantsHandler: QueryVariantsHandler,
     readWriteRatioHandler: ReadWriteRatioHandler,
+    errorGroupHandler: ErrorGroupHandler,
+    errorEndpointHandler: ErrorEndpointHandler,
   ) {
     this.handlers = new Map<string, RuleHandler>([
       [RuleType.P50_FAILURE, latencyHandler],
@@ -105,6 +109,9 @@ export class RuleHandlerFactory {
       [RuleType.QUERY_VARIANTS, queryVariantsHandler],
       [RuleType.TIME_SHARE_QUERY, statementHandler],
       [RuleType.READ_WRITE_RATIO, readWriteRatioHandler],
+      [RuleType.CRITICAL_ERROR, errorGroupHandler],
+      [RuleType.FREQUENT_ERROR, errorGroupHandler],
+      [RuleType.ERROR_ENDPOINT, errorEndpointHandler],
     ]);
   }
 

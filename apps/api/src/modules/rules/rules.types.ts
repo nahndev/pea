@@ -10,6 +10,7 @@ export interface RuleConfig {
   maxBlocks?: number;
   maxBytes?: number;
   maxItems?: number;
+  minCount?: number;
 }
 
 export interface LatencyStat {
@@ -27,6 +28,12 @@ export interface StatementRow {
   calls: number;
   value: number;
   detail: number | null;
+}
+
+/** A bug_log rule evaluated per error group over the events matching `condition` */
+export interface ErrorGroupRule {
+  condition: string;
+  describe: (count: number) => string;
 }
 
 /** A `pg_stat_statements` rule evaluated per query over the columns of `QUERY_STATEMENTS_SQL` */

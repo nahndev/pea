@@ -19,6 +19,8 @@ import { ReadWriteRatioHandler } from './database/read-write-ratio.handler';
 import { RuleHandlerFactory } from './rule-handler.factory';
 import { SlowApiHandler } from './api/slow-api.handler';
 import { SlowRouteHandler } from './api/slow-route.handler';
+import { ErrorGroupHandler } from './bug/error-group.handler';
+import { ErrorEndpointHandler } from './bug/error-endpoint.handler';
 
 describe('RuleHandlerFactory', () => {
   const latencyHandler = {} as LatencyHandler;
@@ -39,6 +41,8 @@ describe('RuleHandlerFactory', () => {
   const statementEvictionHandler = {} as StatementEvictionHandler;
   const queryVariantsHandler = {} as QueryVariantsHandler;
   const readWriteRatioHandler = {} as ReadWriteRatioHandler;
+  const errorGroupHandler = {} as ErrorGroupHandler;
+  const errorEndpointHandler = {} as ErrorEndpointHandler;
   const ruleHandlerFactory = new RuleHandlerFactory(
     latencyHandler,
     rateHandler,
@@ -58,6 +62,8 @@ describe('RuleHandlerFactory', () => {
     statementEvictionHandler,
     queryVariantsHandler,
     readWriteRatioHandler,
+    errorGroupHandler,
+    errorEndpointHandler,
   );
 
   it.each([
@@ -121,6 +127,9 @@ describe('RuleHandlerFactory', () => {
     [RuleType.QUERY_VARIANTS, queryVariantsHandler],
     [RuleType.TIME_SHARE_QUERY, statementHandler],
     [RuleType.READ_WRITE_RATIO, readWriteRatioHandler],
+    [RuleType.CRITICAL_ERROR, errorGroupHandler],
+    [RuleType.FREQUENT_ERROR, errorGroupHandler],
+    [RuleType.ERROR_ENDPOINT, errorEndpointHandler],
   ])('returns the handler of %s', (type, handler) => {
     expect(ruleHandlerFactory.create(type)).toBe(handler);
   });

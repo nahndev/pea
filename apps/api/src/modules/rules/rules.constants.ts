@@ -1,11 +1,15 @@
 import { RuleType } from '@tomato/constants';
 import { API_METRIC_DURATION_COLUMN, API_METRIC_STATUS_CODE_COLUMN } from '../files/api-metric-requests';
-import type { LatencyStat, RateDefinition, RuleConfig } from './rules.types';
+import { BUG_LOG_IS_CRITICAL_COLUMN } from '../files/bug-log-events';
+import type { ErrorGroupRule, LatencyStat, RateDefinition, RuleConfig } from './rules.types';
 
 export const DEFAULT_MIN_REQUESTS = 10;
 export const ROUTE_PERCENTILE = 0.95;
 /** Issues created per database rule, worst first */
 export const MAX_DATABASE_ISSUES = 100;
+/** Issues created per bug rule, most frequent first */
+export const MAX_BUG_ISSUES = 100;
+export const MAX_ISSUE_MESSAGE_LENGTH = 200;
 
 export const SERVER_ERROR_CONDITION = `${API_METRIC_STATUS_CODE_COLUMN} BETWEEN 500 AND 599`;
 const CLIENT_ERROR_CONDITION = `${API_METRIC_STATUS_CODE_COLUMN} BETWEEN 400 AND 499`;
@@ -30,6 +34,11 @@ export const RATE_BY_RULE_TYPE: ReadonlyMap<string, RateDefinition> = new Map([
   ],
   [RuleType.ERROR_RATE, { label: () => '5xx error rate', condition: () => SERVER_ERROR_CONDITION }],
   [RuleType.CLIENT_ERROR_RATE, { label: () => '4xx error rate', condition: () => CLIENT_ERROR_CONDITION }],
+]);
+
+export const ERROR_GROUP_RULE_BY_TYPE: ReadonlyMap<string, ErrorGroupRule> = new Map([
+  [RuleType.CRITICAL_ERROR, { condition: BUG_LOG_IS_CRITICAL_COLUMN, describe: (count: number) => `${count} critical occurrences` }],
+  [RuleType.FREQUENT_ERROR, { condition: 'true', describe: (count: number) => `Raised ${count} times` }],
 ]);
 
 export const CONFIG_FIELDS_BY_RULE_TYPE: Readonly<Record<RuleType, readonly (keyof RuleConfig)[]>> = {
@@ -93,4 +102,7 @@ export const CONFIG_FIELDS_BY_RULE_TYPE: Readonly<Record<RuleType, readonly (key
   [RuleType.QUERY_VARIANTS]: ['maxItems'],
   [RuleType.TIME_SHARE_QUERY]: ['maxPercent'],
   [RuleType.READ_WRITE_RATIO]: ['maxPercent'],
+  [RuleType.CRITICAL_ERROR]: ['minCount'],
+  [RuleType.FREQUENT_ERROR]: ['minCount'],
+  [RuleType.ERROR_ENDPOINT]: ['minCount'],
 };

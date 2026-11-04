@@ -1,7 +1,7 @@
 import { AnalysisSchema } from '@tomato/constants';
 import { z } from 'zod';
 import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
-import { LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from './analyses.constants';
+import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from './analyses.constants';
 
 const logFileSchema = z
   .instanceof(File, { error: 'file_required' })
@@ -15,10 +15,16 @@ const commonShape = {
   title: requiredText(),
 };
 
-const fileAnalysisSchema = z.object({
+const apiMetricAnalysisSchema = z.object({
   ...commonShape,
-  schema: z.enum(analysisSchemaValues).exclude([AnalysisSchema.DATABASE]),
-  [LOG_FILE_FIELD.name]: logFileSchema,
+  schema: z.enum(analysisSchemaValues).exclude([AnalysisSchema.DATABASE, AnalysisSchema.BUG]),
+  [API_METRIC_FILE_FIELD.name]: logFileSchema,
+});
+
+const bugAnalysisSchema = z.object({
+  ...commonShape,
+  schema: z.literal(AnalysisSchema.BUG),
+  [BUG_LOG_FILE_FIELD.name]: logFileSchema,
 });
 
 const databaseAnalysisSchema = z.object({
@@ -29,7 +35,7 @@ const databaseAnalysisSchema = z.object({
 
 export const createAnalysisSchema = z.discriminatedUnion(
   'schema',
-  [fileAnalysisSchema, databaseAnalysisSchema],
+  [apiMetricAnalysisSchema, bugAnalysisSchema, databaseAnalysisSchema],
   'required',
 );
 

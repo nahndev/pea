@@ -54,6 +54,36 @@ Lines that are blank, not valid JSON, or missing the url, method, duration or a 
 `GET /api/process/generate-pdf-wopi/87472/1/1/1018?timeZone=-60` taking 5378 ms becomes route
 `/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}` and `ms` 5378.
 
+## LeaneoExceptionsConvert
+
+Converts a Monolog `exceptions.log` file to the NDJSON format of the bug log ([bug_log.md](bug_log.md)),
+so it can be uploaded as the **Bug log** of a new `BUG` analysis.
+
+- Page: `/add-ons/leaneo-exceptions-convert`
+- Endpoint: `POST /rest/add-ons/leaneo-exceptions-convert` (multipart, field `file`, max 50 MB)
+- Response: `application/x-ndjson` attachment `bug_log.log`, counts in the same headers as LeaneoSlowApiConvert
+- Errors: `LOG_FILE_REQUIRED` (no file), `LOG_FILE_INVALID` (no line could be converted)
+
+### Mapping
+
+One line in, one `bug_log` line out.
+
+| bug_log    | Source                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| `type`     | short class of `context.exception.class`, else `message` normalised                                     |
+| `message`  | `context.exception.message`, else `message`, normalised, 500 characters                                 |
+| `location` | first frame of `context.exception.file` / `trace` under `/src/`, from `src/` (`src/Controller/A.php:12`) |
+| `route`    | `context.api`, or the url of `No route found for "GET https://…"` (then `method` too), ids as `{id}`    |
+| `status`   | HTTP exceptions by class (`NotFoundHttpException` 404, `TooManyRequestsHttpException` 429…), other uncaught exceptions 500, else an exception `code` between 400 and 599 |
+| `level`    | `level_name`, upper-cased                                                                               |
+| `channel`  | `channel`                                                                                               |
+| `ts`       | `datetime` in epoch milliseconds                                                                        |
+
+Normalising drops `[…]` prefixes and replaces emails (`{email}`), uuids and long hex ids (`{id}`), IPv4 (`{ip}`) and
+numbers of 3+ digits or with decimals (`{n}`), so one error keeps one type and no personal data is copied.
+Nothing else of `context` is carried over (form fields, user, IP, mobile diagnostics).
+Lines that are blank, not valid JSON, or have neither an exception class nor a message are skipped and counted.
+
 ## Adding an add-on
 
 1. Create `apps/api/src/modules/add-ons/<slug>/` and register its controller and providers in `AddOnsModule`.

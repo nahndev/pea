@@ -65,6 +65,9 @@ const RULES = [
   { schema: AnalysisSchema.DATABASE, type: RuleType.QUERY_VARIANTS, description: 'Too many query ids', severity: Severity.LOW, config: { maxItems: 20 } },
   { schema: AnalysisSchema.DATABASE, type: RuleType.TIME_SHARE_QUERY, description: 'Execution time share', severity: Severity.MEDIUM, config: { maxPercent: 20 } },
   { schema: AnalysisSchema.DATABASE, type: RuleType.READ_WRITE_RATIO, description: 'Write-heavy workload', severity: Severity.INFO, config: { maxPercent: 50 } },
+  { schema: AnalysisSchema.BUG, type: RuleType.CRITICAL_ERROR, description: 'Critical error', severity: Severity.HIGH, config: { minCount: 1 } },
+  { schema: AnalysisSchema.BUG, type: RuleType.FREQUENT_ERROR, description: 'Frequent error', severity: Severity.MEDIUM, config: { minCount: 100 } },
+  { schema: AnalysisSchema.BUG, type: RuleType.ERROR_ENDPOINT, description: 'Endpoint raising errors', severity: Severity.LOW, config: { minCount: 20 } },
 ];
 
 const METRICS = [
@@ -91,6 +94,15 @@ const METRICS = [
   { schema: AnalysisSchema.DATABASE, type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
   { schema: AnalysisSchema.DATABASE, type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
   { schema: AnalysisSchema.DATABASE, type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
+  { schema: AnalysisSchema.BUG, type: MetricType.ERROR_COUNT, unit: MetricUnit.COUNT, description: 'Errors' },
+  { schema: AnalysisSchema.BUG, type: MetricType.CRITICAL_ERROR_COUNT, unit: MetricUnit.COUNT, description: 'Critical errors' },
+  { schema: AnalysisSchema.BUG, type: MetricType.ERROR_GROUP_COUNT, unit: MetricUnit.COUNT, description: 'Distinct errors' },
+  { schema: AnalysisSchema.BUG, type: MetricType.ERROR_OCCURRENCES, unit: MetricUnit.COUNT, description: 'Occurrences per error' },
+  { schema: AnalysisSchema.BUG, type: MetricType.BLOCKER_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Blocker issues' },
+  { schema: AnalysisSchema.BUG, type: MetricType.HIGH_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'High issues' },
+  { schema: AnalysisSchema.BUG, type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
+  { schema: AnalysisSchema.BUG, type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
+  { schema: AnalysisSchema.BUG, type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
 ];
 
 const CONDITIONS = [
@@ -102,6 +114,8 @@ const CONDITIONS = [
   { schema: AnalysisSchema.API, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.DATABASE, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.DATABASE, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
+  { schema: AnalysisSchema.BUG, metricType: MetricType.CRITICAL_ERROR_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
+  { schema: AnalysisSchema.BUG, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
 ];
 
 async function main() {

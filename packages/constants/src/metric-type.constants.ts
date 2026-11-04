@@ -17,6 +17,10 @@ export const MetricType = {
   DEADLOCKS: 'DEADLOCKS',
   TEMP_FILES: 'TEMP_FILES',
   REPLICATION_LAG: 'REPLICATION_LAG',
+  ERROR_COUNT: 'ERROR_COUNT',
+  CRITICAL_ERROR_COUNT: 'CRITICAL_ERROR_COUNT',
+  ERROR_GROUP_COUNT: 'ERROR_GROUP_COUNT',
+  ERROR_OCCURRENCES: 'ERROR_OCCURRENCES',
 } as const;
 
 export type MetricType = (typeof MetricType)[keyof typeof MetricType];

@@ -12,6 +12,7 @@ export const RULE_CONFIG_FIELDS = {
   maxBlocks: { label: 'Max blocks', unit: '', step: 1 },
   maxBytes: { label: 'Max size', unit: 'B', step: 1 },
   maxItems: { label: 'Max items', unit: '', step: 1 },
+  minCount: { label: 'Min occurrences', unit: '', step: 1 },
 } as const;
 
 export type RuleConfigField = keyof typeof RULE_CONFIG_FIELDS;

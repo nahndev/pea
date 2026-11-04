@@ -84,6 +84,7 @@ so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
 | `thresholdMs` | Duration limit in milliseconds                               |
 | `maxPercent`  | Maximum allowed share of requests, in percent                |
 | `minRequests` | Per-route rules only: skip routes with fewer requests (default `10`) |
+| `minCount`    | Bug rules only: minimum occurrences of an error or endpoint  |
 
 A rule with a missing or non-numeric required field produces no issue.
 
@@ -135,6 +136,24 @@ Issue examples:
 - `GET /api/cart P95 1594.7ms exceeds threshold 1500ms`
 - `GET /api/cart 5xx error rate 6.1% exceeds threshold 5%`
 - `GET /api/cart expected less than 2000ms, current max is 3372.5ms`
+
+## Bug errors
+
+`BUG` analyses read a bug log ([bug_log.md](bug_log.md)) instead of the request log. One issue per offending subject,
+most frequent first, at most 100 per rule (`MAX_BUG_ISSUES`). An error (subject `ERROR`) is `<type> at <location>`,
+or `<type>` without location.
+
+| Type             | Violation when                                                         | Handler                | Default `minCount` |
+| ---------------- | ---------------------------------------------------------------------- | ---------------------- | ------------------ |
+| `CRITICAL_ERROR` | an error has at least `minCount` events at `CRITICAL`, `ALERT` or `EMERGENCY` | `ErrorGroupHandler`    | `1`                |
+| `FREQUENT_ERROR` | an error has at least `minCount` events, any level                    | `ErrorGroupHandler`    | `100`              |
+| `ERROR_ENDPOINT` | an endpoint (subject `API`) has at least `minCount` events             | `ErrorEndpointHandler` | `20`               |
+
+Issue examples:
+
+- `290 critical occurrences: Missing captcha`
+- `Raised 1556 times: Not Found`
+- `200 errors raised, 0 with a 5xx status`
 
 ## Seed data behaviour
 

@@ -1,6 +1,7 @@
 import type { AnalysisSchema } from '@tomato/constants';
 import type { Prisma } from '../../generated/client';
 import type { DatabaseConnection, QueryStatsSnapshot, SubjectQueryStat } from '../database-connections/database-connections.types';
+import type { LogFileField } from './analyses.constants';
 
 const LATEST_RESULT_ORDER = [{ createdAt: 'desc' }, { id: 'desc' }] satisfies Prisma.AnalysisResultOrderByWithRelationInput[];
 
@@ -46,6 +47,9 @@ export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{
   };
 }>;
 
+/** Uploaded files by multipart field */
+export type UploadedLogFiles = Partial<Record<LogFileField, Express.Multer.File[]>>;
+
 export interface MetricTrendPick {
   metricId: string;
   subjectUuid: string | null;
@@ -53,7 +57,7 @@ export interface MetricTrendPick {
 
 export interface ApiAnalysisContext {
   schema: Exclude<AnalysisSchema, typeof AnalysisSchema.DATABASE>;
-  /** Absolute path of the uploaded API metric log */
+  /** Absolute path of the uploaded log: api_metric, or bug_log for `BUG` */
   logPath: string;
 }
 

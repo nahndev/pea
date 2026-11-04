@@ -41,6 +41,17 @@ describe('createAnalysisSchema', () => {
     expect(messages({ ...base, schema: 'API', api_metric: big })).toContain('api_metric:too_large');
   });
 
+  describe('bug', () => {
+    it('accepts a bug log', () => {
+      expect(createAnalysisSchema.parse({ ...base, schema: 'BUG', bug_log: file() })).toMatchObject({ schema: 'BUG' });
+    });
+
+    it('requires the bug log, not the API metric log', () => {
+      expect(messages({ ...base, schema: 'BUG', api_metric: file() })).toContain('bug_log:file_required');
+      expect(messages({ ...base, schema: 'BUG', bug_log: file('') })).toContain('bug_log:empty');
+    });
+  });
+
   describe('database', () => {
     it('accepts a database without a file', () => {
       expect(createAnalysisSchema.parse({ ...base, schema: 'DATABASE', databaseId: 'db-1' })).toMatchObject({ schema: 'DATABASE', databaseId: 'db-1' });

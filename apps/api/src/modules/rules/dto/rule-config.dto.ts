@@ -57,4 +57,9 @@ export class RuleConfigDto {
   @IsInt()
   @Min(1)
   maxItems?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minCount?: number;
 }

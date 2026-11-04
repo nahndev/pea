@@ -8,6 +8,8 @@ import { TableRowsHandler } from './database/table-rows.handler';
 import { DatabaseStatHandler } from './database/database-stat.handler';
 import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
 import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
+import { ErrorCountHandler } from './bug/error-count.handler';
+import { ErrorOccurrencesHandler } from './bug/error-occurrences.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
@@ -17,6 +19,8 @@ describe('MetricHandlerFactory', () => {
   const databaseStatHandler = {} as DatabaseStatHandler;
   const tableDeadTuplesHandler = {} as TableDeadTuplesHandler;
   const queryMeanDurationHandler = {} as QueryMeanDurationHandler;
+  const errorCountHandler = {} as ErrorCountHandler;
+  const errorOccurrencesHandler = {} as ErrorOccurrencesHandler;
   const metricHandlerFactory = new MetricHandlerFactory(
     percentileHandler,
     issueCountHandler,
@@ -25,6 +29,8 @@ describe('MetricHandlerFactory', () => {
     databaseStatHandler,
     tableDeadTuplesHandler,
     queryMeanDurationHandler,
+    errorCountHandler,
+    errorOccurrencesHandler,
   );
 
   it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
@@ -49,6 +55,15 @@ describe('MetricHandlerFactory', () => {
     [MetricType.TABLE_DEAD_TUPLES, tableDeadTuplesHandler],
     [MetricType.QUERY_MEAN_DURATION, queryMeanDurationHandler],
   ])('returns the database handler of %s', (type, handler) => {
+    expect(metricHandlerFactory.create(type)).toBe(handler);
+  });
+
+  it.each([
+    [MetricType.ERROR_COUNT, errorCountHandler],
+    [MetricType.CRITICAL_ERROR_COUNT, errorCountHandler],
+    [MetricType.ERROR_GROUP_COUNT, errorCountHandler],
+    [MetricType.ERROR_OCCURRENCES, errorOccurrencesHandler],
+  ])('returns the bug handler of %s', (type, handler) => {
     expect(metricHandlerFactory.create(type)).toBe(handler);
   });
 

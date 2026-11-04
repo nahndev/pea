@@ -69,6 +69,9 @@ export const RULE_TYPE_LABEL: Record<RuleType, string> = {
   [RuleType.QUERY_VARIANTS]: 'Too many query ids',
   [RuleType.TIME_SHARE_QUERY]: 'Execution time share',
   [RuleType.READ_WRITE_RATIO]: 'Write-heavy workload',
+  [RuleType.CRITICAL_ERROR]: 'Critical error',
+  [RuleType.FREQUENT_ERROR]: 'Frequent error',
+  [RuleType.ERROR_ENDPOINT]: 'Endpoint raising errors',
 };
 
 export const ALL_FILTER = 'all';
