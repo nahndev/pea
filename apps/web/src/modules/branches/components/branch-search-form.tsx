@@ -8,15 +8,16 @@ import { buildHref } from '@/shared/lib/pagination';
 
 interface BranchSearchFormProps {
   search?: string;
+  ordering: string | undefined;
 }
 
-export function BranchSearchForm({ search = '' }: BranchSearchFormProps) {
+export function BranchSearchForm({ search = '', ordering }: BranchSearchFormProps) {
   const router = useRouter();
   const [value, setValue] = useState(search);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    router.push(buildHref('/branches', { q: value.trim() }));
+    router.push(buildHref('/branches', { q: value.trim(), ordering }));
   };
 
   return (

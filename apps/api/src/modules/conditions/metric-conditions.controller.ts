@@ -19,8 +19,8 @@ export class MetricConditionsController {
 
   @Get()
   @ApiOkResponse()
-  findAll(@Query() { schema }: ListMetricConditionsQueryDto) {
-    return this.metricConditionsService.findAll({ schema });
+  findAll(@Query() { schema, ordering }: ListMetricConditionsQueryDto) {
+    return this.metricConditionsService.findAll({ schema }, ordering);
   }
 
   @Post()

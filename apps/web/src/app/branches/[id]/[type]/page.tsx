@@ -14,7 +14,7 @@ export default async function BranchSchemaRoutePage({ params, searchParams }: Br
   const { id: branchId, type } = await params;
   const parsed = schemaSlugParamsSchema.safeParse({ type });
   if (!parsed.success) notFound();
-  const { page } = branchDetailParamsSchema.parse(await searchParams);
+  const query = branchDetailParamsSchema.parse(await searchParams);
 
-  return <BranchSchemaPageBySchema schema={parsed.data.type} branchId={branchId} page={page} />;
+  return <BranchSchemaPageBySchema schema={parsed.data.type} branchId={branchId} params={query} />;
 }

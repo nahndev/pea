@@ -63,13 +63,14 @@ export class IssuesService {
 
   async findPage(
     analysisResultId: string,
-    { status, severity, ruleType, limit, offset }: ListIssuesQueryDto,
+    { status, severity, ruleType, limit, offset, ordering }: ListIssuesQueryDto,
   ): Promise<Paginated<IssueView>> {
     const { items, total } = await this.issuesRepository.findPage(
       analysisResultId,
       { status, severity, ruleType },
       limit,
       offset,
+      ordering,
     );
     return { items: await this.toViews(items), total };
   }

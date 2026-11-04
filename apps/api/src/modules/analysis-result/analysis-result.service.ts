@@ -55,11 +55,11 @@ export class AnalysisResultService {
 
   async listMetrics(
     analysisId: string,
-    { metricType, subjectUuid, limit, offset }: ListMetricResultsQueryDto,
+    { metricType, subjectUuid, limit, offset, ordering }: ListMetricResultsQueryDto,
   ): Promise<Paginated<MetricResultView>> {
     const result = await this.findLatest(analysisId);
     if (!result) return { items: [], total: 0 };
-    return this.metricsService.findResultPage(result.id, { metricType, subjectUuid }, limit, offset);
+    return this.metricsService.findResultPage(result.id, { metricType, subjectUuid }, limit, offset, ordering);
   }
 
   async listMetricFilterOptions(analysisId: string): Promise<MetricResultFilterOptions> {

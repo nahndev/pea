@@ -1,11 +1,10 @@
 import { buttonVariants } from '@tomato/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ConditionListView } from '@/modules/conditions';
+import { ConditionListView, conditionListParamsSchema } from '@/modules/conditions';
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
 import { buildHref } from '@/shared/lib/pagination';
-import { schemaParamsSchema } from '@/shared/lib/schema-params';
 
 export const metadata: Metadata = { title: 'Conditions' };
 
@@ -14,7 +13,8 @@ interface ConditionsPageProps {
 }
 
 export default async function ConditionsPage({ searchParams }: ConditionsPageProps) {
-  const { schema } = schemaParamsSchema.parse(await searchParams);
+  const params = conditionListParamsSchema.parse(await searchParams);
+  const { schema } = params;
 
   return (
     <>
@@ -25,7 +25,7 @@ export default async function ConditionsPage({ searchParams }: ConditionsPagePro
         </Link>
       </div>
       <SchemaTabs schema={schema} href={(value) => buildHref('/conditions', { schema: value })} />
-      <ConditionListView schema={schema} />
+      <ConditionListView params={params} />
     </>
   );
 }

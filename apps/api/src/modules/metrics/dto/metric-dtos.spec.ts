@@ -17,11 +17,30 @@ describe('ListMetricsQueryDto', () => {
   it('rejects any other value', async () => {
     await expect(validate({ isActive: 'yes' })).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('parses a JSON:API ordering', async () => {
+    await expect(validate({ ordering: '-unit,type' })).resolves.toEqual({
+      ordering: [
+        { field: 'unit', order: 'desc' },
+        { field: 'type', order: 'asc' },
+      ],
+    });
+  });
+
+  it('rejects an unknown, repeated or non-text ordering', async () => {
+    await expect(validate({ ordering: 'id' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(validate({ ordering: 'unit,-unit' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(validate({ ordering: ['unit', 'type'] })).rejects.toBeInstanceOf(BadRequestException);
+  });
 });
 
 describe('ListMetricResultsQueryDto', () => {
   const pipe = createValidationPipe();
   const validate = (query: unknown) => pipe.transform(query, { type: 'query', metatype: ListMetricResultsQueryDto });
+
+  it('keeps the pagination defaults next to the ordering', async () => {
+    await expect(validate({ ordering: '-value' })).resolves.toEqual({ limit: 20, offset: 0, ordering: [{ field: 'value', order: 'desc' }] });
+  });
 
   it('accepts a metric type and a subject uuid', async () => {
     await expect(validate({ metricType: 'ENDPOINT_P95', subjectUuid: '1774ce23-c32c-58aa-9b40-bd08fcfdb938' })).resolves.toMatchObject({

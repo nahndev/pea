@@ -4,11 +4,11 @@ import { ApiTrendChart } from '@/modules/metrics';
 import { BranchSchemaLayout } from '../branch-schema-layout';
 import type { BranchSchemaPageProps } from './branch-schema-page.types';
 
-export function ApiSchemaPage({ branchId, page }: BranchSchemaPageProps) {
+export function ApiSchemaPage({ branchId, params }: BranchSchemaPageProps) {
   return (
     <BranchSchemaLayout branchId={branchId} schema={AnalysisSchema.API}>
       <ApiTrendChart branchId={branchId} />
-      <AnalysisListView branchId={branchId} schema={AnalysisSchema.API} page={page} />
+      <AnalysisListView branchId={branchId} schema={AnalysisSchema.API} params={params} />
     </BranchSchemaLayout>
   );
 }

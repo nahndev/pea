@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ErrorCode } from '@tomato/constants';
+import { ErrorCode, SortOrder } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
 import { BranchesRepository } from './branches.repository';
 import { BranchesService } from './branches.service';
@@ -77,9 +77,10 @@ describe('BranchesService reads', () => {
       total: 1,
     });
 
-    const page = await branchesService.findAll({ search: 'feat', limit: 10, offset: 5 });
+    const ordering = [{ field: 'name' as const, order: SortOrder.DESC }];
+    const page = await branchesService.findAll({ search: 'feat', limit: 10, offset: 5, ordering });
 
-    expect(branchesRepository.findActivities).toHaveBeenCalledWith('feat', 10, 5);
+    expect(branchesRepository.findActivities).toHaveBeenCalledWith('feat', 10, 5, ordering);
     expect(page).toEqual({
       items: [{ id: 'br-1', name: 'feat/x', analysisCount: 3, latestAnalysisAt: latestAnalysisAt.toISOString() }],
       total: 1,

@@ -1,15 +1,24 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { DatabaseSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
+import { buildHref } from '@/shared/lib/pagination';
+import type { DatabaseListParams } from '../databases.schemas';
 import { useDatabases } from '../hooks/use-databases';
 
-export function DatabaseListView() {
-  const { data, error, isPending } = useDatabases();
+interface DatabaseListViewProps {
+  params: DatabaseListParams;
+}
+
+export function DatabaseListView({ params }: DatabaseListViewProps) {
+  const { data, error, isPending } = useDatabases(params);
+  const sortHref = (next: string | undefined) => buildHref('/databases', { ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
@@ -21,10 +30,18 @@ export function DatabaseListView() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead className="text-right">Analyses</TableHead>
-                <TableHead>Updated</TableHead>
+                <SortableTableHead field={DatabaseSortField.NAME} ordering={params.ordering} href={sortHref}>
+                  Name
+                </SortableTableHead>
+                <SortableTableHead field={DatabaseSortField.ADDRESS} ordering={params.ordering} href={sortHref}>
+                  Address
+                </SortableTableHead>
+                <SortableTableHead field={DatabaseSortField.ANALYSIS_COUNT} ordering={params.ordering} href={sortHref} className="text-right">
+                  Analyses
+                </SortableTableHead>
+                <SortableTableHead field={DatabaseSortField.UPDATED_AT} ordering={params.ordering} href={sortHref}>
+                  Updated
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

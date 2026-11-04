@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { AnalysisSchema, ErrorCode, RuleType, Severity } from '@tomato/constants';
+import { AnalysisSchema, ErrorCode, RuleType, Severity, SortOrder } from '@tomato/constants';
 import type { Rule } from '../../generated/client';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -43,6 +43,18 @@ describe('RulesService', () => {
         config: { thresholdMs: 2000 },
       },
     ]);
+  });
+
+  it('sorts rules by severity rank', async () => {
+    rulesRepository.findAll.mockResolvedValue([
+      { ...slowApi, id: 'r-low', severity: Severity.LOW },
+      { ...slowApi, id: 'r-blocker', severity: Severity.BLOCKER },
+      { ...slowApi, id: 'r-medium', severity: Severity.MEDIUM },
+    ]);
+
+    const rules = await rulesService.findAll({}, [{ field: 'severity', order: SortOrder.ASC }]);
+
+    expect(rules.map(({ id }) => id)).toEqual(['r-blocker', 'r-medium', 'r-low']);
   });
 
   it('lists only the rules of a schema for an analysis', async () => {

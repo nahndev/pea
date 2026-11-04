@@ -1,12 +1,18 @@
 import { buttonVariants } from '@tomato/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { DatabaseListView } from '@/modules/databases';
+import { DatabaseListView, databaseListParamsSchema } from '@/modules/databases';
 import { PageHeader } from '@/shared/components/page-header';
 
 export const metadata: Metadata = { title: 'Databases' };
 
-export default function DatabasesPage() {
+interface DatabasesPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function DatabasesPage({ searchParams }: DatabasesPageProps) {
+  const params = databaseListParamsSchema.parse(await searchParams);
+
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -15,7 +21,7 @@ export default function DatabasesPage() {
           Add database
         </Link>
       </div>
-      <DatabaseListView />
+      <DatabaseListView params={params} />
     </>
   );
 }

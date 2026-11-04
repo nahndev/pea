@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricHistorySortField, type MetricResultSortField, type MetricSortField, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricEvaluationView, MetricHistoryItemView, MetricResultFilterOptions, MetricResultView, MetricSummaryView, MetricView, Paginated, SubjectView } from '@tomato/types';
 import type { Metric, MetricEvaluation, MetricResult } from '../../generated/client';
+import { type Ordering, sortItems } from '../../common/sort/sort';
 import type { AnalysisContext } from '../analyses/analyses.types';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricHandlerFactory } from './handlers/metric-handler.factory';
@@ -12,6 +13,13 @@ import { SubjectsService } from '../subjects/subjects.service';
 import { SUMMARY_METRIC_TYPES } from './metrics.constants';
 import { MetricsRepository } from './metrics.repository';
 import { summarizeMetrics } from './summarize-metrics';
+
+const SORT_VALUE: Record<MetricSortField, (metric: MetricView) => string | number> = {
+  type: ({ type }) => type,
+  description: ({ description }) => description,
+  unit: ({ unit }) => unit,
+  status: ({ isActive }) => (isActive ? 0 : 1),
+};
 
 @Injectable()
 export class MetricsService {
@@ -39,9 +47,12 @@ export class MetricsService {
     return this.metricResultsRepository.createMany(analysisResultId, items);
   }
 
-  async findAll(filter: { isActive?: boolean; schema?: AnalysisSchema } = {}): Promise<MetricView[]> {
+  async findAll(
+    filter: { isActive?: boolean; schema?: AnalysisSchema } = {},
+    ordering: Ordering<MetricSortField> = [],
+  ): Promise<MetricView[]> {
     const metrics = await this.metricsRepository.findAll(filter);
-    return metrics.map((metric) => this.toView(metric));
+    return sortItems(metrics.map((metric) => this.toView(metric)), SORT_VALUE, ordering);
   }
 
   async getById(id: string): Promise<MetricView> {
@@ -85,8 +96,9 @@ export class MetricsService {
     filters: { metricType?: MetricType; subjectUuid?: string },
     limit: number,
     offset: number,
+    ordering: Ordering<MetricResultSortField> = [],
   ): Promise<Paginated<MetricResultView>> {
-    const { items, total } = await this.metricResultsRepository.findDetailedPage(analysisResultId, filters, limit, offset);
+    const { items, total } = await this.metricResultsRepository.findDetailedPage(analysisResultId, filters, limit, offset, ordering);
     return {
       total,
       items: items.map(({ id, value, subject, metric, evaluations }) => ({
@@ -112,9 +124,14 @@ export class MetricsService {
     return summarizeMetrics(SUMMARY_METRIC_TYPES, results);
   }
 
-  async findHistory(metricId: string, limit: number, offset: number): Promise<Paginated<MetricHistoryItemView>> {
+  async findHistory(
+    metricId: string,
+    limit: number,
+    offset: number,
+    ordering: Ordering<MetricHistorySortField> = [],
+  ): Promise<Paginated<MetricHistoryItemView>> {
     await this.getById(metricId);
-    const { items, total } = await this.metricResultsRepository.findHistoryByMetric(metricId, limit, offset);
+    const { items, total } = await this.metricResultsRepository.findHistoryByMetric(metricId, limit, offset, ordering);
     return {
       total,
       items: items.map(({ id, value, createdAt, subject, evaluations, analysisResult: { analysis } }) => ({

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AnalysisSchema } from '@tomato/constants';
-import type { CreateConditionInput, UpdateConditionInput } from '../conditions.schemas';
+import type { ConditionListParams, CreateConditionInput, UpdateConditionInput } from '../conditions.schemas';
 import { conditionsService } from '../services/conditions.service';
 
-export const useConditions = (schema: AnalysisSchema) =>
-  useQuery({ queryKey: ['conditions', 'list', schema], queryFn: () => conditionsService.list(schema) });
+export const useConditions = (params: ConditionListParams) =>
+  useQuery({ queryKey: ['conditions', 'list', params], queryFn: () => conditionsService.list(params) });
 
 export const useCondition = (conditionId: string) =>
   useQuery({ queryKey: ['conditions', conditionId], queryFn: () => conditionsService.get(conditionId) });

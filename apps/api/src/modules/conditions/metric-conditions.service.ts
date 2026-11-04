@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   type AnalysisSchema,
+  type ConditionSortField,
   ErrorCode,
   MetricConditionAggregate,
   type MetricConditionOperator,
@@ -10,6 +11,7 @@ import {
 } from '@tomato/constants';
 import type { MetricConditionView } from '@tomato/types';
 import { type MetricResult, Prisma } from '../../generated/client';
+import { type Ordering, sortItems } from '../../common/sort/sort';
 import { MetricsService } from '../metrics/metrics.service';
 import { CreateMetricConditionDto } from './dto/create-metric-condition.dto';
 import { UpdateMetricConditionDto } from './dto/update-metric-condition.dto';
@@ -21,6 +23,12 @@ import { MetricEvaluationsRepository, type MetricEvaluationSource } from './metr
 
 const UNIQUE_VIOLATION_CODE = 'P2002';
 
+const SORT_VALUE: Record<ConditionSortField, (condition: MetricConditionView) => string | number> = {
+  metric: ({ metric }) => metric.type,
+  threshold: ({ threshold }) => threshold,
+  status: ({ isActive, metric }) => (!metric.isActive ? 2 : isActive ? 0 : 1),
+};
+
 @Injectable()
 export class MetricConditionsService {
   constructor(
@@ -29,9 +37,12 @@ export class MetricConditionsService {
     private readonly metricsService: MetricsService,
   ) {}
 
-  async findAll(filter: { schema?: AnalysisSchema } = {}): Promise<MetricConditionView[]> {
+  async findAll(
+    filter: { schema?: AnalysisSchema } = {},
+    ordering: Ordering<ConditionSortField> = [],
+  ): Promise<MetricConditionView[]> {
     const conditions = await this.metricConditionsRepository.findAll(filter);
-    return conditions.map((condition) => this.toView(condition));
+    return sortItems(conditions.map((condition) => this.toView(condition)), SORT_VALUE, ordering);
   }
 
   async findOne(id: string): Promise<MetricConditionView> {

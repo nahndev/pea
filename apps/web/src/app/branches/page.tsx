@@ -11,7 +11,7 @@ interface BranchesPageProps {
 }
 
 export default async function BranchesPage({ searchParams }: BranchesPageProps) {
-  const { page, q } = branchListParamsSchema.parse(await searchParams);
+  const params = branchListParamsSchema.parse(await searchParams);
 
   return (
     <>
@@ -21,7 +21,7 @@ export default async function BranchesPage({ searchParams }: BranchesPageProps) 
           Create branch
         </Link>
       </div>
-      <BranchListView page={page} search={q} />
+      <BranchListView params={params} />
     </>
   );
 }

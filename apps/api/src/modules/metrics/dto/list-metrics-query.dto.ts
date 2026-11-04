@@ -1,6 +1,8 @@
-import { AnalysisSchema } from '@tomato/constants';
+import { AnalysisSchema, MetricSortField } from '@tomato/constants';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsOptional } from 'class-validator';
+import { IsOrdering } from '../../../common/decorators/is-ordering.decorator';
+import type { Ordering } from '../../../common/sort/sort';
 
 export class ListMetricsQueryDto {
   @IsOptional()
@@ -11,4 +13,7 @@ export class ListMetricsQueryDto {
   @IsOptional()
   @IsIn(Object.values(AnalysisSchema))
   schema?: AnalysisSchema;
+
+  @IsOrdering(MetricSortField)
+  ordering?: Ordering<MetricSortField>;
 }

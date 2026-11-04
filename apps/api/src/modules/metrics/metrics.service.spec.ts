@@ -1,5 +1,5 @@
 import { NotFoundException } from "@nestjs/common";
-import { AnalysisSchema, ErrorCode, SubjectType } from "@tomato/constants";
+import { AnalysisSchema, ErrorCode, SortOrder, SubjectType } from "@tomato/constants";
 import { MetricHandlerFactory } from "./handlers/metric-handler.factory";
 import type { MetricHandler } from "./handlers/metric-handler.types";
 import { createSubject } from "../subjects/subject";
@@ -256,6 +256,7 @@ describe("MetricsService", () => {
       {},
       20,
       40,
+      [],
     );
   });
 
@@ -266,13 +267,14 @@ describe("MetricsService", () => {
     });
     const filters = { metricType: "ENDPOINT_P95", subjectUuid: "su-1" } as const;
 
-    await metricsService.findResultPage("res-1", filters, 20, 0);
+    await metricsService.findResultPage("res-1", filters, 20, 0, [{ field: "value", order: SortOrder.DESC }]);
 
     expect(metricResultsRepository.findDetailedPage).toHaveBeenCalledWith(
       "res-1",
       filters,
       20,
       0,
+      [{ field: "value", order: SortOrder.DESC }],
     );
   });
 
@@ -438,7 +440,7 @@ describe("MetricsService", () => {
         ],
       } as never);
 
-      await expect(metricsService.findHistory("m-1", 20, 40)).resolves.toEqual({
+      await expect(metricsService.findHistory("m-1", 20, 40, [{ field: "createdAt", order: SortOrder.ASC }])).resolves.toEqual({
         total: 7,
         items: [
           {
@@ -467,6 +469,7 @@ describe("MetricsService", () => {
         "m-1",
         20,
         40,
+        [{ field: "createdAt", order: SortOrder.ASC }],
       );
     });
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { AnalysisSchema } from '@tomato/constants';
-import type { Analysis, Prisma } from '../../generated/client';
+import { AnalysisResultStatus, type AnalysisSchema, type AnalysisSortField } from '@tomato/constants';
+import { Prisma, type Analysis } from '../../generated/client';
+import { type Ordering, orderByIds, toSqlOrderBy } from '../../common/sort/sort';
 import type { StoredFile } from '../files/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DEFAULT_TREND_METRIC_TYPES } from './analyses.constants';
@@ -14,6 +15,13 @@ import {
   type AnalysisWithData,
   type AnalysisWithLatestResult,
 } from './analyses.types';
+
+const ORDER_BY: Record<AnalysisSortField, Prisma.Sql> = {
+  title: Prisma.sql`a.title`,
+  createdAt: Prisma.sql`a.created_at`,
+  status: Prisma.sql`array_position(${Object.values(AnalysisResultStatus)}::text[], r.status::text)`,
+  issueCount: Prisma.sql`r.issue_count`,
+};
 
 interface CreateAnalysisData {
   branchId: string;
@@ -55,19 +63,27 @@ export class AnalysesRepository {
     schema: AnalysisSchema,
     limit: number,
     offset: number,
+    ordering: Ordering<AnalysisSortField> = [],
   ): Promise<{ items: AnalysisWithLatestResult[]; total: number }> {
-    const where = { branchId, schema };
-    const [items, total] = await this.prismaService.$transaction([
-      this.prismaService.analysis.findMany({
-        where,
-        include: LATEST_RESULT_INCLUDE,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit,
-        skip: offset,
-      }),
-      this.prismaService.analysis.count({ where }),
+    const orderBy = toSqlOrderBy(ordering, ORDER_BY);
+    const [rows, total] = await this.prismaService.$transaction([
+      this.prismaService.$queryRaw<{ id: string }[]>`
+        SELECT a.id
+        FROM analyses a
+        LEFT JOIN LATERAL (
+          SELECT status, issue_count FROM analysis_results
+          WHERE analysis_id = a.id
+          ORDER BY created_at DESC, id DESC
+          LIMIT 1
+        ) r ON TRUE
+        WHERE a.branch_id = ${branchId}::uuid AND a.schema = ${schema}
+        ORDER BY ${orderBy} a.created_at DESC, a.id DESC
+        LIMIT ${limit} OFFSET ${offset}`,
+      this.prismaService.analysis.count({ where: { branchId, schema } }),
     ]);
-    return { items, total };
+    const ids = rows.map(({ id }) => id);
+    const items = await this.prismaService.analysis.findMany({ where: { id: { in: ids } }, include: LATEST_RESULT_INCLUDE });
+    return { items: orderByIds(ids, items), total };
   }
 
   countBySchema(branchId: string) {

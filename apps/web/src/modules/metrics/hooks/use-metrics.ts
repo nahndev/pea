@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AnalysisSchema } from '@tomato/constants';
 import { useAnalysisProgress } from '@/modules/analyses';
-import type { MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
+import type { MetricListParams, MetricPageParams, MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
 import { metricsService } from '../services/metrics.service';
 
 export const useMetricResults = (analysisId: string, params: MetricResultListParams) => {
@@ -42,8 +42,8 @@ export const useMetricTrend = (branchId: string | undefined, schema: AnalysisSch
     placeholderData: keepPreviousData,
   });
 
-export const useMetrics = (schema: AnalysisSchema) =>
-  useQuery({ queryKey: ['metrics', 'list', schema], queryFn: () => metricsService.list(schema) });
+export const useMetrics = (params: MetricListParams) =>
+  useQuery({ queryKey: ['metrics', 'list', params], queryFn: () => metricsService.list(params) });
 
 export const useMetric = (metricId: string) =>
   useQuery({ queryKey: ['metrics', 'detail', metricId], queryFn: () => metricsService.get(metricId) });
@@ -51,10 +51,10 @@ export const useMetric = (metricId: string) =>
 export const useMetricSubjects = (metricId: string) =>
   useQuery({ queryKey: ['metrics', 'subjects', metricId], queryFn: () => metricsService.listSubjects(metricId) });
 
-export const useMetricHistory = (metricId: string, page: number) =>
+export const useMetricHistory = (metricId: string, params: MetricPageParams) =>
   useQuery({
-    queryKey: ['metrics', 'history', metricId, page],
-    queryFn: () => metricsService.listHistory(metricId, page),
+    queryKey: ['metrics', 'history', metricId, params],
+    queryFn: () => metricsService.listHistory(metricId, params),
     placeholderData: keepPreviousData,
   });
 

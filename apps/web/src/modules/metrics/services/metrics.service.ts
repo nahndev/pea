@@ -4,11 +4,11 @@ import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
 import { TREND_LIMIT } from '../metrics.constants';
-import type { MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
+import type { MetricListParams, MetricPageParams, MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
 
 export const metricsService = {
-  async list(schema: AnalysisSchema) {
-    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { schema } });
+  async list({ schema, ordering }: MetricListParams) {
+    const { data } = await apiClient.get<MetricView[]>('/metrics', { params: { schema, ordering } });
     return data;
   },
 
@@ -22,9 +22,9 @@ export const metricsService = {
     return data;
   },
 
-  async listHistory(id: string, page: number) {
+  async listHistory(id: string, { page, ordering }: MetricPageParams) {
     const { data } = await apiClient.get<Paginated<MetricHistoryItemView>>(`/metrics/${id}/results`, {
-      params: { limit: PAGE_SIZE, offset: toOffset(page) },
+      params: { limit: PAGE_SIZE, offset: toOffset(page), ordering },
     });
     return data;
   },
@@ -34,9 +34,9 @@ export const metricsService = {
     return data;
   },
 
-  async listResults(analysisId: string, { page, metricType, subjectUuid }: MetricResultListParams) {
+  async listResults(analysisId: string, { page, metricType, subjectUuid, ordering }: MetricResultListParams) {
     const { data } = await apiClient.get<Paginated<MetricResultView>>(`/analyses/${analysisId}/metrics`, {
-      params: { limit: PAGE_SIZE, offset: toOffset(page), metricType, subjectUuid },
+      params: { limit: PAGE_SIZE, offset: toOffset(page), metricType, subjectUuid, ordering },
     });
     return data;
   },

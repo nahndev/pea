@@ -21,9 +21,10 @@ interface MetricDetailViewProps {
   params: MetricPageParams;
 }
 
-export function MetricDetailView({ metricId, params: { page } }: MetricDetailViewProps) {
+export function MetricDetailView({ metricId, params }: MetricDetailViewProps) {
+  const { page, ordering } = params;
   const { data, error } = useMetric(metricId);
-  const history = useMetricHistory(metricId, page);
+  const history = useMetricHistory(metricId, params);
 
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-40 w-full" />;
@@ -56,11 +57,16 @@ export function MetricDetailView({ metricId, params: { page } }: MetricDetailVie
         ) : null}
         {history.data && history.data.items.length > 0 ? (
           <>
-            <MetricHistoryTable metric={data} items={history.data.items} />
+            <MetricHistoryTable
+              metric={data}
+              items={history.data.items}
+              ordering={ordering}
+              sortHref={(next) => buildHref(`/metrics/${metricId}`, { ordering: next })}
+            />
             <PaginationBar
               page={page}
               total={history.data.total}
-              buildHref={(value) => buildHref(`/metrics/${metricId}`, { page: value > 1 ? value : undefined })}
+              buildHref={(value) => buildHref(`/metrics/${metricId}`, { page: value > 1 ? value : undefined, ordering })}
             />
           </>
         ) : null}

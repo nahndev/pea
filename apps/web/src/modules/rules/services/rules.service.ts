@@ -1,11 +1,10 @@
-import type { AnalysisSchema } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
-import type { CreateRuleInput, RuleUpdateInput } from '../rules.schemas';
+import type { CreateRuleInput, RuleListParams, RuleUpdateInput } from '../rules.schemas';
 
 export const rulesService = {
-  async list(schema: AnalysisSchema) {
-    const { data } = await apiClient.get<RuleView[]>('/rules', { params: { schema } });
+  async list({ schema, ordering }: RuleListParams) {
+    const { data } = await apiClient.get<RuleView[]>('/rules', { params: { schema, ordering } });
     return data;
   },
 

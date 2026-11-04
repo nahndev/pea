@@ -1,7 +1,8 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DatabaseCheckStatus, DatabaseCheckType, DatabaseConnectionMode, ErrorCode } from '@tomato/constants';
+import { DatabaseCheckStatus, DatabaseCheckType, DatabaseConnectionMode, type DatabaseSortField, ErrorCode } from '@tomato/constants';
 import type { DatabaseInspection, DatabaseSummary, DatabaseView } from '@tomato/types';
 import { type Database, Prisma } from '../../generated/client';
+import { type Ordering, sortItems } from '../../common/sort/sort';
 import { DEFAULT_DATABASE_PORT } from '../database-connections/database-connections.constants';
 import { DatabaseConnectionsService } from '../database-connections/database-connections.service';
 import type { DatabaseConnection, QueryStat, QueryStatsSnapshot, SubjectQueryStat } from '../database-connections/database-connections.types';
@@ -15,6 +16,13 @@ const UNIQUE_VIOLATION_CODE = 'P2002';
 
 type ConnectionInput = Omit<UpdateDatabaseDto, 'name'>;
 
+const SORT_VALUE: Record<DatabaseSortField, (database: DatabaseView) => string | number> = {
+  name: ({ name }) => name,
+  address: ({ address }) => address,
+  analysisCount: ({ analysisCount }) => analysisCount,
+  updatedAt: ({ updatedAt }) => Date.parse(updatedAt),
+};
+
 @Injectable()
 export class DatabasesService {
   constructor(
@@ -22,9 +30,9 @@ export class DatabasesService {
     private readonly databaseConnectionsService: DatabaseConnectionsService,
   ) {}
 
-  async findAll(): Promise<DatabaseView[]> {
+  async findAll(ordering: Ordering<DatabaseSortField> = []): Promise<DatabaseView[]> {
     const databases = await this.databasesRepository.findAll();
-    return databases.map((database) => this.toView(database));
+    return sortItems(databases.map((database) => this.toView(database)), SORT_VALUE, ordering);
   }
 
   async findOne(id: string): Promise<DatabaseView> {

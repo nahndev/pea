@@ -85,10 +85,10 @@ export class AnalysesService {
 
   async findByBranch(
     branchId: string,
-    { schema, limit, offset }: ListBranchAnalysesQueryDto,
+    { schema, limit, offset, ordering }: ListBranchAnalysesQueryDto,
   ): Promise<Paginated<AnalysisSummary>> {
     await this.branchesService.findOne(branchId);
-    const { items, total } = await this.analysesRepository.findPageByBranch(branchId, schema, limit, offset);
+    const { items, total } = await this.analysesRepository.findPageByBranch(branchId, schema, limit, offset, ordering);
     return { items: items.map((analysis) => this.toSummary(analysis)), total };
   }
 

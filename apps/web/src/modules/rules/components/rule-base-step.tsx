@@ -18,7 +18,7 @@ interface RuleBaseStepProps {
 }
 
 export function RuleBaseStep({ schema, baseId, onSelect, onNext }: RuleBaseStepProps) {
-  const { data, error, isPending } = useRules(schema);
+  const { data, error, isPending } = useRules({ schema });
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-card">

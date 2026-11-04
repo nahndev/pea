@@ -1,5 +1,5 @@
 import { Logger, NotFoundException } from '@nestjs/common';
-import { AnalysisResultStatus, AnalysisSchema, ErrorCode } from '@tomato/constants';
+import { AnalysisResultStatus, AnalysisSchema, ErrorCode, SortOrder } from '@tomato/constants';
 import { AnalysesService } from '../analyses/analyses.service';
 import { AnalysisContextFactory } from '../analyses/analysis-context.factory';
 import { MetricConditionsService } from '../conditions/metric-conditions.service';
@@ -240,11 +240,23 @@ describe('AnalysisResultService reads', () => {
   it('pages the metric results of the latest result', async () => {
     analysisResultRepository.findLatestByAnalysis.mockResolvedValue({ id: 'res-2' } as never);
 
-    await analysisResultService.listMetrics('an-1', { limit: 20, offset: 40, metricType: 'ENDPOINT_P95', subjectUuid: 'su-1' });
+    await analysisResultService.listMetrics('an-1', {
+      limit: 20,
+      offset: 40,
+      metricType: 'ENDPOINT_P95',
+      subjectUuid: 'su-1',
+      ordering: [{ field: 'value', order: SortOrder.DESC }],
+    });
     await analysisResultService.listMetricSummaries('an-1');
     await analysisResultService.listMetricFilterOptions('an-1');
 
-    expect(metricsService.findResultPage).toHaveBeenCalledWith('res-2', { metricType: 'ENDPOINT_P95', subjectUuid: 'su-1' }, 20, 40);
+    expect(metricsService.findResultPage).toHaveBeenCalledWith(
+      'res-2',
+      { metricType: 'ENDPOINT_P95', subjectUuid: 'su-1' },
+      20,
+      40,
+      [{ field: 'value', order: SortOrder.DESC }],
+    );
     expect(metricsService.findSummaries).toHaveBeenCalledWith('res-2');
     expect(metricsService.findResultFilterOptions).toHaveBeenCalledWith('res-2');
   });

@@ -8,4 +8,4 @@ export { formatMetricValue } from './format-metric-value';
 export { AGGREGATE_LABEL, METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } from './metrics.constants';
 export { MetricDetailView } from './components/metric-detail-view';
 export { MetricListView } from './components/metric-list-view';
-export { metricPageParamsSchema, metricResultListParamsSchema } from './metrics.schemas';
+export { metricListParamsSchema, metricPageParamsSchema, metricResultListParamsSchema } from './metrics.schemas';

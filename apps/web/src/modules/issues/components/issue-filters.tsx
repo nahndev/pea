@@ -19,7 +19,9 @@ export function IssueFilters({ analysisId, params }: IssueFiltersProps) {
 
   const update = (change: Partial<Pick<IssueListParams, 'status' | 'severity' | 'ruleType'>>) => {
     const next = { ...params, ...change };
-    router.push(buildHref(pathname, { status: next.status, severity: next.severity, ruleType: next.ruleType }));
+    router.push(
+      buildHref(pathname, { status: next.status, severity: next.severity, ruleType: next.ruleType, ordering: next.ordering }),
+    );
   };
   const toFilter = (value: string) => (value === ALL_FILTER ? undefined : value);
 

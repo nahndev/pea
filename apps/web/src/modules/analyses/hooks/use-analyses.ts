@@ -10,10 +10,10 @@ const isRunning = (analysis: AnalysisDetail | undefined) =>
   (!analysis.latestResult || analysis.latestResult.status === AnalysisResultStatus.RUNNING) &&
   Date.now() - new Date(analysis.createdAt).getTime() < POLL_TIMEOUT_MS;
 
-export const useBranchAnalyses = (branchId: string, schema: AnalysisSchema, page: number) =>
+export const useBranchAnalyses = (branchId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) =>
   useQuery({
-    queryKey: ['analyses', 'branch', branchId, { schema, page }],
-    queryFn: () => analysesService.listByBranch(branchId, schema, page),
+    queryKey: ['analyses', 'branch', branchId, { schema, page, ordering }],
+    queryFn: () => analysesService.listByBranch(branchId, schema, page, ordering),
   });
 
 export const useAnalysis = (analysisId: string) =>

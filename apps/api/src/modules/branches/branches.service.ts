@@ -32,8 +32,8 @@ export class BranchesService {
     return branch;
   }
 
-  async findAll({ search, limit, offset }: ListBranchesQueryDto): Promise<Paginated<BranchSummary>> {
-    const { items, total } = await this.branchesRepository.findActivities(search, limit, offset);
+  async findAll({ search, limit, offset, ordering }: ListBranchesQueryDto): Promise<Paginated<BranchSummary>> {
+    const { items, total } = await this.branchesRepository.findActivities(search, limit, offset, ordering);
     return {
       items: items.map(({ id, name, analysisCount, latestAnalysisAt }) => ({
         id,

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { DatabaseInput } from '../databases.schemas';
+import type { DatabaseInput, DatabaseListParams } from '../databases.schemas';
 import { databasesService } from '../services/databases.service';
 
-export const useDatabases = () => useQuery({ queryKey: ['databases', 'list'], queryFn: () => databasesService.list() });
+export const useDatabases = (params: DatabaseListParams = {}) =>
+  useQuery({ queryKey: ['databases', 'list', params], queryFn: () => databasesService.list(params) });
 
 export const useDatabase = (databaseId: string) =>
   useQuery({ queryKey: ['databases', databaseId], queryFn: () => databasesService.get(databaseId) });

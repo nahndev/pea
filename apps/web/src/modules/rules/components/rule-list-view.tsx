@@ -1,20 +1,25 @@
 'use client';
 
-import type { AnalysisSchema } from '@tomato/constants';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { RuleSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { ErrorState } from '@/shared/components/error-state';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
+import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useRules } from '../hooks/use-rules';
+import type { RuleListParams } from '../rules.schemas';
 
 interface RuleListViewProps {
-  schema: AnalysisSchema;
+  params: RuleListParams;
 }
 
-export function RuleListView({ schema }: RuleListViewProps) {
-  const { data, error, isPending } = useRules(schema);
+export function RuleListView({ params }: RuleListViewProps) {
+  const { data, error, isPending } = useRules(params);
+  const { ordering } = params;
+  const sortHref = (next: string | undefined) => buildHref('/rules', { schema: params.schema, ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
@@ -25,9 +30,15 @@ export function RuleListView({ schema }: RuleListViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Rule</TableHead>
-                <TableHead>Severity</TableHead>
-                <TableHead>Type</TableHead>
+                <SortableTableHead field={RuleSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                  Rule
+                </SortableTableHead>
+                <SortableTableHead field={RuleSortField.SEVERITY} ordering={ordering} href={sortHref}>
+                  Severity
+                </SortableTableHead>
+                <SortableTableHead field={RuleSortField.TYPE} ordering={ordering} href={sortHref}>
+                  Type
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

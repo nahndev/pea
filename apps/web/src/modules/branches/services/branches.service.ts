@@ -2,17 +2,12 @@ import type { AnalysisCountBySchema, Branch, BranchSummary, Paginated } from '@t
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
-import type { CreateBranchInput } from '../branches.schemas';
-
-interface ListBranchesParams {
-  page: number;
-  search?: string;
-}
+import type { BranchListParams, CreateBranchInput } from '../branches.schemas';
 
 export const branchesService = {
-  async list({ page, search }: ListBranchesParams) {
+  async list({ page, q, ordering }: BranchListParams) {
     const { data } = await apiClient.get<Paginated<BranchSummary>>('/branches', {
-      params: { limit: PAGE_SIZE, offset: toOffset(page), search: search || undefined },
+      params: { limit: PAGE_SIZE, offset: toOffset(page), search: q || undefined, ordering },
     });
     return data;
   },

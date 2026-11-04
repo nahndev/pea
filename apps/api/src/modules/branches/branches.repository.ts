@@ -1,6 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import type { Branch } from '../../generated/client';
+import type { BranchSortField } from '@tomato/constants';
+import { Prisma, type Branch } from '../../generated/client';
+import { type Ordering, toSqlOrderBy } from '../../common/sort/sort';
 import { PrismaService } from '../../prisma/prisma.service';
+
+const ORDER_BY: Record<BranchSortField, Prisma.Sql> = {
+  name: Prisma.sql`b.name`,
+  analysisCount: Prisma.sql`COUNT(a.id)`,
+  latestAnalysisAt: Prisma.sql`MAX(a.created_at)`,
+};
 
 export interface BranchActivity extends Branch {
   analysisCount: number;
@@ -27,8 +35,10 @@ export class BranchesRepository {
     search: string | undefined,
     limit: number,
     offset: number,
+    ordering: Ordering<BranchSortField> = [],
   ): Promise<{ items: BranchActivity[]; total: number }> {
     const pattern = search ? `%${search.replace(/[\\%_]/g, '\\$&')}%` : '%';
+    const orderBy = toSqlOrderBy(ordering, ORDER_BY);
     const [items, total] = await Promise.all([
       this.prismaService.$queryRaw<BranchActivity[]>`
         SELECT b.id, b.name, COUNT(a.id)::int AS "analysisCount", MAX(a.created_at) AS "latestAnalysisAt"
@@ -36,7 +46,7 @@ export class BranchesRepository {
         LEFT JOIN analyses a ON a.branch_id = b.id
         WHERE b.name ILIKE ${pattern}
         GROUP BY b.id
-        ORDER BY MAX(a.created_at) DESC NULLS LAST, b.id DESC
+        ORDER BY ${orderBy} MAX(a.created_at) DESC NULLS LAST, b.id DESC
         LIMIT ${limit} OFFSET ${offset}`,
       this.prismaService.branch.count({
         where: search ? { name: { contains: search, mode: 'insensitive' } } : {},

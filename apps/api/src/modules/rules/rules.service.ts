@@ -1,11 +1,18 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { type AnalysisSchema, ErrorCode, type RuleType, type Severity } from '@tomato/constants';
+import { type AnalysisSchema, ErrorCode, type RuleSortField, type RuleType, Severity } from '@tomato/constants';
 import type { RuleView } from '@tomato/types';
 import type { Rule } from '../../generated/client';
+import { type Ordering, rankOf, sortItems } from '../../common/sort/sort';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { CONFIG_FIELDS_BY_RULE_TYPE } from './rules.constants';
 import { RulesRepository } from './rules.repository';
+
+const SORT_VALUE: Record<RuleSortField, (rule: RuleView) => string | number> = {
+  description: ({ description }) => description,
+  severity: ({ severity }) => rankOf(Object.values(Severity), severity),
+  type: ({ type }) => type,
+};
 
 @Injectable()
 export class RulesService {
@@ -15,9 +22,9 @@ export class RulesService {
     return this.rulesRepository.findAll({ schema });
   }
 
-  async findAll(filter: { schema?: AnalysisSchema } = {}): Promise<RuleView[]> {
+  async findAll(filter: { schema?: AnalysisSchema } = {}, ordering: Ordering<RuleSortField> = []): Promise<RuleView[]> {
     const rules = await this.rulesRepository.findAll(filter);
-    return rules.map((rule) => this.toView(rule));
+    return sortItems(rules.map((rule) => this.toView(rule)), SORT_VALUE, ordering);
   }
 
   async findOne(id: string): Promise<RuleView> {

@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CreateBranchInput } from '../branches.schemas';
+import type { BranchListParams, CreateBranchInput } from '../branches.schemas';
 import { branchesService } from '../services/branches.service';
 
-export const useBranches = (page: number, search?: string) =>
-  useQuery({ queryKey: ['branches', 'list', { page, search }], queryFn: () => branchesService.list({ page, search }) });
+export const useBranches = (params: BranchListParams) =>
+  useQuery({ queryKey: ['branches', 'list', params], queryFn: () => branchesService.list(params) });
 
 export const useBranch = (branchId: string) =>
   useQuery({ queryKey: ['branches', branchId], queryFn: () => branchesService.get(branchId) });

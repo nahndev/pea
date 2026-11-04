@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { ListMetricHistoryQueryDto } from './dto/list-metric-history-query.dto';
 import { ListMetricsQueryDto } from './dto/list-metrics-query.dto';
 import { UpdateMetricDto } from './dto/update-metric.dto';
 import { MetricsService } from './metrics.service';
@@ -12,8 +12,8 @@ export class MetricsController {
 
   @Get()
   @ApiOkResponse()
-  findAll(@Query() { isActive, schema }: ListMetricsQueryDto) {
-    return this.metricsService.findAll({ isActive, schema });
+  findAll(@Query() { isActive, schema, ordering }: ListMetricsQueryDto) {
+    return this.metricsService.findAll({ isActive, schema }, ordering);
   }
 
   @Get(':id')
@@ -33,8 +33,8 @@ export class MetricsController {
   @Get(':id/results')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  findHistory(@Param('id', ParseUUIDPipe) id: string, @Query() { limit, offset }: PaginationQueryDto) {
-    return this.metricsService.findHistory(id, limit, offset);
+  findHistory(@Param('id', ParseUUIDPipe) id: string, @Query() { limit, offset, ordering }: ListMetricHistoryQueryDto) {
+    return this.metricsService.findHistory(id, limit, offset, ordering);
   }
 
   @Patch(':id')

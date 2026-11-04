@@ -1,11 +1,12 @@
 'use client';
 
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
-import type { AnalysisSchema } from '@tomato/constants';
+import { type AnalysisSchema, AnalysisSortField } from '@tomato/constants';
 import Link from 'next/link';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
 import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
@@ -16,14 +17,15 @@ import { GateStatusBadge, ResultStatusBadge } from './analysis-status-badges';
 interface AnalysisListViewProps {
   branchId: string;
   schema: AnalysisSchema;
-  page: number;
+  params: { page: number; ordering?: string };
 }
 
 const linkClass = 'text-sm underline-offset-4 hover:underline focus-ring rounded-sm';
 
-export function AnalysisListView({ branchId, schema, page }: AnalysisListViewProps) {
-  const { data, error, isPending } = useBranchAnalyses(branchId, schema, page);
+export function AnalysisListView({ branchId, schema, params: { page, ordering } }: AnalysisListViewProps) {
+  const { data, error, isPending } = useBranchAnalyses(branchId, schema, page, ordering);
   const pathname = `/branches/${branchId}/${schema.toLowerCase()}`;
+  const sortHref = (next: string | undefined) => buildHref(pathname, { ordering: next });
 
   return (
     <section className="flex flex-col gap-4" aria-labelledby="analyses-heading">
@@ -39,11 +41,19 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Date</TableHead>
+                  <SortableTableHead field={AnalysisSortField.TITLE} ordering={ordering} href={sortHref}>
+                    Title
+                  </SortableTableHead>
+                  <SortableTableHead field={AnalysisSortField.CREATED_AT} ordering={ordering} href={sortHref}>
+                    Date
+                  </SortableTableHead>
                   <TableHead>Schema</TableHead>
-                  <TableHead>Result</TableHead>
-                  <TableHead className="text-right">Issues</TableHead>
+                  <SortableTableHead field={AnalysisSortField.STATUS} ordering={ordering} href={sortHref}>
+                    Result
+                  </SortableTableHead>
+                  <SortableTableHead field={AnalysisSortField.ISSUE_COUNT} ordering={ordering} href={sortHref} className="text-right">
+                    Issues
+                  </SortableTableHead>
                   <TableHead>Conditions</TableHead>
                   <TableHead>Details</TableHead>
                 </TableRow>
@@ -78,7 +88,7 @@ export function AnalysisListView({ branchId, schema, page }: AnalysisListViewPro
               </TableBody>
             </Table>
           </div>
-          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined })} />
+          <PaginationBar page={page} total={data.total} buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined, ordering })} />
         </>
       ) : null}
     </section>

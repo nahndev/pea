@@ -1,21 +1,26 @@
 'use client';
 
-import type { AnalysisSchema } from '@tomato/constants';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { ConditionSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
+import { buildHref } from '@/shared/lib/pagination';
 import { AGGREGATE_LABEL, METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
+import type { ConditionListParams } from '../conditions.schemas';
 import { useConditions } from '../hooks/use-conditions';
 
 interface ConditionListViewProps {
-  schema: AnalysisSchema;
+  params: ConditionListParams;
 }
 
-export function ConditionListView({ schema }: ConditionListViewProps) {
-  const { data, error, isPending } = useConditions(schema);
+export function ConditionListView({ params }: ConditionListViewProps) {
+  const { data, error, isPending } = useConditions(params);
+  const { ordering } = params;
+  const sortHref = (next: string | undefined) => buildHref('/conditions', { schema: params.schema, ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
@@ -27,9 +32,15 @@ export function ConditionListView({ schema }: ConditionListViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Metric</TableHead>
-                <TableHead>Fails when</TableHead>
-                <TableHead>Status</TableHead>
+                <SortableTableHead field={ConditionSortField.METRIC} ordering={ordering} href={sortHref}>
+                  Metric
+                </SortableTableHead>
+                <SortableTableHead field={ConditionSortField.THRESHOLD} ordering={ordering} href={sortHref}>
+                  Fails when
+                </SortableTableHead>
+                <SortableTableHead field={ConditionSortField.STATUS} ordering={ordering} href={sortHref}>
+                  Status
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

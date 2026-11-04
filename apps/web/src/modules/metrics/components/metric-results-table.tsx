@@ -1,9 +1,10 @@
-import type { MetricUnit } from '@tomato/constants';
+import { MetricResultSortField, type MetricUnit } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import type { MetricResultView } from '@tomato/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GateStatusBadge } from '@/modules/analyses';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { formatMetricValue } from '../format-metric-value';
 import { metricSeriesKey, metricSeriesLabel } from '../metric-series';
 import { AGGREGATE_LABEL, METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } from '../metrics.constants';
@@ -13,9 +14,11 @@ interface MetricResultsTableProps {
   pickedKeys: string[];
   pickedUnit: MetricUnit | undefined;
   onToggle: (result: MetricResultView) => void;
+  ordering: string | undefined;
+  sortHref: (ordering: string | undefined) => string;
 }
 
-export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle }: MetricResultsTableProps) {
+export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle, ordering, sortHref }: MetricResultsTableProps) {
   const router = useRouter();
 
   return (
@@ -26,10 +29,18 @@ export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle }
             <TableHead className="w-10">
               <span className="sr-only">Show in trend chart</span>
             </TableHead>
-            <TableHead className="w-1/5">Metric</TableHead>
-            <TableHead className="w-1/4">Endpoint</TableHead>
-            <TableHead className="w-28 text-right">Value</TableHead>
-            <TableHead className="w-16">Unit</TableHead>
+            <SortableTableHead field={MetricResultSortField.METRIC} ordering={ordering} href={sortHref} scroll={false} className="w-1/5">
+              Metric
+            </SortableTableHead>
+            <SortableTableHead field={MetricResultSortField.SUBJECT} ordering={ordering} href={sortHref} scroll={false} className="w-1/4">
+              Endpoint
+            </SortableTableHead>
+            <SortableTableHead field={MetricResultSortField.VALUE} ordering={ordering} href={sortHref} scroll={false} className="w-28 text-right">
+              Value
+            </SortableTableHead>
+            <SortableTableHead field={MetricResultSortField.UNIT} ordering={ordering} href={sortHref} scroll={false} className="w-20">
+              Unit
+            </SortableTableHead>
             <TableHead>Conditions</TableHead>
           </TableRow>
         </TableHeader>

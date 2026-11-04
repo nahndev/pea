@@ -19,7 +19,11 @@ export function MetricResultFilters({ analysisId, params }: MetricResultFiltersP
 
   const update = (change: Partial<Pick<MetricResultListParams, 'metricType' | 'subjectUuid'>>) => {
     const next = { ...params, ...change };
-    const href = buildHref(`/analyses/${analysisId}/metrics`, { metricType: next.metricType, subjectUuid: next.subjectUuid });
+    const href = buildHref(`/analyses/${analysisId}/metrics`, {
+      metricType: next.metricType,
+      subjectUuid: next.subjectUuid,
+      ordering: next.ordering,
+    });
     router.push(`${href}#${METRIC_RESULTS_ANCHOR}`, { scroll: false });
   };
   const toFilter = (value: string) => (value === ALL_FILTER ? undefined : value);

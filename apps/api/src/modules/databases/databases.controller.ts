@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -12,6 +12,7 @@ import {
 import { DatabasesService } from './databases.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
 import { InspectDatabaseDto } from './dto/inspect-database.dto';
+import { ListDatabasesQueryDto } from './dto/list-databases-query.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
 
 @ApiTags('databases')
@@ -21,8 +22,8 @@ export class DatabasesController {
 
   @Get()
   @ApiOkResponse()
-  findAll() {
-    return this.databasesService.findAll();
+  findAll(@Query() { ordering }: ListDatabasesQueryDto) {
+    return this.databasesService.findAll(ordering);
   }
 
   @Post()

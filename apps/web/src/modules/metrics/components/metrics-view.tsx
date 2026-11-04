@@ -31,7 +31,7 @@ interface PickedSeries {
 }
 
 export function MetricsView({ analysisId, params }: MetricsViewProps) {
-  const { page, metricType, subjectUuid } = params;
+  const { page, metricType, subjectUuid, ordering } = params;
   const { data: results, error, isPending } = useMetricResults(analysisId, params);
   const { data: summaries } = useMetricSummaries(analysisId);
   const { data: analysis } = useAnalysis(analysisId);
@@ -90,11 +90,13 @@ export function MetricsView({ analysisId, params }: MetricsViewProps) {
               pickedKeys={picked.map(({ key }) => key)}
               pickedUnit={picked[0]?.unit}
               onToggle={toggle}
+              ordering={ordering}
+              sortHref={(next) => `${buildHref(pathname, { metricType, subjectUuid, ordering: next })}#${METRIC_RESULTS_ANCHOR}`}
             />
             <PaginationBar
               page={page}
               total={results.total}
-              buildHref={(target) => `${buildHref(pathname, { page: target > 1 ? target : undefined, metricType, subjectUuid })}#${METRIC_RESULTS_ANCHOR}`}
+              buildHref={(target) => `${buildHref(pathname, { page: target > 1 ? target : undefined, metricType, subjectUuid, ordering })}#${METRIC_RESULTS_ANCHOR}`}
             />
           </>
         )}

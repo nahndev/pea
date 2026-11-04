@@ -1,7 +1,9 @@
+import { MetricHistorySortField } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import type { MetricHistoryItemView, MetricView } from '@tomato/types';
 import Link from 'next/link';
 import { GateStatusBadge } from '@/modules/analyses';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { formatDateTime } from '@/shared/lib/format';
 import { formatMetricValue } from '../format-metric-value';
 import { VIOLATION_PHRASE } from '../metrics.constants';
@@ -9,20 +11,32 @@ import { VIOLATION_PHRASE } from '../metrics.constants';
 interface MetricHistoryTableProps {
   metric: MetricView;
   items: MetricHistoryItemView[];
+  ordering: string | undefined;
+  sortHref: (ordering: string | undefined) => string;
 }
 
-export function MetricHistoryTable({ metric, items }: MetricHistoryTableProps) {
+export function MetricHistoryTable({ metric, items, ordering, sortHref }: MetricHistoryTableProps) {
   return (
     <div className="rounded-lg border bg-card shadow-card">
       <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[28%]">Analysis</TableHead>
-            <TableHead className="w-[14%]">Branch</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead className="w-28 text-right">Value</TableHead>
+            <SortableTableHead field={MetricHistorySortField.ANALYSIS} ordering={ordering} href={sortHref} className="w-[28%]">
+              Analysis
+            </SortableTableHead>
+            <SortableTableHead field={MetricHistorySortField.BRANCH} ordering={ordering} href={sortHref} className="w-[14%]">
+              Branch
+            </SortableTableHead>
+            <SortableTableHead field={MetricHistorySortField.SUBJECT} ordering={ordering} href={sortHref}>
+              Subject
+            </SortableTableHead>
+            <SortableTableHead field={MetricHistorySortField.VALUE} ordering={ordering} href={sortHref} className="w-28 text-right">
+              Value
+            </SortableTableHead>
             <TableHead className="w-44">Conditions</TableHead>
-            <TableHead className="w-44">Measured</TableHead>
+            <SortableTableHead field={MetricHistorySortField.CREATED_AT} ordering={ordering} href={sortHref} className="w-44">
+              Measured
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -1,5 +1,6 @@
-import { DatabaseConnectionMode } from '@tomato/constants';
+import { DatabaseConnectionMode, DatabaseSortField } from '@tomato/constants';
 import { z } from 'zod';
+import { orderingParam } from '@/shared/lib/sort';
 import { POSTGRES_URL_PATTERN } from './databases.constants';
 
 const requiredText = (max = 255) => z.string('required').trim().min(1, 'required').max(max, 'too_long');
@@ -37,3 +38,7 @@ export const buildDatabaseSchema = (hasStoredUrl = false) =>
   );
 
 export type DatabaseInput = z.infer<ReturnType<typeof buildDatabaseSchema>>;
+
+export const databaseListParamsSchema = z.object({ ordering: orderingParam(DatabaseSortField) });
+
+export type DatabaseListParams = z.infer<typeof databaseListParamsSchema>;

@@ -1,11 +1,10 @@
 import { buttonVariants } from '@tomato/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { RuleListView } from '@/modules/rules';
+import { RuleListView, ruleListParamsSchema } from '@/modules/rules';
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
 import { buildHref } from '@/shared/lib/pagination';
-import { schemaParamsSchema } from '@/shared/lib/schema-params';
 
 export const metadata: Metadata = { title: 'Rules' };
 
@@ -14,7 +13,8 @@ interface RulesPageProps {
 }
 
 export default async function RulesPage({ searchParams }: RulesPageProps) {
-  const { schema } = schemaParamsSchema.parse(await searchParams);
+  const params = ruleListParamsSchema.parse(await searchParams);
+  const { schema } = params;
 
   return (
     <>
@@ -25,7 +25,7 @@ export default async function RulesPage({ searchParams }: RulesPageProps) {
         </Link>
       </div>
       <SchemaTabs schema={schema} href={(value) => buildHref('/rules', { schema: value })} />
-      <RuleListView schema={schema} />
+      <RuleListView params={params} />
     </>
   );
 }

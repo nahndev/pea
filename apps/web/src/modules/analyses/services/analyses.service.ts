@@ -7,9 +7,9 @@ import { LOG_FILE_FIELD } from '../analyses.constants';
 import type { CreateAnalysisInput } from '../analyses.schemas';
 
 export const analysesService = {
-  async listByBranch(branchId: string, schema: AnalysisSchema, page: number) {
+  async listByBranch(branchId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) {
     const { data } = await apiClient.get<Paginated<AnalysisSummary>>(`/branches/${branchId}/analyses`, {
-      params: { schema, limit: PAGE_SIZE, offset: toOffset(page) },
+      params: { schema, limit: PAGE_SIZE, offset: toOffset(page), ordering },
     });
     return data;
   },

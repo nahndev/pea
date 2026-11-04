@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { AnalysisResultStatus, MetricEvaluationStatus } from '@tomato/constants';
+import {
+  AnalysisResultStatus,
+  MetricEvaluationStatus,
+  type MetricHistorySortField,
+  type MetricResultSortField,
+  type SortOrder,
+} from '@tomato/constants';
 import type { MetricResult, Prisma } from '../../generated/client';
+import { type Ordering, toPrismaOrderBy } from '../../common/sort/sort';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
@@ -22,6 +29,23 @@ const SUMMARY_SELECT = {
 } satisfies Prisma.MetricResultSelect;
 
 export type MetricResultSummarySource = Prisma.MetricResultGetPayload<{ select: typeof SUMMARY_SELECT }>;
+
+type MetricResultOrderBy = Prisma.MetricResultOrderByWithRelationInput;
+
+const RESULT_ORDER_BY: Record<MetricResultSortField, (order: SortOrder) => MetricResultOrderBy> = {
+  metric: (order) => ({ metric: { type: order } }),
+  subject: (order) => ({ subject: { description: order } }),
+  value: (order) => ({ value: order }),
+  unit: (order) => ({ metric: { unit: order } }),
+};
+
+const HISTORY_ORDER_BY: Record<MetricHistorySortField, (order: SortOrder) => MetricResultOrderBy> = {
+  analysis: (order) => ({ analysisResult: { analysis: { title: order } } }),
+  branch: (order) => ({ analysisResult: { analysis: { branch: { name: order } } } }),
+  subject: (order) => ({ subject: { description: order } }),
+  value: (order) => ({ value: order }),
+  createdAt: (order) => ({ createdAt: order }),
+};
 
 export interface MetricResultSource {
   metricId: string;
@@ -66,13 +90,19 @@ export class MetricResultsRepository {
     });
   }
 
-  async findHistoryByMetric(metricId: string, limit: number, offset: number): Promise<{ items: MetricResultHistory[]; total: number }> {
+  async findHistoryByMetric(
+    metricId: string,
+    limit: number,
+    offset: number,
+    ordering: Ordering<MetricHistorySortField> = [],
+  ): Promise<{ items: MetricResultHistory[]; total: number }> {
     const where: Prisma.MetricResultWhereInput = { metricId };
+    const defaultOrderBy: MetricResultOrderBy[] = [{ createdAt: 'desc' }, { id: 'desc' }];
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.metricResult.findMany({
         where,
         include: HISTORY_INCLUDE,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: [...toPrismaOrderBy(ordering, HISTORY_ORDER_BY), ...defaultOrderBy],
         take: limit,
         skip: offset,
       }),
@@ -86,16 +116,18 @@ export class MetricResultsRepository {
     filters: { metricType?: string; subjectUuid?: string },
     limit: number,
     offset: number,
+    ordering: Ordering<MetricResultSortField> = [],
   ): Promise<{ items: MetricResultWithDetails[]; total: number }> {
     const where: Prisma.MetricResultWhereInput = {
       analysisResultId,
       metric: filters.metricType ? { type: filters.metricType } : undefined,
       subjectUuid: filters.subjectUuid,
     };
+    const defaultOrderBy: MetricResultOrderBy[] = [{ metric: { type: 'asc' } }, { subject: { description: 'asc' } }, { id: 'asc' }];
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.metricResult.findMany({
         where,
-        orderBy: [{ metric: { type: 'asc' } }, { subject: { description: 'asc' } }, { id: 'asc' }],
+        orderBy: [...toPrismaOrderBy(ordering, RESULT_ORDER_BY), ...defaultOrderBy],
         include: { metric: true, subject: true, evaluations: { orderBy: { id: 'asc' } } },
         take: limit,
         skip: offset,

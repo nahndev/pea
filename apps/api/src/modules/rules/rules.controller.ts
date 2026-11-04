@@ -19,8 +19,8 @@ export class RulesController {
 
   @Get()
   @ApiOkResponse()
-  findAll(@Query() { schema }: ListRulesQueryDto) {
-    return this.rulesService.findAll({ schema });
+  findAll(@Query() { schema, ordering }: ListRulesQueryDto) {
+    return this.rulesService.findAll({ schema }, ordering);
   }
 
   @Post()

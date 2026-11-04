@@ -1,23 +1,28 @@
 'use client';
 
-import type { AnalysisSchema } from '@tomato/constants';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { MetricSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
+import { buildHref } from '@/shared/lib/pagination';
 import { useMetrics } from '../hooks/use-metrics';
 import { METRIC_LABEL, METRIC_UNIT_LABEL } from '../metrics.constants';
+import type { MetricListParams } from '../metrics.schemas';
 
 interface MetricListViewProps {
-  schema: AnalysisSchema;
+  params: MetricListParams;
 }
 
-export function MetricListView({ schema }: MetricListViewProps) {
+export function MetricListView({ params }: MetricListViewProps) {
   const router = useRouter();
-  const { data, error, isPending } = useMetrics(schema);
+  const { data, error, isPending } = useMetrics(params);
+  const { ordering } = params;
+  const sortHref = (next: string | undefined) => buildHref('/metrics', { schema: params.schema, ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
@@ -29,10 +34,18 @@ export function MetricListView({ schema }: MetricListViewProps) {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-1/4">Metric</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="w-20">Unit</TableHead>
-                <TableHead className="w-28">Status</TableHead>
+                <SortableTableHead field={MetricSortField.TYPE} ordering={ordering} href={sortHref} className="w-1/4">
+                  Metric
+                </SortableTableHead>
+                <SortableTableHead field={MetricSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                  Description
+                </SortableTableHead>
+                <SortableTableHead field={MetricSortField.UNIT} ordering={ordering} href={sortHref} className="w-20">
+                  Unit
+                </SortableTableHead>
+                <SortableTableHead field={MetricSortField.STATUS} ordering={ordering} href={sortHref} className="w-28">
+                  Status
+                </SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

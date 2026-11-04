@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { IssueSubjectStatus, Severity, SubjectType } from '@tomato/constants';
+import { IssueSubjectStatus, Severity, SortOrder, SubjectType } from '@tomato/constants';
 import { createSubject, DEFAULT_SUBJECT } from '../subjects/subject';
 import { SubjectsService } from '../subjects/subjects.service';
 import { IssueSubjectsRepository } from './issue-subjects.repository';
@@ -110,6 +110,7 @@ describe('IssuesService', () => {
       severity: Severity.HIGH,
       limit: 20,
       offset: 0,
+      ordering: [{ field: 'severity', order: SortOrder.ASC }],
     });
 
     expect(issuesRepository.findPage).toHaveBeenCalledWith(
@@ -117,6 +118,7 @@ describe('IssuesService', () => {
       { status: IssueSubjectStatus.PLANNING, severity: Severity.HIGH, ruleType: undefined },
       20,
       0,
+      [{ field: 'severity', order: SortOrder.ASC }],
     );
     expect(page.items[0]).toMatchObject({
       id: 'i-1',

@@ -1,29 +1,33 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { BranchSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { DEFAULT_ANALYSIS_SCHEMA } from '@/shared/lib/analysis-schema.constants';
 import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
 import { branchSchemaHref } from '../branch-schema-href';
+import type { BranchListParams } from '../branches.schemas';
 import { useBranches } from '../hooks/use-branches';
 import { BranchSearchForm } from './branch-search-form';
 
 interface BranchListViewProps {
-  page: number;
-  search?: string;
+  params: BranchListParams;
 }
 
-export function BranchListView({ page, search }: BranchListViewProps) {
-  const { data, error, isPending } = useBranches(page, search);
+export function BranchListView({ params }: BranchListViewProps) {
+  const { page, q: search, ordering } = params;
+  const { data, error, isPending } = useBranches(params);
+  const sortHref = (next: string | undefined) => buildHref('/branches', { q: search, ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
-      <BranchSearchForm key={search} search={search} />
+      <BranchSearchForm key={search} search={search} ordering={ordering} />
       {isPending ? <TableSkeleton /> : null}
       {error ? <ErrorState error={error} /> : null}
       {data && data.items.length === 0 ? (
@@ -43,9 +47,15 @@ export function BranchListView({ page, search }: BranchListViewProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Branch</TableHead>
-                  <TableHead className="text-right">Analyses</TableHead>
-                  <TableHead>Last analysis</TableHead>
+                  <SortableTableHead field={BranchSortField.NAME} ordering={ordering} href={sortHref}>
+                    Branch
+                  </SortableTableHead>
+                  <SortableTableHead field={BranchSortField.ANALYSIS_COUNT} ordering={ordering} href={sortHref} className="text-right">
+                    Analyses
+                  </SortableTableHead>
+                  <SortableTableHead field={BranchSortField.LATEST_ANALYSIS_AT} ordering={ordering} href={sortHref}>
+                    Last analysis
+                  </SortableTableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -71,7 +81,7 @@ export function BranchListView({ page, search }: BranchListViewProps) {
           <PaginationBar
             page={page}
             total={data.total}
-            buildHref={(target) => buildHref('/branches', { page: target > 1 ? target : undefined, q: search })}
+            buildHref={(target) => buildHref('/branches', { page: target > 1 ? target : undefined, q: search, ordering })}
           />
         </>
       ) : null}

@@ -1,11 +1,13 @@
 'use client';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
+import { IssueSortField } from '@tomato/constants';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
+import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
@@ -26,6 +28,9 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
   const { data, error, isPending } = useIssues(analysisId, params);
   const pathname = `/analyses/${analysisId}/issues`;
   const hasFilters = Boolean(params.status || params.severity || params.ruleType);
+  const filters = { status: params.status, severity: params.severity, ruleType: params.ruleType };
+  const { ordering } = params;
+  const sortHref = (next: string | undefined) => buildHref(pathname, { ...filters, ordering: next });
 
   return (
     <section className="flex flex-col gap-4">
@@ -43,12 +48,24 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-28">Severity</TableHead>
-                  <TableHead className="w-1/3">Rule</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-20 text-right">Count</TableHead>
-                  <TableHead className="w-44">Raised</TableHead>
+                  <SortableTableHead field={IssueSortField.SEVERITY} ordering={ordering} href={sortHref} className="w-28">
+                    Severity
+                  </SortableTableHead>
+                  <SortableTableHead field={IssueSortField.RULE} ordering={ordering} href={sortHref} className="w-1/3">
+                    Rule
+                  </SortableTableHead>
+                  <SortableTableHead field={IssueSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                    Details
+                  </SortableTableHead>
+                  <SortableTableHead field={IssueSortField.STATUS} ordering={ordering} href={sortHref} className="w-32">
+                    Status
+                  </SortableTableHead>
+                  <SortableTableHead field={IssueSortField.ISSUE_COUNT} ordering={ordering} href={sortHref} className="w-20 text-right">
+                    Count
+                  </SortableTableHead>
+                  <SortableTableHead field={IssueSortField.CREATED_AT} ordering={ordering} href={sortHref} className="w-44">
+                    Raised
+                  </SortableTableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -93,7 +110,7 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
           <PaginationBar
             page={params.page}
             total={data.total}
-            buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined, status: params.status, severity: params.severity, ruleType: params.ruleType })}
+            buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined, ...filters, ordering })}
           />
         </>
       ) : null}

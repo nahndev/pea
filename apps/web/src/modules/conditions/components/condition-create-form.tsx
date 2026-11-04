@@ -21,7 +21,7 @@ interface ConditionCreateFormProps {
 export function ConditionCreateForm({ schema }: ConditionCreateFormProps) {
   const router = useRouter();
   const metrics = useMetricOptions(schema);
-  const conditions = useConditions(schema);
+  const conditions = useConditions({ schema });
   const { mutate, isPending, error: requestError } = useCreateCondition();
   const [metricId, setMetricId] = useState<string>();
   const [aggregates, setAggregates] = useState(() => createAggregateDrafts());

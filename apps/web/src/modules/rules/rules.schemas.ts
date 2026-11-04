@@ -1,5 +1,7 @@
-import type { AnalysisSchema, RuleType, Severity } from '@tomato/constants';
+import { type AnalysisSchema, RuleSortField, type RuleType, type Severity } from '@tomato/constants';
 import { z } from 'zod';
+import { schemaParamsSchema } from '@/shared/lib/schema-params';
+import { orderingParam } from '@/shared/lib/sort';
 import { isRuleConfigField, type RuleConfigField } from './rules.constants';
 
 const numeric = z.string().trim().min(1, 'invalid').transform(Number);
@@ -36,3 +38,7 @@ export interface CreateRuleInput {
   severity: Severity;
   config: RuleConfigInput;
 }
+
+export const ruleListParamsSchema = schemaParamsSchema.extend({ ordering: orderingParam(RuleSortField) });
+
+export type RuleListParams = z.infer<typeof ruleListParamsSchema>;

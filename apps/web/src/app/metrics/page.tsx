@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
-import { MetricListView } from '@/modules/metrics';
+import { MetricListView, metricListParamsSchema } from '@/modules/metrics';
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
 import { buildHref } from '@/shared/lib/pagination';
-import { schemaParamsSchema } from '@/shared/lib/schema-params';
 
 export const metadata: Metadata = { title: 'Metrics' };
 
@@ -12,13 +11,13 @@ interface MetricsPageProps {
 }
 
 export default async function MetricsPage({ searchParams }: MetricsPageProps) {
-  const { schema } = schemaParamsSchema.parse(await searchParams);
+  const params = metricListParamsSchema.parse(await searchParams);
 
   return (
     <>
       <PageHeader title="Metrics" description="Values measured for every analysis. Open a metric to edit or disable it." />
-      <SchemaTabs schema={schema} href={(value) => buildHref('/metrics', { schema: value })} />
-      <MetricListView schema={schema} />
+      <SchemaTabs schema={params.schema} href={(value) => buildHref('/metrics', { schema: value })} />
+      <MetricListView params={params} />
     </>
   );
 }
