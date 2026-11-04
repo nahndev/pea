@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_FILE_SIZE } from './leaneo-exceptions-convert.constants';
+import { MAX_LOG_FILE_SIZE } from '@/shared/lib/log-file.constants';
 import { convertExceptionsSchema } from './leaneo-exceptions-convert.schemas';
 
 const messages = (input: unknown) => {
@@ -22,7 +22,7 @@ describe('convertExceptionsSchema', () => {
 
   it('rejects a file larger than the limit', () => {
     const file = new File(['x'], 'exceptions.log');
-    Object.defineProperty(file, 'size', { value: MAX_FILE_SIZE + 1 });
+    Object.defineProperty(file, 'size', { value: MAX_LOG_FILE_SIZE + 1 });
 
     expect(messages({ file })).toEqual(['file:too_large']);
   });

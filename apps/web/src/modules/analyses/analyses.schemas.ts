@@ -1,12 +1,8 @@
 import { AnalysisSchema } from '@tomato/constants';
 import { z } from 'zod';
 import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
-import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, MAX_LOG_FILE_SIZE } from './analyses.constants';
-
-const logFileSchema = z
-  .instanceof(File, { error: 'file_required' })
-  .refine((file) => file.size > 0, 'empty')
-  .refine((file) => file.size <= MAX_LOG_FILE_SIZE, 'too_large');
+import { logFileSchema } from '@/shared/lib/log-file.schemas';
+import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD } from './analyses.constants';
 
 const requiredText = (max = 255) => z.string('required').trim().min(1, 'required').max(max, 'too_long');
 

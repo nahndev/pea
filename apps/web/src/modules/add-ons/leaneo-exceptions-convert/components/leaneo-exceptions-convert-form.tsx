@@ -1,18 +1,19 @@
 'use client';
 
-import { Button, buttonVariants, Input, Label } from '@tomato/ui';
+import { Button, buttonVariants } from '@tomato/ui';
 import { DownloadIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
 import { ErrorState } from '@/shared/components/error-state';
+import { FileUploader } from '@/shared/components/file-uploader';
+import { LOG_FILE_ACCEPT, LOG_FILE_ERRORS, MAX_LOG_FILE_SIZE } from '@/shared/lib/log-file.constants';
 import { useConvertExceptions } from '../hooks/use-leaneo-exceptions-convert';
-import { MAX_FILE_SIZE, OUTPUT_FILE_NAME } from '../leaneo-exceptions-convert.constants';
+import { OUTPUT_FILE_NAME } from '../leaneo-exceptions-convert.constants';
 import { convertExceptionsSchema } from '../leaneo-exceptions-convert.schemas';
 
 const FIELD_ERRORS: Record<string, string> = {
+  ...LOG_FILE_ERRORS,
   file_required: 'Attach the exceptions.log file.',
-  empty: 'The file is empty.',
-  too_large: `The file must be at most ${MAX_FILE_SIZE / 1024 / 1024} MB.`,
 };
 
 interface Download {
@@ -23,6 +24,7 @@ interface Download {
 
 export function LeaneoExceptionsConvertForm() {
   const { mutate, isPending, error: requestError, reset } = useConvertExceptions();
+  const [file, setFile] = useState<File>();
   const [fieldError, setFieldError] = useState<string>();
   const [download, setDownload] = useState<Download>();
 
@@ -32,8 +34,7 @@ export function LeaneoExceptionsConvertForm() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const file = new FormData(event.currentTarget).get('file');
-    const parsed = convertExceptionsSchema.safeParse({ file: file instanceof File && file.name === '' ? undefined : file });
+    const parsed = convertExceptionsSchema.safeParse({ file });
     setDownload(undefined);
     reset();
     if (!parsed.success) {
@@ -49,16 +50,20 @@ export function LeaneoExceptionsConvertForm() {
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="file">Exceptions log</Label>
-          <Input id="file" name="file" type="file" accept=".log,.json,.jsonl,.ndjson,.txt" aria-invalid={Boolean(fieldError)} aria-describedby="file-hint file-error" />
-          <p id="file-hint" className="text-xs text-muted-foreground">
-            Monolog JSON Lines with message, level_name, channel, datetime and context.exception on each line. Personal data (request, user, IP) is dropped.
-          </p>
-          <p id="file-error" role={fieldError ? 'alert' : undefined} className="min-h-0 text-xs text-danger empty:hidden">
-            {fieldError}
-          </p>
-        </div>
+        <FileUploader
+          id="file"
+          label="Exceptions log"
+          accept={LOG_FILE_ACCEPT}
+          maxSize={MAX_LOG_FILE_SIZE}
+          value={file}
+          onChange={(next) => {
+            setFile(next);
+            setFieldError(undefined);
+          }}
+          hint="Monolog JSON Lines with message, level_name, channel, datetime and context.exception on each line. Personal data (request, user, IP) is dropped."
+          error={fieldError}
+          disabled={isPending}
+        />
         {requestError ? <ErrorState title="Unable to convert the file" error={requestError} /> : null}
         <div>
           <Button type="submit" disabled={isPending}>

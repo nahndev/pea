@@ -9,8 +9,9 @@ import { ErrorState } from '@/shared/components/error-state';
 import { FieldError } from '@/shared/components/field-error';
 import { PageHeader } from '@/shared/components/page-header';
 import { ANALYSIS_SCHEMA_LABEL, DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
+import { LOG_FILE_ERRORS } from '@/shared/lib/log-file.constants';
 import { DatabaseSelect } from '@/modules/databases';
-import { LOG_FILE_FIELD_BY_SCHEMA, MAX_LOG_FILE_SIZE } from '../analyses.constants';
+import { LOG_FILE_FIELD_BY_SCHEMA } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
 import { LogFileInput } from './log-file-input';
@@ -24,8 +25,7 @@ const FIELD_ERRORS: Record<string, string> = {
   required: 'This field is required.',
   too_long: 'Must be at most 255 characters.',
   invalid: 'This value is not valid.',
-  empty: 'The file is empty.',
-  too_large: `The file must be at most ${MAX_LOG_FILE_SIZE / 1024 / 1024} MB.`,
+  ...LOG_FILE_ERRORS,
   file_required: 'Attach the log file.',
 };
 
@@ -34,19 +34,24 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
   const { mutate, isPending, error: requestError } = useCreateAnalysis();
   const [schema, setSchema] = useState<AnalysisSchema>(initialSchema);
   const [databaseId, setDatabaseId] = useState('');
+  const [logFile, setLogFile] = useState<File>();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isDatabase = schema === AnalysisSchema.DATABASE;
+  const logFileField = schema === AnalysisSchema.DATABASE ? undefined : LOG_FILE_FIELD_BY_SCHEMA[schema];
+
+  const changeSchema = (value: AnalysisSchema) => {
+    setSchema(value);
+    setLogFile(undefined);
+  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const raw = {
-      ...Object.fromEntries(
-        [...form.entries()].filter(([, value]) => !(value instanceof File && value.size === 0 && value.name === '')),
-      ),
+      ...Object.fromEntries(form),
       schema,
-      ...(isDatabase ? { databaseId } : {}),
+      ...(logFileField ? { [logFileField.name]: logFile } : { databaseId }),
     };
     const parsed = createAnalysisSchema.safeParse(raw);
     if (!parsed.success) {
@@ -70,7 +75,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="schema">Schema</Label>
-          <Select value={schema} onValueChange={(value) => setSchema(value as AnalysisSchema)}>
+          <Select value={schema} onValueChange={(value) => changeSchema(value as AnalysisSchema)}>
             <SelectTrigger id="schema" className="w-40" aria-invalid={Boolean(fieldErrors.schema)}>
               <SelectValue />
             </SelectTrigger>
@@ -88,10 +93,19 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
           <Input id="title" name="title" placeholder="Release 1.2 — checkout refactor" maxLength={255} aria-invalid={Boolean(fieldErrors.title)} aria-describedby="title-error" required />
           <FieldError id="title-error" message={fieldErrors.title} />
         </div>
-        {schema === AnalysisSchema.DATABASE ? (
-          <DatabaseSelect value={databaseId} onChange={setDatabaseId} error={fieldErrors.databaseId} />
+        {logFileField ? (
+          <LogFileInput
+            field={logFileField}
+            value={logFile}
+            onChange={(file) => {
+              setLogFile(file);
+              setFieldErrors(({ [logFileField.name]: _, ...rest }) => rest);
+            }}
+            error={fieldErrors[logFileField.name]}
+            disabled={isPending}
+          />
         ) : (
-          <LogFileInput key={schema} field={LOG_FILE_FIELD_BY_SCHEMA[schema]} error={fieldErrors[LOG_FILE_FIELD_BY_SCHEMA[schema].name]} />
+          <DatabaseSelect value={databaseId} onChange={setDatabaseId} error={fieldErrors.databaseId} />
         )}
         {requestError ? <ErrorState error={requestError} /> : null}
         <div className="flex gap-3">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_LOG_FILE_SIZE } from './analyses.constants';
+import { MAX_LOG_FILE_SIZE } from '@/shared/lib/log-file.constants';
 import { createAnalysisSchema } from './analyses.schemas';
 
 const file = (content = '{"method":"GET","route":"/api/cart","ms":120}\n', name = 'a.jsonl') => new File([content], name);

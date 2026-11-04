@@ -12,8 +12,6 @@ export const GATE_STATUS_STYLE: Record<MetricEvaluationStatus, StatusStyle> = {
   [MetricEvaluationStatus.FAILED]: { label: 'Failed', intent: 'danger' },
 };
 
-export const MAX_LOG_FILE_SIZE = 50 * 1024 * 1024;
-
 export const API_METRIC_FILE_FIELD = {
   name: 'api_metric',
   label: 'API metric log',

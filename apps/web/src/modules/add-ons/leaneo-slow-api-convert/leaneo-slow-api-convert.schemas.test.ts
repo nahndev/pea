@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_FILE_SIZE } from './leaneo-slow-api-convert.constants';
+import { MAX_LOG_FILE_SIZE } from '@/shared/lib/log-file.constants';
 import { convertSlowApiSchema } from './leaneo-slow-api-convert.schemas';
 
 const messages = (input: unknown) => {
@@ -22,7 +22,7 @@ describe('convertSlowApiSchema', () => {
 
   it('rejects a file larger than the limit', () => {
     const file = new File(['x'], 'slow_api.log');
-    Object.defineProperty(file, 'size', { value: MAX_FILE_SIZE + 1 });
+    Object.defineProperty(file, 'size', { value: MAX_LOG_FILE_SIZE + 1 });
 
     expect(messages({ file })).toEqual(['file:too_large']);
   });
