@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { type AnalysisSchema, AnalysisResultStatus } from '@tomato/constants';
-import type { IssueView, MetricResultView, MetricSummaryView, Paginated } from '@tomato/types';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import type { IssueView, MetricResultFilterOptions, MetricResultView, MetricSummaryView, Paginated } from '@tomato/types';
 import type { AnalysisResult } from '../../generated/client';
 import type { AnalysisWithData } from '../analyses/analyses.types';
 import { AnalysesService } from '../analyses/analyses.service';
@@ -9,6 +8,7 @@ import { AnalysisContextFactory } from '../analyses/analysis-context.factory';
 import { MetricConditionsService } from '../conditions/metric-conditions.service';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { IssuesService } from '../issues/issues.service';
+import { ListMetricResultsQueryDto } from '../metrics/dto/list-metric-results-query.dto';
 import { MetricsService } from '../metrics/metrics.service';
 import { RuleHandlerFactory } from '../rules/handlers/rule-handler.factory';
 import { RulesService } from '../rules/rules.service';
@@ -53,10 +53,19 @@ export class AnalysisResultService {
     return this.issuesService.findPage(result.id, query);
   }
 
-  async listMetrics(analysisId: string, { limit, offset }: PaginationQueryDto): Promise<Paginated<MetricResultView>> {
+  async listMetrics(
+    analysisId: string,
+    { metricType, subjectUuid, limit, offset }: ListMetricResultsQueryDto,
+  ): Promise<Paginated<MetricResultView>> {
     const result = await this.findLatest(analysisId);
     if (!result) return { items: [], total: 0 };
-    return this.metricsService.findResultPage(result.id, limit, offset);
+    return this.metricsService.findResultPage(result.id, { metricType, subjectUuid }, limit, offset);
+  }
+
+  async listMetricFilterOptions(analysisId: string): Promise<MetricResultFilterOptions> {
+    const result = await this.findLatest(analysisId);
+    if (!result) return { metricTypes: [], subjects: [] };
+    return this.metricsService.findResultFilterOptions(result.id);
   }
 
   async listMetricSummaries(analysisId: string): Promise<MetricSummaryView[]> {

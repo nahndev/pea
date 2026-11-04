@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { updateMetricSchema } from './metrics.schemas';
+import { metricResultListParamsSchema, updateMetricSchema } from './metrics.schemas';
 
 describe('updateMetricSchema', () => {
   it('trims the description', () => {
@@ -24,5 +24,21 @@ describe('updateMetricSchema', () => {
     expect(updateMetricSchema.safeParse({ description: 'x', isActive: true, include: ['a'], exclude: ['b'] }).success).toBe(true);
     expect(updateMetricSchema.safeParse({ description: 'x', isActive: true, include: 'a', exclude: [] }).success).toBe(false);
     expect(updateMetricSchema.safeParse({ description: 'x', isActive: true }).success).toBe(false);
+  });
+});
+
+describe('metricResultListParamsSchema', () => {
+  it('reads the page and the filters', () => {
+    expect(
+      metricResultListParamsSchema.parse({ page: '2', metricType: 'ENDPOINT_P95', subjectUuid: '1774ce23-c32c-58aa-9b40-bd08fcfdb938' }),
+    ).toEqual({ page: 2, metricType: 'ENDPOINT_P95', subjectUuid: '1774ce23-c32c-58aa-9b40-bd08fcfdb938' });
+  });
+
+  it('drops invalid filters', () => {
+    expect(metricResultListParamsSchema.parse({ metricType: 'P99', subjectUuid: 'GET /api/cart' })).toEqual({
+      page: 1,
+      metricType: undefined,
+      subjectUuid: undefined,
+    });
   });
 });

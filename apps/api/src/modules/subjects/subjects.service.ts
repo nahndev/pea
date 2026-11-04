@@ -17,4 +17,9 @@ export class SubjectsService {
     const subjects = await this.subjectsRepository.findByMetric(metricId);
     return subjects.map(toSubjectView);
   }
+
+  async findByAnalysisResult(analysisResultId: string): Promise<SubjectView[]> {
+    const subjects = await this.subjectsRepository.findByAnalysisResult(analysisResultId);
+    return subjects.map(toSubjectView);
+  }
 }

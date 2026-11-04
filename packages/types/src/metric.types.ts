@@ -51,6 +51,11 @@ export interface MetricSummaryView {
   limit: { operator: MetricConditionOperator; threshold: number } | null;
 }
 
+export interface MetricResultFilterOptions {
+  metricTypes: MetricType[];
+  subjects: SubjectView[];
+}
+
 export interface MetricTrendSeries {
   /** `<metric id>:<subject uuid>` (empty without a subject); the key used in `MetricTrendPoint.values` */
   key: string;

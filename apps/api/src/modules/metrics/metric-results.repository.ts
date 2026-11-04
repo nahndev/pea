@@ -83,10 +83,15 @@ export class MetricResultsRepository {
 
   async findDetailedPage(
     analysisResultId: string,
+    filters: { metricType?: string; subjectUuid?: string },
     limit: number,
     offset: number,
   ): Promise<{ items: MetricResultWithDetails[]; total: number }> {
-    const where: Prisma.MetricResultWhereInput = { analysisResultId };
+    const where: Prisma.MetricResultWhereInput = {
+      analysisResultId,
+      metric: filters.metricType ? { type: filters.metricType } : undefined,
+      subjectUuid: filters.subjectUuid,
+    };
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.metricResult.findMany({
         where,

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
-import type { MetricEvaluationView, MetricHistoryItemView, MetricResultView, MetricSummaryView, MetricView, Paginated, SubjectView } from '@tomato/types';
+import type { MetricEvaluationView, MetricHistoryItemView, MetricResultFilterOptions, MetricResultView, MetricSummaryView, MetricView, Paginated, SubjectView } from '@tomato/types';
 import type { Metric, MetricEvaluation, MetricResult } from '../../generated/client';
 import type { AnalysisContext } from '../analyses/analyses.types';
 import { UpdateMetricDto } from './dto/update-metric.dto';
@@ -80,8 +80,13 @@ export class MetricsService {
     return this.metricResultsRepository.findPassedHistory(filter);
   }
 
-  async findResultPage(analysisResultId: string, limit: number, offset: number): Promise<Paginated<MetricResultView>> {
-    const { items, total } = await this.metricResultsRepository.findDetailedPage(analysisResultId, limit, offset);
+  async findResultPage(
+    analysisResultId: string,
+    filters: { metricType?: MetricType; subjectUuid?: string },
+    limit: number,
+    offset: number,
+  ): Promise<Paginated<MetricResultView>> {
+    const { items, total } = await this.metricResultsRepository.findDetailedPage(analysisResultId, filters, limit, offset);
     return {
       total,
       items: items.map(({ id, value, subject, metric, evaluations }) => ({
@@ -92,6 +97,14 @@ export class MetricsService {
         evaluations: evaluations.map((evaluation) => this.toEvaluationView(evaluation)),
       })),
     };
+  }
+
+  async findResultFilterOptions(analysisResultId: string): Promise<MetricResultFilterOptions> {
+    const [metricTypes, subjects] = await Promise.all([
+      this.metricsRepository.findTypesByAnalysisResult(analysisResultId),
+      this.subjectsService.findByAnalysisResult(analysisResultId),
+    ]);
+    return { metricTypes: metricTypes as MetricType[], subjects };
   }
 
   async findSummaries(analysisResultId: string): Promise<MetricSummaryView[]> {

@@ -1,3 +1,4 @@
+import { MetricType } from '@tomato/constants';
 import { z } from 'zod';
 
 export const updateMetricSchema = z.object({
@@ -14,3 +15,10 @@ export const metricPageParamsSchema = z.object({
 });
 
 export type MetricPageParams = z.infer<typeof metricPageParamsSchema>;
+
+export const metricResultListParamsSchema = metricPageParamsSchema.extend({
+  metricType: z.enum(Object.values(MetricType) as [MetricType, ...MetricType[]]).optional().catch(undefined),
+  subjectUuid: z.uuid().optional().catch(undefined),
+});
+
+export type MetricResultListParams = z.infer<typeof metricResultListParamsSchema>;

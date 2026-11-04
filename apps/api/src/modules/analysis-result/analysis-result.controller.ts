@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
+import { ListMetricResultsQueryDto } from '../metrics/dto/list-metric-results-query.dto';
 import { AnalysisResultService } from './analysis-result.service';
 
 @ApiTags('analyses')
@@ -28,8 +28,15 @@ export class AnalysisResultController {
   @Get('metrics')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  listMetrics(@Param('analysisId', ParseUUIDPipe) analysisId: string, @Query() query: PaginationQueryDto) {
+  listMetrics(@Param('analysisId', ParseUUIDPipe) analysisId: string, @Query() query: ListMetricResultsQueryDto) {
     return this.analysisResultService.listMetrics(analysisId, query);
+  }
+
+  @Get('metrics/filters')
+  @ApiOkResponse()
+  @ApiNotFoundResponse()
+  listMetricFilterOptions(@Param('analysisId', ParseUUIDPipe) analysisId: string) {
+    return this.analysisResultService.listMetricFilterOptions(analysisId);
   }
 
   @Get('metrics/summaries')

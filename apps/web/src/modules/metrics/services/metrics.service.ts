@@ -1,10 +1,10 @@
 import type { AnalysisSchema } from '@tomato/constants';
-import type { MetricHistoryItemView, MetricResultView, MetricSummaryView, MetricTrend, MetricView, Paginated, SubjectView } from '@tomato/types';
+import type { MetricHistoryItemView, MetricResultFilterOptions, MetricResultView, MetricSummaryView, MetricTrend, MetricView, Paginated, SubjectView } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
 import { TREND_LIMIT } from '../metrics.constants';
-import type { UpdateMetricInput } from '../metrics.schemas';
+import type { MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
 
 export const metricsService = {
   async list(schema: AnalysisSchema) {
@@ -34,10 +34,15 @@ export const metricsService = {
     return data;
   },
 
-  async listResults(analysisId: string, page: number) {
+  async listResults(analysisId: string, { page, metricType, subjectUuid }: MetricResultListParams) {
     const { data } = await apiClient.get<Paginated<MetricResultView>>(`/analyses/${analysisId}/metrics`, {
-      params: { limit: PAGE_SIZE, offset: toOffset(page) },
+      params: { limit: PAGE_SIZE, offset: toOffset(page), metricType, subjectUuid },
     });
+    return data;
+  },
+
+  async listResultFilters(analysisId: string) {
+    const { data } = await apiClient.get<MetricResultFilterOptions>(`/analyses/${analysisId}/metrics/filters`);
     return data;
   },
 

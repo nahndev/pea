@@ -194,7 +194,7 @@ describe('AnalysisResultService reads', () => {
   let analysisResultRepository: jest.Mocked<Pick<AnalysisResultRepository, 'findLatestByAnalysis'>>;
   let analysesService: jest.Mocked<Pick<AnalysesService, 'findOne'>>;
   let issuesService: jest.Mocked<Pick<IssuesService, 'findPage'>>;
-  let metricsService: jest.Mocked<Pick<MetricsService, 'findResultPage' | 'findSummaries'>>;
+  let metricsService: jest.Mocked<Pick<MetricsService, 'findResultPage' | 'findResultFilterOptions' | 'findSummaries'>>;
   let analysisResultService: AnalysisResultService;
 
   const query = { limit: 20, offset: 0 };
@@ -203,7 +203,7 @@ describe('AnalysisResultService reads', () => {
     analysisResultRepository = { findLatestByAnalysis: jest.fn() };
     analysesService = { findOne: jest.fn().mockResolvedValue({ id: 'an-1' }) };
     issuesService = { findPage: jest.fn().mockResolvedValue({ items: [], total: 0 }) };
-    metricsService = { findResultPage: jest.fn(), findSummaries: jest.fn() };
+    metricsService = { findResultPage: jest.fn(), findResultFilterOptions: jest.fn(), findSummaries: jest.fn() };
     analysisResultService = new AnalysisResultService(
       analysisResultRepository as unknown as AnalysisResultRepository,
       analysesService as unknown as AnalysesService,
@@ -230,19 +230,23 @@ describe('AnalysisResultService reads', () => {
     await expect(analysisResultService.listIssues('an-1', query)).resolves.toEqual({ items: [], total: 0 });
     await expect(analysisResultService.listMetrics('an-1', query)).resolves.toEqual({ items: [], total: 0 });
     await expect(analysisResultService.listMetricSummaries('an-1')).resolves.toEqual([]);
+    await expect(analysisResultService.listMetricFilterOptions('an-1')).resolves.toEqual({ metricTypes: [], subjects: [] });
     expect(issuesService.findPage).not.toHaveBeenCalled();
     expect(metricsService.findResultPage).not.toHaveBeenCalled();
+    expect(metricsService.findResultFilterOptions).not.toHaveBeenCalled();
     expect(metricsService.findSummaries).not.toHaveBeenCalled();
   });
 
   it('pages the metric results of the latest result', async () => {
     analysisResultRepository.findLatestByAnalysis.mockResolvedValue({ id: 'res-2' } as never);
 
-    await analysisResultService.listMetrics('an-1', { limit: 20, offset: 40 });
+    await analysisResultService.listMetrics('an-1', { limit: 20, offset: 40, metricType: 'ENDPOINT_P95', subjectUuid: 'su-1' });
     await analysisResultService.listMetricSummaries('an-1');
+    await analysisResultService.listMetricFilterOptions('an-1');
 
-    expect(metricsService.findResultPage).toHaveBeenCalledWith('res-2', 20, 40);
+    expect(metricsService.findResultPage).toHaveBeenCalledWith('res-2', { metricType: 'ENDPOINT_P95', subjectUuid: 'su-1' }, 20, 40);
     expect(metricsService.findSummaries).toHaveBeenCalledWith('res-2');
+    expect(metricsService.findResultFilterOptions).toHaveBeenCalledWith('res-2');
   });
 
   it('propagates ANALYSIS_NOT_FOUND from the analysis lookup', async () => {

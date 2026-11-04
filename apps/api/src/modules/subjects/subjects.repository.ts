@@ -18,4 +18,11 @@ export class SubjectsRepository {
       orderBy: [{ description: 'asc' }, { uuid: 'asc' }],
     });
   }
+
+  findByAnalysisResult(analysisResultId: string): Promise<Subject[]> {
+    return this.prismaService.subject.findMany({
+      where: { results: { some: { analysisResultId } } },
+      orderBy: [{ description: 'asc' }, { uuid: 'asc' }],
+    });
+  }
 }

@@ -10,7 +10,10 @@ import { SubjectsService } from "../subjects/subjects.service";
 
 describe("MetricsService", () => {
   let metricsRepository: jest.Mocked<
-    Pick<MetricsRepository, "findAll" | "findById" | "update">
+    Pick<
+      MetricsRepository,
+      "findAll" | "findById" | "update" | "findTypesByAnalysisResult"
+    >
   >;
   let metricResultsRepository: jest.Mocked<
     Pick<
@@ -23,7 +26,10 @@ describe("MetricsService", () => {
     >
   >;
   let subjectsService: jest.Mocked<
-    Pick<SubjectsService, "createMany" | "findByMetric">
+    Pick<
+      SubjectsService,
+      "createMany" | "findByMetric" | "findByAnalysisResult"
+    >
   >;
   let metricHandlerFactory: jest.Mocked<
     Pick<MetricHandlerFactory, "supports" | "create">
@@ -45,6 +51,7 @@ describe("MetricsService", () => {
       findAll: jest.fn().mockResolvedValue(metricList),
       findById: jest.fn(),
       update: jest.fn(),
+      findTypesByAnalysisResult: jest.fn(),
     };
     metricResultsRepository = {
       createMany: jest
@@ -58,6 +65,7 @@ describe("MetricsService", () => {
     subjectsService = {
       createMany: jest.fn().mockResolvedValue(0),
       findByMetric: jest.fn(),
+      findByAnalysisResult: jest.fn(),
     };
     handler = { handle: jest.fn().mockResolvedValue([{ value: 10 }]) };
     metricHandlerFactory = {
@@ -213,7 +221,7 @@ describe("MetricsService", () => {
     } as never);
 
     await expect(
-      metricsService.findResultPage("res-1", 20, 40),
+      metricsService.findResultPage("res-1", {}, 20, 40),
     ).resolves.toEqual({
       total: 12,
       items: [
@@ -245,9 +253,44 @@ describe("MetricsService", () => {
     });
     expect(metricResultsRepository.findDetailedPage).toHaveBeenCalledWith(
       "res-1",
+      {},
       20,
       40,
     );
+  });
+
+  it("passes the metric type and subject filters to the page", async () => {
+    metricResultsRepository.findDetailedPage.mockResolvedValue({
+      total: 0,
+      items: [],
+    });
+    const filters = { metricType: "ENDPOINT_P95", subjectUuid: "su-1" } as const;
+
+    await metricsService.findResultPage("res-1", filters, 20, 0);
+
+    expect(metricResultsRepository.findDetailedPage).toHaveBeenCalledWith(
+      "res-1",
+      filters,
+      20,
+      0,
+    );
+  });
+
+  it("lists the metric types and subjects measured in an analysis result", async () => {
+    const subject = { uuid: "su-1", type: "API", description: "GET /api/cart" };
+    metricsRepository.findTypesByAnalysisResult.mockResolvedValue([
+      "ENDPOINT_P95",
+      "P50",
+    ]);
+    subjectsService.findByAnalysisResult.mockResolvedValue([subject] as never);
+
+    await expect(
+      metricsService.findResultFilterOptions("res-1"),
+    ).resolves.toEqual({ metricTypes: ["ENDPOINT_P95", "P50"], subjects: [subject] });
+    expect(metricsRepository.findTypesByAnalysisResult).toHaveBeenCalledWith(
+      "res-1",
+    );
+    expect(subjectsService.findByAnalysisResult).toHaveBeenCalledWith("res-1");
   });
 
   it("summarizes the duration metrics of an analysis result", async () => {

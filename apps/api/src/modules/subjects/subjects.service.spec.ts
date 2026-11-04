@@ -4,7 +4,7 @@ import { SubjectsRepository } from './subjects.repository';
 import { SubjectsService } from './subjects.service';
 
 describe('SubjectsService', () => {
-  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany' | 'findByMetric'>>;
+  let subjectsRepository: jest.Mocked<Pick<SubjectsRepository, 'createMany' | 'findByMetric' | 'findByAnalysisResult'>>;
   let subjectsService: SubjectsService;
 
   const cart = createSubject(SubjectType.API, 'GET /api/cart');
@@ -14,6 +14,7 @@ describe('SubjectsService', () => {
     subjectsRepository = {
       createMany: jest.fn().mockImplementation((items: unknown[]) => items.length),
       findByMetric: jest.fn(),
+      findByAnalysisResult: jest.fn(),
     };
     subjectsService = new SubjectsService(subjectsRepository as unknown as SubjectsRepository);
   });
@@ -33,5 +34,12 @@ describe('SubjectsService', () => {
 
     await expect(subjectsService.findByMetric('m-1')).resolves.toEqual([cart]);
     expect(subjectsRepository.findByMetric).toHaveBeenCalledWith('m-1');
+  });
+
+  it('lists the subjects of an analysis result as views', async () => {
+    subjectsRepository.findByAnalysisResult.mockResolvedValue([{ ...cart, createdAt: new Date() }]);
+
+    await expect(subjectsService.findByAnalysisResult('res-1')).resolves.toEqual([cart]);
+    expect(subjectsRepository.findByAnalysisResult).toHaveBeenCalledWith('res-1');
   });
 });

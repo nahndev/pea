@@ -12,14 +12,16 @@ import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { buildHref } from '@/shared/lib/pagination';
 import { useMetricResults, useMetricSummaries } from '../hooks/use-metrics';
 import { metricSeriesKey } from '../metric-series';
-import type { MetricPageParams } from '../metrics.schemas';
+import { METRIC_RESULTS_ANCHOR } from '../metrics.constants';
+import type { MetricResultListParams } from '../metrics.schemas';
+import { MetricResultFilters } from './metric-result-filters';
 import { MetricResultsTable } from './metric-results-table';
 import { MetricSummaryCards } from './metric-summary-cards';
 import { TrendChartBySchema } from './trend-chart.factory';
 
 interface MetricsViewProps {
   analysisId: string;
-  params: MetricPageParams;
+  params: MetricResultListParams;
 }
 
 interface PickedSeries {
@@ -28,12 +30,14 @@ interface PickedSeries {
   limit?: number;
 }
 
-export function MetricsView({ analysisId, params: { page } }: MetricsViewProps) {
-  const { data: results, error, isPending } = useMetricResults(analysisId, page);
+export function MetricsView({ analysisId, params }: MetricsViewProps) {
+  const { page, metricType, subjectUuid } = params;
+  const { data: results, error, isPending } = useMetricResults(analysisId, params);
   const { data: summaries } = useMetricSummaries(analysisId);
   const { data: analysis } = useAnalysis(analysisId);
   const [picked, setPicked] = useState<PickedSeries[]>([]);
   const pathname = `/analyses/${analysisId}/metrics`;
+  const hasFilters = Boolean(metricType || subjectUuid);
 
   const toggle = ({ metric, subject, evaluations }: MetricResultView) => {
     const key = metricSeriesKey(metric.id, subject);
@@ -53,7 +57,7 @@ export function MetricsView({ analysisId, params: { page } }: MetricsViewProps) 
       </div>
     );
   }
-  if (results.total === 0) {
+  if (results.total === 0 && !hasFilters) {
     return <EmptyState title="No metrics yet">Metrics appear once the analysis has finished.</EmptyState>;
   }
 
@@ -72,17 +76,28 @@ export function MetricsView({ analysisId, params: { page } }: MetricsViewProps) 
           onClear={() => setPicked([])}
         />
       ) : null}
-      <section className="flex flex-col gap-3" aria-labelledby="metric-results-heading">
-        <h2 id="metric-results-heading" className="text-lg font-semibold">
+      <section className="flex flex-col gap-3" aria-labelledby={METRIC_RESULTS_ANCHOR}>
+        <h2 id={METRIC_RESULTS_ANCHOR} className="scroll-mt-4 text-lg font-semibold">
           Results
         </h2>
-        <MetricResultsTable
-          results={results.items}
-          pickedKeys={picked.map(({ key }) => key)}
-          pickedUnit={picked[0]?.unit}
-          onToggle={toggle}
-        />
-        <PaginationBar page={page} total={results.total} buildHref={(target) => buildHref(pathname, { page: target > 1 ? target : undefined })} />
+        <MetricResultFilters analysisId={analysisId} params={params} />
+        {results.total === 0 ? (
+          <EmptyState title="No result matches these filters">Clear a filter to see more.</EmptyState>
+        ) : (
+          <>
+            <MetricResultsTable
+              results={results.items}
+              pickedKeys={picked.map(({ key }) => key)}
+              pickedUnit={picked[0]?.unit}
+              onToggle={toggle}
+            />
+            <PaginationBar
+              page={page}
+              total={results.total}
+              buildHref={(target) => `${buildHref(pathname, { page: target > 1 ? target : undefined, metricType, subjectUuid })}#${METRIC_RESULTS_ANCHOR}`}
+            />
+          </>
+        )}
       </section>
     </div>
   );

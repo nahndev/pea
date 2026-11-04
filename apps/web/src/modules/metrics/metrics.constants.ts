@@ -45,3 +45,7 @@ export const AGGREGATE_LABEL: Record<MetricConditionAggregate, string> = {
 };
 
 export const TREND_LIMIT = 20;
+
+export const ALL_FILTER = 'all';
+
+export const METRIC_RESULTS_ANCHOR = 'metric-results-heading';

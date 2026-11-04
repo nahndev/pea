@@ -1,14 +1,24 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AnalysisSchema } from '@tomato/constants';
 import { useAnalysisProgress } from '@/modules/analyses';
-import type { UpdateMetricInput } from '../metrics.schemas';
+import type { MetricResultListParams, UpdateMetricInput } from '../metrics.schemas';
 import { metricsService } from '../services/metrics.service';
 
-export const useMetricResults = (analysisId: string, page: number) => {
+export const useMetricResults = (analysisId: string, params: MetricResultListParams) => {
   const { isLoaded, version } = useAnalysisProgress(analysisId);
   return useQuery({
-    queryKey: ['metrics', 'results', analysisId, page, version],
-    queryFn: () => metricsService.listResults(analysisId, page),
+    queryKey: ['metrics', 'results', analysisId, params, version],
+    queryFn: () => metricsService.listResults(analysisId, params),
+    enabled: isLoaded,
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useMetricResultFilters = (analysisId: string) => {
+  const { isLoaded, version } = useAnalysisProgress(analysisId);
+  return useQuery({
+    queryKey: ['metrics', 'filters', analysisId, version],
+    queryFn: () => metricsService.listResultFilters(analysisId),
     enabled: isLoaded,
     placeholderData: keepPreviousData,
   });

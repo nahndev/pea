@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { createValidationPipe } from '../../../common/pipes/validation.pipe';
+import { ListMetricResultsQueryDto } from './list-metric-results-query.dto';
 import { ListMetricsQueryDto } from './list-metrics-query.dto';
 import { UpdateMetricDto } from './update-metric.dto';
 
@@ -15,6 +16,25 @@ describe('ListMetricsQueryDto', () => {
 
   it('rejects any other value', async () => {
     await expect(validate({ isActive: 'yes' })).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('ListMetricResultsQueryDto', () => {
+  const pipe = createValidationPipe();
+  const validate = (query: unknown) => pipe.transform(query, { type: 'query', metatype: ListMetricResultsQueryDto });
+
+  it('accepts a metric type and a subject uuid', async () => {
+    await expect(validate({ metricType: 'ENDPOINT_P95', subjectUuid: '1774ce23-c32c-58aa-9b40-bd08fcfdb938' })).resolves.toMatchObject({
+      metricType: 'ENDPOINT_P95',
+      subjectUuid: '1774ce23-c32c-58aa-9b40-bd08fcfdb938',
+    });
+  });
+
+  it.each([
+    ['an unknown metric type', { metricType: 'P99' }],
+    ['a subject that is not a uuid', { subjectUuid: 'GET /api/cart' }],
+  ])('rejects %s', async (_, query) => {
+    await expect(validate(query)).rejects.toBeInstanceOf(BadRequestException);
   });
 });
 

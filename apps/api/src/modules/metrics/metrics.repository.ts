@@ -11,6 +11,16 @@ export class MetricsRepository {
     return this.prismaService.metric.findMany({ where: filter, orderBy: { id: 'asc' } });
   }
 
+  async findTypesByAnalysisResult(analysisResultId: string): Promise<string[]> {
+    const metrics = await this.prismaService.metric.findMany({
+      where: { results: { some: { analysisResultId } } },
+      select: { type: true },
+      distinct: ['type'],
+      orderBy: { type: 'asc' },
+    });
+    return metrics.map(({ type }) => type);
+  }
+
   findById(id: string): Promise<Metric | null> {
     return this.prismaService.metric.findUnique({ where: { id } });
   }
