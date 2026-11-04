@@ -1,9 +1,9 @@
-import { SortOrder } from '@tomato/constants';
-import { TableHead, cn } from '@tomato/ui';
-import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
-import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { nextOrdering, orderOf } from '../lib/sort';
+import { SortOrder } from "@tomato/constants";
+import { TableHead, cn } from "@tomato/ui";
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { nextOrdering, orderOf } from "../lib/sort";
 
 interface SortableTableHeadProps {
   field: string;
@@ -14,19 +14,57 @@ interface SortableTableHeadProps {
   children: ReactNode;
 }
 
-export function SortableTableHead({ field, ordering, href, scroll, className, children }: SortableTableHeadProps) {
+function getOrderValue<T>(
+  order: SortOrder | undefined,
+  ascValue: T,
+  descValue: T,
+  defaultValue: T,
+): T {
+  return order === SortOrder.ASC
+    ? ascValue
+    : order === SortOrder.DESC
+      ? descValue
+      : defaultValue;
+}
+
+export function SortableTableHead({
+  field,
+  ordering,
+  href,
+  scroll,
+  className,
+  children,
+}: SortableTableHeadProps) {
   const order = orderOf(ordering, field);
-  const Icon = order === SortOrder.ASC ? ArrowUpIcon : order === SortOrder.DESC ? ArrowDownIcon : ArrowUpDownIcon;
+  const iconProps = {
+    className: cn("size-3.5 shrink-0", !order && "text-muted-foreground"),
+    "aria-hidden": true,
+  };
+  const icon = getOrderValue(
+    order,
+    <ArrowUpIcon {...iconProps} />,
+    <ArrowDownIcon {...iconProps} />,
+    <ArrowUpDownIcon {...iconProps} />,
+  );
+  const iconClassName = getOrderValue(
+    order,
+    "visible",
+    "visible",
+    "invisible group-hover:visible",
+  );
 
   return (
-    <TableHead className={className} aria-sort={order === SortOrder.ASC ? 'ascending' : order === SortOrder.DESC ? 'descending' : 'none'}>
+    <TableHead
+      className={cn(className, "group")}
+      aria-sort={getOrderValue(order, "ascending", "descending", "none")}
+    >
       <Link
         href={href(nextOrdering(ordering, field))}
         scroll={scroll}
-        className="inline-flex max-w-full items-center gap-1 rounded-sm underline-offset-4 hover:underline focus-ring"
+        className="inline-flex max-w-full items-center gap-1 rounded-sm underline-offset-4 focus-ring"
       >
         <span className="truncate">{children}</span>
-        <Icon className={cn('size-3.5 shrink-0', !order && 'text-muted-foreground')} aria-hidden="true" />
+        <div className={iconClassName}>{icon}</div>
       </Link>
     </TableHead>
   );
