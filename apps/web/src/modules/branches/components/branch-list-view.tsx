@@ -11,6 +11,7 @@ import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { DEFAULT_ANALYSIS_SCHEMA } from '@/shared/lib/analysis-schema.constants';
 import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { branchSchemaHref } from '../branch-schema-href';
 import type { BranchListParams } from '../branches.schemas';
 import { useBranches } from '../hooks/use-branches';
@@ -47,13 +48,13 @@ export function BranchListView({ params }: BranchListViewProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableTableHead field={BranchSortField.NAME} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={BranchSortField.NAME} cacheKey={SortTable.BRANCHES} ordering={ordering} href={sortHref}>
                     Branch
                   </SortableTableHead>
-                  <SortableTableHead field={BranchSortField.ANALYSIS_COUNT} ordering={ordering} href={sortHref} className="text-right">
+                  <SortableTableHead field={BranchSortField.ANALYSIS_COUNT} cacheKey={SortTable.BRANCHES} ordering={ordering} href={sortHref} className="text-right">
                     Analyses
                   </SortableTableHead>
-                  <SortableTableHead field={BranchSortField.LATEST_ANALYSIS_AT} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={BranchSortField.LATEST_ANALYSIS_AT} cacheKey={SortTable.BRANCHES} ordering={ordering} href={sortHref}>
                     Last analysis
                   </SortableTableHead>
                 </TableRow>

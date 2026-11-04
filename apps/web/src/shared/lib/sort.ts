@@ -1,5 +1,6 @@
 import { ORDERING_DESC_PREFIX, ORDERING_SEPARATOR, SortOrder } from '@tomato/constants';
 import { z } from 'zod';
+import { ORDERING_COOKIE_MAX_AGE_SECONDS, ORDERING_COOKIE_PREFIX, type SortTable } from './sort.constants';
 
 interface OrderingTerm {
   field: string;
@@ -41,4 +42,13 @@ export function nextOrdering(ordering: string | undefined, field: string): strin
   const [primary] = toTerms(ordering);
   if (primary?.field !== field) return field;
   return primary.order === SortOrder.ASC ? `${ORDERING_DESC_PREFIX}${field}` : undefined;
+}
+
+export const orderingCookieName = (table: SortTable) => `${ORDERING_COOKIE_PREFIX}${table}`;
+
+/** Remembers a table's ordering so it is restored when the page is opened without `?ordering` */
+export function saveOrdering(table: SortTable, ordering: string | undefined) {
+  const value = ordering ? encodeURIComponent(ordering) : '';
+  const maxAge = ordering ? ORDERING_COOKIE_MAX_AGE_SECONDS : 0;
+  document.cookie = `${orderingCookieName(table)}=${value}; path=/; max-age=${maxAge}; samesite=lax`;
 }

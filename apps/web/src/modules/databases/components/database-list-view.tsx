@@ -9,6 +9,7 @@ import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
+import { SortTable } from '@/shared/lib/sort.constants';
 import type { DatabaseListParams } from '../databases.schemas';
 import { useDatabases } from '../hooks/use-databases';
 
@@ -30,16 +31,16 @@ export function DatabaseListView({ params }: DatabaseListViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableTableHead field={DatabaseSortField.NAME} ordering={params.ordering} href={sortHref}>
+                <SortableTableHead field={DatabaseSortField.NAME} cacheKey={SortTable.DATABASES} ordering={params.ordering} href={sortHref}>
                   Name
                 </SortableTableHead>
-                <SortableTableHead field={DatabaseSortField.ADDRESS} ordering={params.ordering} href={sortHref}>
+                <SortableTableHead field={DatabaseSortField.ADDRESS} cacheKey={SortTable.DATABASES} ordering={params.ordering} href={sortHref}>
                   Address
                 </SortableTableHead>
-                <SortableTableHead field={DatabaseSortField.ANALYSIS_COUNT} ordering={params.ordering} href={sortHref} className="text-right">
+                <SortableTableHead field={DatabaseSortField.ANALYSIS_COUNT} cacheKey={SortTable.DATABASES} ordering={params.ordering} href={sortHref} className="text-right">
                   Analyses
                 </SortableTableHead>
-                <SortableTableHead field={DatabaseSortField.UPDATED_AT} ordering={params.ordering} href={sortHref}>
+                <SortableTableHead field={DatabaseSortField.UPDATED_AT} cacheKey={SortTable.DATABASES} ordering={params.ordering} href={sortHref}>
                   Updated
                 </SortableTableHead>
               </TableRow>

@@ -1,12 +1,16 @@
+"use client";
+
 import { SortOrder } from "@tomato/constants";
 import { TableHead, cn } from "@tomato/ui";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { nextOrdering, orderOf } from "../lib/sort";
+import { nextOrdering, orderOf, saveOrdering } from "../lib/sort";
+import type { SortTable } from "../lib/sort.constants";
 
 interface SortableTableHeadProps {
   field: string;
+  cacheKey: SortTable;
   ordering: string | undefined;
   href: (ordering: string | undefined) => string;
   scroll?: boolean;
@@ -29,6 +33,7 @@ function getOrderValue<T>(
 
 export function SortableTableHead({
   field,
+  cacheKey,
   ordering,
   href,
   scroll,
@@ -36,6 +41,7 @@ export function SortableTableHead({
   children,
 }: SortableTableHeadProps) {
   const order = orderOf(ordering, field);
+  const next = nextOrdering(ordering, field);
   const iconProps = {
     className: cn("size-3.5 shrink-0", !order && "text-muted-foreground"),
     "aria-hidden": true,
@@ -59,8 +65,9 @@ export function SortableTableHead({
       aria-sort={getOrderValue(order, "ascending", "descending", "none")}
     >
       <Link
-        href={href(nextOrdering(ordering, field))}
+        href={href(next)}
         scroll={scroll}
+        onClick={() => saveOrdering(cacheKey, next)}
         className="inline-flex max-w-full items-center gap-1 rounded-sm underline-offset-4 focus-ring"
       >
         <span className="truncate">{children}</span>

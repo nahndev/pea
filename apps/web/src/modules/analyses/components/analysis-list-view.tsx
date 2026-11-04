@@ -11,6 +11,7 @@ import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
 import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { buildHref } from '@/shared/lib/pagination';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { useBranchAnalyses } from '../hooks/use-analyses';
 import { GateStatusBadge, ResultStatusBadge } from './analysis-status-badges';
 
@@ -41,17 +42,17 @@ export function AnalysisListView({ branchId, schema, params: { page, ordering } 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableTableHead field={AnalysisSortField.TITLE} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={AnalysisSortField.TITLE} cacheKey={SortTable.ANALYSES} ordering={ordering} href={sortHref}>
                     Title
                   </SortableTableHead>
-                  <SortableTableHead field={AnalysisSortField.CREATED_AT} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={AnalysisSortField.CREATED_AT} cacheKey={SortTable.ANALYSES} ordering={ordering} href={sortHref}>
                     Date
                   </SortableTableHead>
                   <TableHead>Schema</TableHead>
-                  <SortableTableHead field={AnalysisSortField.STATUS} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={AnalysisSortField.STATUS} cacheKey={SortTable.ANALYSES} ordering={ordering} href={sortHref}>
                     Result
                   </SortableTableHead>
-                  <SortableTableHead field={AnalysisSortField.ISSUE_COUNT} ordering={ordering} href={sortHref} className="text-right">
+                  <SortableTableHead field={AnalysisSortField.ISSUE_COUNT} cacheKey={SortTable.ANALYSES} ordering={ordering} href={sortHref} className="text-right">
                     Issues
                   </SortableTableHead>
                   <TableHead>Conditions</TableHead>

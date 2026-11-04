@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BranchListView, branchListParamsSchema } from '@/modules/branches';
 import { PageHeader } from '@/shared/components/page-header';
+import { withCachedOrdering } from '@/shared/lib/sort-cache';
+import { SortTable } from '@/shared/lib/sort.constants';
 
 export const metadata: Metadata = { title: 'Branches' };
 
@@ -11,7 +13,7 @@ interface BranchesPageProps {
 }
 
 export default async function BranchesPage({ searchParams }: BranchesPageProps) {
-  const params = branchListParamsSchema.parse(await searchParams);
+  const params = branchListParamsSchema.parse(await withCachedOrdering(SortTable.BRANCHES, await searchParams));
 
   return (
     <>

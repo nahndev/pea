@@ -1,6 +1,7 @@
 import { SortOrder } from '@tomato/constants';
 import { describe, expect, it } from 'vitest';
-import { nextOrdering, orderOf, orderingParam } from './sort';
+import { nextOrdering, orderOf, orderingParam, saveOrdering } from './sort';
+import { SortTable } from './sort.constants';
 
 const Field = { NAME: 'name', SIZE: 'size' } as const;
 
@@ -36,5 +37,15 @@ describe('nextOrdering', () => {
   it('cycles ascending, descending, then the default order', () => {
     expect(nextOrdering('name', 'name')).toBe('-name');
     expect(nextOrdering('-name,size', 'name')).toBeUndefined();
+  });
+});
+
+describe('saveOrdering', () => {
+  it('stores the ordering per table and clears it on the default order', () => {
+    saveOrdering(SortTable.ISSUES, '-count,severity');
+    expect(document.cookie).toContain('pea-ordering-issues=-count%2Cseverity');
+
+    saveOrdering(SortTable.ISSUES, undefined);
+    expect(document.cookie).not.toContain('pea-ordering-issues');
   });
 });

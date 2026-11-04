@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { MetricDetailView, metricPageParamsSchema } from '@/modules/metrics';
+import { withCachedOrdering } from '@/shared/lib/sort-cache';
+import { SortTable } from '@/shared/lib/sort.constants';
 
 export const metadata: Metadata = { title: 'Metric' };
 
@@ -10,7 +12,7 @@ interface MetricPageProps {
 
 export default async function MetricPage({ params, searchParams }: MetricPageProps) {
   const { id } = await params;
-  const filters = metricPageParamsSchema.parse(await searchParams);
+  const filters = metricPageParamsSchema.parse(await withCachedOrdering(SortTable.METRIC_HISTORY, await searchParams));
 
   return <MetricDetailView metricId={id} params={filters} />;
 }

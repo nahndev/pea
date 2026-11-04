@@ -10,6 +10,7 @@ import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { buildHref } from '@/shared/lib/pagination';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { useMetrics } from '../hooks/use-metrics';
 import { METRIC_LABEL, METRIC_UNIT_LABEL } from '../metrics.constants';
 import type { MetricListParams } from '../metrics.schemas';
@@ -34,16 +35,16 @@ export function MetricListView({ params }: MetricListViewProps) {
           <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <SortableTableHead field={MetricSortField.TYPE} ordering={ordering} href={sortHref} className="w-1/4">
+                <SortableTableHead field={MetricSortField.TYPE} cacheKey={SortTable.METRICS} ordering={ordering} href={sortHref} className="w-1/4">
                   Metric
                 </SortableTableHead>
-                <SortableTableHead field={MetricSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={MetricSortField.DESCRIPTION} cacheKey={SortTable.METRICS} ordering={ordering} href={sortHref}>
                   Description
                 </SortableTableHead>
-                <SortableTableHead field={MetricSortField.UNIT} ordering={ordering} href={sortHref} className="w-20">
+                <SortableTableHead field={MetricSortField.UNIT} cacheKey={SortTable.METRICS} ordering={ordering} href={sortHref} className="w-20">
                   Unit
                 </SortableTableHead>
-                <SortableTableHead field={MetricSortField.STATUS} ordering={ordering} href={sortHref} className="w-28">
+                <SortableTableHead field={MetricSortField.STATUS} cacheKey={SortTable.METRICS} ordering={ordering} href={sortHref} className="w-28">
                   Status
                 </SortableTableHead>
               </TableRow>

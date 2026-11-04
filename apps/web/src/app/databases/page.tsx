@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { DatabaseListView, databaseListParamsSchema } from '@/modules/databases';
 import { PageHeader } from '@/shared/components/page-header';
+import { withCachedOrdering } from '@/shared/lib/sort-cache';
+import { SortTable } from '@/shared/lib/sort.constants';
 
 export const metadata: Metadata = { title: 'Databases' };
 
@@ -11,7 +13,7 @@ interface DatabasesPageProps {
 }
 
 export default async function DatabasesPage({ searchParams }: DatabasesPageProps) {
-  const params = databaseListParamsSchema.parse(await searchParams);
+  const params = databaseListParamsSchema.parse(await withCachedOrdering(SortTable.DATABASES, await searchParams));
 
   return (
     <>

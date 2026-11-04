@@ -9,6 +9,7 @@ import { ErrorState } from '@/shared/components/error-state';
 import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { buildHref } from '@/shared/lib/pagination';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { AGGREGATE_LABEL, METRIC_LABEL, VIOLATION_PHRASE, formatMetricValue } from '@/modules/metrics';
 import type { ConditionListParams } from '../conditions.schemas';
 import { useConditions } from '../hooks/use-conditions';
@@ -32,13 +33,13 @@ export function ConditionListView({ params }: ConditionListViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableTableHead field={ConditionSortField.METRIC} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={ConditionSortField.METRIC} cacheKey={SortTable.CONDITIONS} ordering={ordering} href={sortHref}>
                   Metric
                 </SortableTableHead>
-                <SortableTableHead field={ConditionSortField.THRESHOLD} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={ConditionSortField.THRESHOLD} cacheKey={SortTable.CONDITIONS} ordering={ordering} href={sortHref}>
                   Fails when
                 </SortableTableHead>
-                <SortableTableHead field={ConditionSortField.STATUS} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={ConditionSortField.STATUS} cacheKey={SortTable.CONDITIONS} ordering={ordering} href={sortHref}>
                   Status
                 </SortableTableHead>
               </TableRow>

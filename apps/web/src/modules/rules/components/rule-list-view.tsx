@@ -9,6 +9,7 @@ import { StatusBadge } from '@/shared/components/status-badge';
 import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { useRules } from '../hooks/use-rules';
 import type { RuleListParams } from '../rules.schemas';
 
@@ -30,13 +31,13 @@ export function RuleListView({ params }: RuleListViewProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableTableHead field={RuleSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={RuleSortField.DESCRIPTION} cacheKey={SortTable.RULES} ordering={ordering} href={sortHref}>
                   Rule
                 </SortableTableHead>
-                <SortableTableHead field={RuleSortField.SEVERITY} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={RuleSortField.SEVERITY} cacheKey={SortTable.RULES} ordering={ordering} href={sortHref}>
                   Severity
                 </SortableTableHead>
-                <SortableTableHead field={RuleSortField.TYPE} ordering={ordering} href={sortHref}>
+                <SortableTableHead field={RuleSortField.TYPE} cacheKey={SortTable.RULES} ordering={ordering} href={sortHref}>
                   Type
                 </SortableTableHead>
               </TableRow>

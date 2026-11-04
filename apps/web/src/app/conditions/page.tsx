@@ -5,6 +5,8 @@ import { ConditionListView, conditionListParamsSchema } from '@/modules/conditio
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
 import { buildHref } from '@/shared/lib/pagination';
+import { withCachedOrdering } from '@/shared/lib/sort-cache';
+import { SortTable } from '@/shared/lib/sort.constants';
 
 export const metadata: Metadata = { title: 'Conditions' };
 
@@ -13,7 +15,7 @@ interface ConditionsPageProps {
 }
 
 export default async function ConditionsPage({ searchParams }: ConditionsPageProps) {
-  const params = conditionListParamsSchema.parse(await searchParams);
+  const params = conditionListParamsSchema.parse(await withCachedOrdering(SortTable.CONDITIONS, await searchParams));
   const { schema } = params;
 
   return (

@@ -5,6 +5,8 @@ import { RuleListView, ruleListParamsSchema } from '@/modules/rules';
 import { PageHeader } from '@/shared/components/page-header';
 import { SchemaTabs } from '@/shared/components/schema-tabs';
 import { buildHref } from '@/shared/lib/pagination';
+import { withCachedOrdering } from '@/shared/lib/sort-cache';
+import { SortTable } from '@/shared/lib/sort.constants';
 
 export const metadata: Metadata = { title: 'Rules' };
 
@@ -13,7 +15,7 @@ interface RulesPageProps {
 }
 
 export default async function RulesPage({ searchParams }: RulesPageProps) {
-  const params = ruleListParamsSchema.parse(await searchParams);
+  const params = ruleListParamsSchema.parse(await withCachedOrdering(SortTable.RULES, await searchParams));
   const { schema } = params;
 
   return (

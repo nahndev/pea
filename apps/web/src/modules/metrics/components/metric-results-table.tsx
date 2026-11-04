@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GateStatusBadge } from '@/modules/analyses';
 import { SortableTableHead } from '@/shared/components/sortable-table-head';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { formatMetricValue } from '../format-metric-value';
 import { metricSeriesKey, metricSeriesLabel } from '../metric-series';
 import { AGGREGATE_LABEL, METRIC_LABEL, METRIC_UNIT_LABEL, VIOLATION_PHRASE } from '../metrics.constants';
@@ -29,16 +30,16 @@ export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle, 
             <TableHead className="w-10">
               <span className="sr-only">Show in trend chart</span>
             </TableHead>
-            <SortableTableHead field={MetricResultSortField.METRIC} ordering={ordering} href={sortHref} scroll={false} className="w-1/5">
+            <SortableTableHead field={MetricResultSortField.METRIC} cacheKey={SortTable.METRIC_RESULTS} ordering={ordering} href={sortHref} scroll={false} className="w-1/5">
               Metric
             </SortableTableHead>
-            <SortableTableHead field={MetricResultSortField.SUBJECT} ordering={ordering} href={sortHref} scroll={false} className="w-1/4">
+            <SortableTableHead field={MetricResultSortField.SUBJECT} cacheKey={SortTable.METRIC_RESULTS} ordering={ordering} href={sortHref} scroll={false} className="w-1/4">
               Endpoint
             </SortableTableHead>
-            <SortableTableHead field={MetricResultSortField.VALUE} ordering={ordering} href={sortHref} scroll={false} className="w-28 text-right">
+            <SortableTableHead field={MetricResultSortField.VALUE} cacheKey={SortTable.METRIC_RESULTS} ordering={ordering} href={sortHref} scroll={false} className="w-28 text-right">
               Value
             </SortableTableHead>
-            <SortableTableHead field={MetricResultSortField.UNIT} ordering={ordering} href={sortHref} scroll={false} className="w-20">
+            <SortableTableHead field={MetricResultSortField.UNIT} cacheKey={SortTable.METRIC_RESULTS} ordering={ordering} href={sortHref} scroll={false} className="w-20">
               Unit
             </SortableTableHead>
             <TableHead>Conditions</TableHead>

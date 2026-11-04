@@ -13,6 +13,7 @@ import { TableSkeleton } from '@/shared/components/table-skeleton';
 import { formatDateTime } from '@/shared/lib/format';
 import { buildHref } from '@/shared/lib/pagination';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
+import { SortTable } from '@/shared/lib/sort.constants';
 import { useIssues } from '../hooks/use-issues';
 import { ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import type { IssueListParams } from '../issues.schemas';
@@ -48,22 +49,22 @@ export function IssueListView({ analysisId, params }: IssueListViewProps) {
             <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <SortableTableHead field={IssueSortField.SEVERITY} ordering={ordering} href={sortHref} className="w-28">
+                  <SortableTableHead field={IssueSortField.SEVERITY} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref} className="w-28">
                     Severity
                   </SortableTableHead>
-                  <SortableTableHead field={IssueSortField.RULE} ordering={ordering} href={sortHref} className="w-1/3">
+                  <SortableTableHead field={IssueSortField.RULE} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref} className="w-1/3">
                     Rule
                   </SortableTableHead>
-                  <SortableTableHead field={IssueSortField.DESCRIPTION} ordering={ordering} href={sortHref}>
+                  <SortableTableHead field={IssueSortField.DESCRIPTION} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref}>
                     Details
                   </SortableTableHead>
-                  <SortableTableHead field={IssueSortField.STATUS} ordering={ordering} href={sortHref} className="w-32">
+                  <SortableTableHead field={IssueSortField.STATUS} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref} className="w-32">
                     Status
                   </SortableTableHead>
-                  <SortableTableHead field={IssueSortField.ISSUE_COUNT} ordering={ordering} href={sortHref} className="w-20 text-right">
+                  <SortableTableHead field={IssueSortField.ISSUE_COUNT} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref} className="w-20 text-right">
                     Count
                   </SortableTableHead>
-                  <SortableTableHead field={IssueSortField.CREATED_AT} ordering={ordering} href={sortHref} className="w-44">
+                  <SortableTableHead field={IssueSortField.CREATED_AT} cacheKey={SortTable.ISSUES} ordering={ordering} href={sortHref} className="w-44">
                     Raised
                   </SortableTableHead>
                 </TableRow>
