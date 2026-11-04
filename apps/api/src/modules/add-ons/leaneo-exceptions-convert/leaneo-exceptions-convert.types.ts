@@ -1,12 +1,12 @@
 /** One line of a bug_log file (docs/bug_log.md) */
 export interface BugEvent {
-  ts?: number;
-  level?: string;
-  channel?: string;
-  type: string;
+  '@timestamp'?: string;
+  'log.level'?: string;
   message?: string;
-  location?: string;
-  method?: string;
-  route?: string;
-  status?: number;
+  'http.request.method'?: string;
+  'url.path'?: string;
+  'http.response.status_code'?: number;
+  'error.type'?: string;
+  'error.message'?: string;
+  'error.stack_trace'?: string;
 }

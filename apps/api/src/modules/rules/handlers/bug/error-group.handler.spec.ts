@@ -64,7 +64,7 @@ describe('ErrorGroupHandler', () => {
   });
 
   it('describes a group without message by its count only', async () => {
-    await writeFile(join(dir, 'bug_log.log'), ['{"type":"x"}', '{"type":"x"}'].join('\n'));
+    await writeFile(join(dir, 'bug_log.log'), ['{"error.type":"x"}', '{"error.type":"x"}'].join('\n'));
 
     await expect(errorGroupHandler.handle(rule(RuleType.FREQUENT_ERROR), context())).resolves.toEqual([
       { ruleId: 'r-1', description: 'Raised 2 times', subject: createSubject(SubjectType.ERROR, 'x') },

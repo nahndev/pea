@@ -10,7 +10,7 @@ export function FrequentErrorRuleConfig({ rule }: RuleConfigProps) {
     <RuleConfigForm
       rule={rule}
       fields={FIELDS}
-      hint="An issue is created for each error (type and location) logged at least the min occurrences, whatever its level."
+      hint="An issue is created for each error (error type and first application stack frame) logged at least the min occurrences, whatever its level."
     />
   );
 }

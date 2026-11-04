@@ -3,8 +3,8 @@ export const OUTPUT_FILE_NAME = 'bug_log.log';
 export const MAX_TYPE_LENGTH = 255;
 export const MAX_MESSAGE_LENGTH = 500;
 
-/** Frames under this directory are application code; the first one locates the error */
-export const APP_SOURCE_DIR = '/src/';
+/** Server path before the project folders, dropped from stack frames */
+export const PROJECT_ROOT = /^.*?\/(?=(?:src|vendor|public|bin|config)\/)/;
 
 export const UNCAUGHT_EXCEPTION_PREFIX = 'Uncaught PHP Exception';
 export const SERVER_ERROR_STATUS = 500;

@@ -3,12 +3,12 @@ import { ErrorCode } from '@tomato/constants';
 import type { ConvertResult } from '../add-ons.types';
 import { toRoute } from '../to-route';
 import {
-  APP_SOURCE_DIR,
   HTTP_STATUS_BY_EXCEPTION,
   MAX_MESSAGE_LENGTH,
   MAX_TYPE_LENGTH,
   MESSAGE_REPLACEMENTS,
   NO_ROUTE_MESSAGE,
+  PROJECT_ROOT,
   SERVER_ERROR_STATUS,
   UNCAUGHT_EXCEPTION_PREFIX,
 } from './leaneo-exceptions-convert.constants';
@@ -61,38 +61,36 @@ export class LeaneoExceptionsConvertService {
     const entry = asRecord(json);
     const context = asRecord(entry?.context);
     const exception = asRecord(context?.exception);
-    const message = asText(entry?.message);
-    const exceptionClass = asText(exception?.class)?.split('\\').pop();
-    const type = exceptionClass ?? (message && normalize(message, MAX_TYPE_LENGTH));
-    if (!type) return null;
+    const rawMessage = asText(entry?.message);
+    const message = rawMessage && normalize(rawMessage, MAX_TYPE_LENGTH);
+    const errorType = asText(exception?.class)?.split('\\').pop();
+    if (!errorType && !message) return null;
 
     const ts = typeof entry?.datetime === 'string' ? Date.parse(entry.datetime) : NaN;
-    const detail = asText(exception?.message) ?? message;
+    const errorMessage = asText(exception?.message);
     return {
-      ts: Number.isNaN(ts) ? undefined : ts,
-      level: asText(entry?.level_name)?.toUpperCase(),
-      channel: asText(entry?.channel),
-      type,
-      message: detail && normalize(detail, MAX_MESSAGE_LENGTH),
-      location: this.toLocation(exception),
-      ...this.toEndpoint(context, message),
-      status: this.toStatus(exceptionClass, exception?.code, message),
+      '@timestamp': Number.isNaN(ts) ? undefined : new Date(ts).toISOString(),
+      'log.level': asText(entry?.level_name)?.toLowerCase(),
+      message,
+      ...this.toEndpoint(context, rawMessage),
+      'http.response.status_code': this.toStatus(errorType, exception?.code, rawMessage),
+      'error.type': errorType,
+      'error.message': errorMessage && normalize(errorMessage, MAX_MESSAGE_LENGTH),
+      'error.stack_trace': this.toStackTrace(exception),
     };
   }
 
-  private toLocation(exception: Record<string, unknown> | undefined): string | undefined {
+  private toStackTrace(exception: Record<string, unknown> | undefined): string | undefined {
     const trace = Array.isArray(exception?.trace) ? exception.trace : [];
-    const frame = [exception?.file, ...trace].find(
-      (value): value is string => typeof value === 'string' && value.includes(APP_SOURCE_DIR),
-    );
-    return frame?.slice(frame.indexOf(APP_SOURCE_DIR) + 1);
+    const frames = [exception?.file, ...trace].filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+    return frames.length > 0 ? frames.map((frame) => frame.replace(PROJECT_ROOT, '')).join('\n') : undefined;
   }
 
-  private toEndpoint(context: Record<string, unknown> | undefined, message: string | undefined): Pick<BugEvent, 'method' | 'route'> {
+  private toEndpoint(context: Record<string, unknown> | undefined, message: string | undefined): Pick<BugEvent, 'http.request.method' | 'url.path'> {
     const api = asText(context?.api);
-    if (api) return { route: toRoute(api) };
+    if (api) return { 'url.path': toRoute(api) };
     const [, method, url] = message?.match(NO_ROUTE_MESSAGE) ?? [];
-    return url ? { method, route: toRoute(toPath(url)) } : {};
+    return url ? { 'http.request.method': method, 'url.path': toRoute(toPath(url)) } : {};
   }
 
   private toStatus(exceptionClass: string | undefined, code: unknown, message: string | undefined): number | undefined {

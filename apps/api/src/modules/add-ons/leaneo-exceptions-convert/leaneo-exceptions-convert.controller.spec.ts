@@ -39,7 +39,7 @@ describe('LeaneoExceptionsConvertController', () => {
     expect(response.headers.get('content-disposition')).toBe('attachment; filename="bug_log.log"');
     expect(response.headers.get(AddOnHeader.CONVERTED_COUNT)).toBe('1');
     expect(response.headers.get(AddOnHeader.SKIPPED_COUNT)).toBe('1');
-    expect(JSON.parse(await response.text())).toEqual({ level: 'CRITICAL', type: 'API exception', message: 'API exception', route: '/favicon.ico' });
+    expect(JSON.parse(await response.text())).toEqual({ 'log.level': 'critical', message: 'API exception', 'url.path': '/favicon.ico' });
   });
 
   it('responds LOG_FILE_REQUIRED without a file', async () => {

@@ -36,13 +36,17 @@ describe('LeaneoExceptionsConvertService', () => {
 
     expect({ converted, skipped }).toEqual({ converted: 1, skipped: 0 });
     expect(lineOf(content)).toEqual({
-      ts: Date.parse(DATETIME),
-      level: 'ERROR',
-      channel: 'request',
-      type: 'NotFoundHttpException',
-      message: 'Not Found',
-      location: 'src/Controller/Shared/Tenant/TenantAuthPageController.php:29',
-      status: 404,
+      '@timestamp': '2026-11-02T20:17:09.844Z',
+      'log.level': 'error',
+      message: 'Uncaught PHP Exception Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException: "Not Found" at /srv/websites/leaneo/vendor/symfony/framework-bundle/Controller/AbstractController.php:{n}',
+      'http.response.status_code': 404,
+      'error.type': 'NotFoundHttpException',
+      'error.message': 'Not Found',
+      'error.stack_trace': [
+        'vendor/symfony/framework-bundle/Controller/AbstractController.php:331',
+        'src/Controller/Shared/Tenant/TenantAuthPageController.php:29',
+        'vendor/symfony/http-kernel/HttpKernel.php:183',
+      ].join('\n'),
     });
   });
 
@@ -58,15 +62,16 @@ describe('LeaneoExceptionsConvertService', () => {
       ]),
     );
 
-    expect(lineOf(content, 0)).toMatchObject({ method: 'GET', route: '/api/system/fileView/{id}', status: 404 });
-    expect(lineOf(content, 0).location).toBeUndefined();
+    expect(lineOf(content, 0)).toMatchObject({
+      'http.request.method': 'GET',
+      'url.path': '/api/system/fileView/{id}',
+      'http.response.status_code': 404,
+    });
     expect(lineOf(content, 1)).toEqual({
-      ts: Date.parse(DATETIME),
-      level: 'CRITICAL',
-      channel: 'request',
-      type: 'API exception',
+      '@timestamp': '2026-11-02T20:17:09.844Z',
+      'log.level': 'critical',
       message: 'API exception',
-      route: '/api/v2/conversation',
+      'url.path': '/api/v2/conversation',
     });
   });
 
@@ -76,17 +81,17 @@ describe('LeaneoExceptionsConvertService', () => {
     ['an uncaught client exception', 'Symfony\\Component\\HttpClient\\Exception\\ClientException', 403, 500],
   ])('derives the status of %s', (_, className, code, status) => {
     const { content } = service.convert(file([uncaught(className, 'x', '/srv/websites/leaneo/src/A.php:1', [], code)]));
-    expect(lineOf(content).status).toBe(status);
+    expect(lineOf(content)['http.response.status_code']).toBe(status);
   });
 
   it('keeps an HTTP code of a handled exception and no status otherwise', () => {
     const handled = (code: number) =>
       entry('Connexion refusée', { exception: { class: 'App\\Models\\Exception\\Auth\\ValidationCompanyException', message: 'Connexion refusée', code } });
     const { content } = service.convert(file([handled(403), handled(1129)]));
-    expect([lineOf(content, 0).status, lineOf(content, 1).status]).toEqual([403, undefined]);
+    expect([0, 1].map((index) => lineOf(content, index)['http.response.status_code'])).toEqual([403, undefined]);
   });
 
-  it('types a log without exception by its message, without ids, emails, ips or numbers', () => {
+  it('normalises the message of a log without exception, without ids, emails, ips or numbers', () => {
     const { content } = service.convert(
       file([
         entry('[0a553adb-b537-4a14-b40a-8b158f5b9887][someone@example.com] forced_logout_4', { event: 'forced_logout_4', batch: [] }),
@@ -96,11 +101,11 @@ describe('LeaneoExceptionsConvertService', () => {
       ]),
     );
 
-    expect([0, 1, 2, 3].map((index) => lineOf(content, index).type)).toEqual([
-      'forced_logout_4',
-      'SMS sending blocked by guarder: Invalid SMS request',
-      'FIREBASE - Execution time{n}',
-      'Too many requests from {ip} for user {id} ({email}) {n}',
+    expect([0, 1, 2, 3].map((index) => lineOf(content, index))).toEqual([
+      { '@timestamp': '2026-11-02T20:17:09.844Z', 'log.level': 'error', message: 'forced_logout_4' },
+      expect.objectContaining({ message: 'SMS sending blocked by guarder: Invalid SMS request' }),
+      expect.objectContaining({ message: 'FIREBASE - Execution time{n}' }),
+      expect.objectContaining({ message: 'Too many requests from {ip} for user {id} ({email}) {n}' }),
     ]);
   });
 

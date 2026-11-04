@@ -68,21 +68,24 @@ so it can be uploaded as the **Bug log** of a new `BUG` analysis.
 
 One line in, one `bug_log` line out.
 
-| bug_log    | Source                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------- |
-| `type`     | short class of `context.exception.class`, else `message` normalised                                     |
-| `message`  | `context.exception.message`, else `message`, normalised, 500 characters                                 |
-| `location` | first frame of `context.exception.file` / `trace` under `/src/`, from `src/` (`src/Controller/A.php:12`) |
-| `route`    | `context.api`, or the url of `No route found for "GET https://…"` (then `method` too), ids as `{id}`    |
-| `status`   | HTTP exceptions by class (`NotFoundHttpException` 404, `TooManyRequestsHttpException` 429…), other uncaught exceptions 500, else an exception `code` between 400 and 599 |
-| `level`    | `level_name`, upper-cased                                                                               |
-| `channel`  | `channel`                                                                                               |
-| `ts`       | `datetime` in epoch milliseconds                                                                        |
+| bug_log                     | Source                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------- |
+| `@timestamp`                | `datetime`, ISO 8601 in UTC (milliseconds)                                                     |
+| `log.level`                 | `level_name`, lower-cased                                                                      |
+| `message`                   | `message`, normalised, 255 characters                                                          |
+| `error.type`                | short class of `context.exception.class`                                                       |
+| `error.message`             | `context.exception.message`, normalised, 500 characters                                        |
+| `error.stack_trace`         | `context.exception.file` then `trace`, one per line, server path dropped (`src/…`, `vendor/…`) |
+| `http.request.method`, `url.path` | `context.api`, or the url of `No route found for "GET https://…"`, ids as `{id}`         |
+| `http.response.status_code` | HTTP exceptions by class (`NotFoundHttpException` 404, `TooManyRequestsHttpException` 429…), other uncaught exceptions 500, else an exception `code` between 400 and 599 |
+
+`service.name` and `trace.id` are not written: the Leaneo log has neither.
 
 Normalising drops `[…]` prefixes and replaces emails (`{email}`), uuids and long hex ids (`{id}`), IPv4 (`{ip}`) and
 numbers of 3+ digits or with decimals (`{n}`), so one error keeps one type and no personal data is copied.
 Nothing else of `context` is carried over (form fields, user, IP, mobile diagnostics).
 Lines that are blank, not valid JSON, or have neither an exception class nor a message are skipped and counted.
+`channel` is dropped: nothing reads it.
 
 ## Adding an add-on
 

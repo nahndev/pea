@@ -10,7 +10,7 @@ export function CriticalErrorRuleConfig({ rule }: RuleConfigProps) {
     <RuleConfigForm
       rule={rule}
       fields={FIELDS}
-      hint="An issue is created for each error (type and location) logged at CRITICAL, ALERT or EMERGENCY at least the min occurrences."
+      hint="An issue is created for each error (error type and first application stack frame) logged at critical, alert, emergency or fatal level at least the min occurrences."
     />
   );
 }

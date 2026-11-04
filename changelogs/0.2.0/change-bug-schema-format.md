@@ -25,8 +25,8 @@
 
 ## Acceptance Criteria
 
-- [ ] Add Add-on convert format for exception
-- [ ] Change format from currently, to
+- [x] Add Add-on convert format for exception
+- [x] Change format from currently, to
 
 ```ts
 {
@@ -43,11 +43,18 @@
 }
 ```
 
-- [ ] Update all code, using new format
-- [ ]
+- [x] Update all code, using new format
 
 ## Solutions
 
-- [ ]
-- [ ]
-- [ ]
+- [x] `bug_log` is now NDJSON with flat ECS keys ([bug_log.md](../../docs/bug_log.md)): `@timestamp`, `log.level`, `message`, `service.name`, `trace.id`, `http.request.method`, `http.response.status_code`, `error.type`, `error.message`, `error.stack_trace`, plus `url.path` (ECS) for the route, which `ERROR_ENDPOINT` needs
+- [x] `bugLogEvents` keeps the same derived columns, so rules and metrics are unchanged:
+  - kind of error = `error.type`, else `message`; a line with neither is ignored
+  - location = first `error.stack_trace` line outside `vendor/` / `node_modules/`
+  - `error_group` = `<service.name>: <type> at <location>`
+  - critical = `log.level` in `critical`, `alert`, `emergency`, `fatal` (any case)
+  - message shown in issues = `error.message`, else `message`
+  - `ts` from `@timestamp`
+- [x] `LeaneoExceptionsConvert` writes the new keys: exception class to `error.type`, `file` + `trace` (server path dropped) to `error.stack_trace`, normalised log message to `message`; `channel` is dropped, `service.name` / `trace.id` are not in the Leaneo log
+- [x] The location now skips dependency frames: a Doctrine deadlock was located in `vendor/doctrine/dbal/src/…` (its path contains `/src/`), now in `src/Pattern/Pointer/RiskPointer.php:258`
+- [x] Web upload hint, rule hints and docs updated; same results on the 2026-11-02 `exceptions.log` (4719 events, 2650 critical, 26 distinct errors, 20 issues)

@@ -24,7 +24,7 @@ export const API_METRIC_FILE_FIELD = {
 export const BUG_LOG_FILE_FIELD = {
   name: 'bug_log',
   label: 'Bug log',
-  hint: 'NDJSON, one error per line: {"type","level","location","route","status"}. Used for metrics and issues.',
+  hint: 'NDJSON, one error per line: {"@timestamp","log.level","message","error.type","error.message","error.stack_trace","http.response.status_code"…}. Used for metrics and issues.',
   converter: { source: 'exceptions.log', label: 'LeaneoExceptionsConvert', href: '/add-ons/leaneo-exceptions-convert' },
 } as const;
 

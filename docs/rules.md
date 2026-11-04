@@ -140,12 +140,12 @@ Issue examples:
 ## Bug errors
 
 `BUG` analyses read a bug log ([bug_log.md](bug_log.md)) instead of the request log. One issue per offending subject,
-most frequent first, at most 100 per rule (`MAX_BUG_ISSUES`). An error (subject `ERROR`) is `<type> at <location>`,
-or `<type>` without location.
+most frequent first, at most 100 per rule (`MAX_BUG_ISSUES`). An error (subject `ERROR`) is `<error.type> at <first application frame>`,
+see [bug_log.md](bug_log.md).
 
 | Type             | Violation when                                                         | Handler                | Default `minCount` |
 | ---------------- | ---------------------------------------------------------------------- | ---------------------- | ------------------ |
-| `CRITICAL_ERROR` | an error has at least `minCount` events at `CRITICAL`, `ALERT` or `EMERGENCY` | `ErrorGroupHandler`    | `1`                |
+| `CRITICAL_ERROR` | an error has at least `minCount` events at `critical`, `alert`, `emergency` or `fatal` | `ErrorGroupHandler`    | `1`                |
 | `FREQUENT_ERROR` | an error has at least `minCount` events, any level                    | `ErrorGroupHandler`    | `100`              |
 | `ERROR_ENDPOINT` | an endpoint (subject `API`) has at least `minCount` events             | `ErrorEndpointHandler` | `20`               |
 
