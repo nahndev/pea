@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { EventEmitter2 } from "@nestjs/event-emitter";
-import { AnalysisEvent, AnalysisSchema, ErrorCode } from "@tomato/constants";
+import { AddOn, AnalysisEvent, AnalysisSchema, ErrorCode } from "@tomato/constants";
+import { AddOnsService } from "../add-ons/add-ons.service";
 import { BranchesService } from "../branches/branches.service";
 import { DatabasesService } from "../databases/databases.service";
 import type { StoredFile } from "../files/storage.service";
@@ -21,6 +22,7 @@ describe("AnalysesService", () => {
   let branchesService: jest.Mocked<Pick<BranchesService, "findOrCreateByName">>;
   let storageService: jest.Mocked<Pick<StorageService, "save" | "remove">>;
   let databasesService: jest.Mocked<Pick<DatabasesService, "verify">>;
+  let addOnsService: jest.Mocked<Pick<AddOnsService, "convert">>;
   let eventEmitter2: jest.Mocked<Pick<EventEmitter2, "emit">>;
   let analysesService: AnalysesService;
 
@@ -36,12 +38,14 @@ describe("AnalysesService", () => {
       remove: jest.fn().mockResolvedValue(undefined),
     };
     databasesService = { verify: jest.fn().mockResolvedValue(undefined) };
+    addOnsService = { convert: jest.fn() };
     eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
       branchesService as unknown as BranchesService,
       storageService as unknown as StorageService,
       databasesService as unknown as DatabasesService,
+      addOnsService as unknown as AddOnsService,
     );
     Object.assign(analysesService, { eventEmitter2 });
   });
@@ -74,6 +78,28 @@ describe("AnalysesService", () => {
       analysis,
     );
     expect(result).toBe(analysis);
+  });
+
+  it("converts the upload with the add-on before saving it", async () => {
+    const converted = { ...UPLOAD, originalname: "converted" } as Express.Multer.File;
+    addOnsService.convert.mockReturnValue(converted);
+    analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
+
+    await analysesService.create(
+      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1", addOn: AddOn.LEANEO },
+      { bug_log: [UPLOAD] },
+    );
+
+    expect(addOnsService.convert).toHaveBeenCalledWith(AddOn.LEANEO, AnalysisSchema.BUG, UPLOAD);
+    expect(storageService.save).toHaveBeenCalledWith(converted);
+  });
+
+  it("saves the upload as is without an add-on", async () => {
+    analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
+
+    await analysesService.create({ branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" }, { api_metric: [UPLOAD] });
+
+    expect(addOnsService.convert).not.toHaveBeenCalled();
   });
 
   it("rejects a missing file before touching the database or the disk", async () => {
@@ -217,6 +243,7 @@ describe("AnalysesService reads", () => {
       branchesService as unknown as BranchesService,
       {} as StorageService,
       {} as DatabasesService,
+      {} as AddOnsService,
     );
   });
 

@@ -1,5 +1,3 @@
-export const OUTPUT_FILE_NAME = 'bug_log.log';
-
 export const MAX_TYPE_LENGTH = 255;
 export const MAX_MESSAGE_LENGTH = 500;
 

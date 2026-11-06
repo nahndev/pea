@@ -1,28 +1,24 @@
 # Add-ons
 
-Add-ons are standalone tools that support the analysis workflow. They are listed at `/add-ons`
-(header menu **Add-ons**); each one has its own page under `/add-ons/<slug>`.
+Add-ons let an analysis be created from a log in another tool's format. The new analysis form shows a switch
+per add-on for the log schemas (`API`, `QUERY`, `BUG`); when it is on, the uploaded file is the add-on's format and
+the server converts it before saving it as the analysis log.
 
-Each add-on lives in its own folder, on both sides:
+- Request: `POST /rest/analyses` with `addOn` (`AddOn` in `@tomato/constants`) next to the log file field
+- The converter is picked by add-on and schema in `AddOnsService` (`apps/api/src/modules/add-ons/add-ons.service.ts`)
+- Errors: `LOG_FILE_INVALID` when no line could be converted; skipped lines are dropped silently
 
-```
-apps/api/src/modules/add-ons/<slug>/   controller, service, constants, types, specs
-apps/web/src/modules/add-ons/<slug>/   components, hooks, services, schemas
-```
+| Add-on   | Schema           | Upload           | Converter                 |
+| -------- | ---------------- | ---------------- | ------------------------- |
+| `LEANEO` | `API`, `QUERY`   | `slow_api.log`   | LeaneoSlowApiConvert      |
+| `LEANEO` | `BUG`            | `exceptions.log` | LeaneoExceptionsConvert   |
 
-`AddOnsModule` (api) registers the controllers and providers; `ADD_ONS` in
-`apps/web/src/modules/add-ons/add-ons.constants.ts` lists the tools shown in the menu.
+Each converter lives in its own folder, `apps/api/src/modules/add-ons/<slug>/` (service, constants, types, specs).
 
 ## LeaneoSlowApiConvert
 
 Converts a `slow_api.log` file to the NDJSON format of the `api_metric` log ([api_metric.md](api_metric.md)),
-so it can be uploaded as the **API metric log** of a new analysis.
-
-- Page: `/add-ons/leaneo-slow-api-convert`
-- Endpoint: `POST /rest/add-ons/leaneo-slow-api-convert` (multipart, field `file`, max 50 MB)
-- Response: `application/x-ndjson` attachment `api_metric.log`; the number of converted and skipped
-  lines is in the `x-converted-count` and `x-skipped-count` headers (`AddOnHeader` in `@tomato/constants`)
-- Errors: `LOG_FILE_REQUIRED` (no file), `LOG_FILE_INVALID` (no line could be converted)
+used by `LEANEO` for the `API` and `QUERY` schemas.
 
 ### Input
 
@@ -57,12 +53,7 @@ Lines that are blank, not valid JSON, or missing the url, method, duration or a 
 ## LeaneoExceptionsConvert
 
 Converts a Monolog `exceptions.log` file to the NDJSON format of the bug log ([bug_log.md](bug_log.md)),
-so it can be uploaded as the **Bug log** of a new `BUG` analysis.
-
-- Page: `/add-ons/leaneo-exceptions-convert`
-- Endpoint: `POST /rest/add-ons/leaneo-exceptions-convert` (multipart, field `file`, max 50 MB)
-- Response: `application/x-ndjson` attachment `bug_log.log`, counts in the same headers as LeaneoSlowApiConvert
-- Errors: `LOG_FILE_REQUIRED` (no file), `LOG_FILE_INVALID` (no line could be converted)
+used by `LEANEO` for the `BUG` schema.
 
 ### Mapping
 
@@ -89,7 +80,8 @@ Lines that are blank, not valid JSON, or have neither an exception class nor a m
 
 ## Adding an add-on
 
-1. Create `apps/api/src/modules/add-ons/<slug>/` and register its controller and providers in `AddOnsModule`.
-2. Create `apps/web/src/modules/add-ons/<slug>/`, export what the pages need from the module `index.ts`.
-3. Add the route under `apps/web/src/app/add-ons/<slug>/page.tsx` and an entry to `ADD_ONS`.
+1. Add a key to `AddOn` in `@tomato/constants`.
+2. Create `apps/api/src/modules/add-ons/<slug>/` with a service implementing `LogConverter`, provide it in `AddOnsModule`
+   and map it per schema in `AddOnsService`.
+3. Add the switch and the upload label/hint (`LOG_FILE_FIELD_BY_SCHEMA`) to the new analysis form.
 4. Add a section to this file.

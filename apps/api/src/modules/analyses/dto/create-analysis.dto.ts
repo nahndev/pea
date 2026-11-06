@@ -1,6 +1,6 @@
-import { AnalysisSchema } from '@tomato/constants';
+import { AddOn, AnalysisSchema } from '@tomato/constants';
 import { Transform } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -25,4 +25,8 @@ export class CreateAnalysisDto {
   @ValidateIf(isDatabase)
   @IsUUID()
   databaseId?: string;
+
+  @IsOptional()
+  @IsIn(Object.values(AddOn))
+  addOn?: AddOn;
 }

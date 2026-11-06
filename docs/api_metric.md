@@ -39,7 +39,7 @@ It is NDJSON: one JSON object per line, one line per HTTP request.
 
 ## Producing the file
 
-- `LeaneoSlowApiConvert` add-on (`/add-ons/leaneo-slow-api-convert`) converts a `slow_api.log`, see [add-ons.md](add-ons.md).
+- Turn on the **Leaneo add-on** in the new analysis form to upload a Leaneo `slow_api.log` instead, see [add-ons.md](add-ons.md).
 - Sample files: `seed/api_metric.healthy.jsonl`, `seed/api_metric.degraded.jsonl`, `seed/api_metric.critical.jsonl`
   (200 requests each, see "Seed data behaviour" in [rules.md](rules.md)).
 

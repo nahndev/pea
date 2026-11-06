@@ -31,6 +31,7 @@ export const analysesService = {
     } else {
       body.set(API_METRIC_FILE_FIELD.name, input.api_metric);
     }
+    if (input.schema !== AnalysisSchema.DATABASE && input.addOn) body.set('addOn', input.addOn);
     const { data } = await apiClient.post<{ id: string }>('/analyses', body);
     return data;
   },

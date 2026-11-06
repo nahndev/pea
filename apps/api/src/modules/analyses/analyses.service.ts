@@ -25,6 +25,7 @@ import type {
 } from "@tomato/types";
 import type { Analysis } from "../../generated/client";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
+import { AddOnsService } from "../add-ons/add-ons.service";
 import { BranchesService } from "../branches/branches.service";
 import { DatabasesService } from "../databases/databases.service";
 import { StorageService } from "../files/storage.service";
@@ -41,11 +42,12 @@ export class AnalysesService {
     private readonly branchesService: BranchesService,
     private readonly storageService: StorageService,
     private readonly databasesService: DatabasesService,
+    private readonly addOnsService: AddOnsService,
   ) {}
 
   @EmitEvent(AnalysisEvent.CREATED)
   async create(dto: CreateAnalysisDto, files: UploadedLogFiles = {}): Promise<Analysis> {
-    const { branch, schema, title, databaseId } = dto;
+    const { branch, schema, title, databaseId, addOn } = dto;
     if (schema === AnalysisSchema.DATABASE) {
       await this.databasesService.verify(databaseId!);
       const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
@@ -54,8 +56,9 @@ export class AnalysesService {
     const upload = files[LOG_FILE_FIELD_BY_SCHEMA[schema]]?.[0];
     if (!upload)
       throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
+    const log = addOn ? this.addOnsService.convert(addOn, schema, upload) : upload;
     const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
-    const file = await this.storageService.save(upload);
+    const file = await this.storageService.save(log);
     try {
       return await this.analysesRepository.create({ branchId, schema, title, file });
     } catch (error) {

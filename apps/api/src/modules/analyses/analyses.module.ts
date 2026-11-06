@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AddOnsModule } from '../add-ons/add-ons.module';
 import { FilesModule } from '../files/files.module';
 import { BranchesModule } from '../branches/branches.module';
 import { DatabaseConnectionsModule } from '../database-connections/database-connections.module';
@@ -10,7 +11,7 @@ import { AnalysesRepository } from './analyses.repository';
 import { AnalysesService } from './analyses.service';
 
 @Module({
-  imports: [BranchesModule, FilesModule, DatabaseConnectionsModule, DatabasesModule],
+  imports: [AddOnsModule, BranchesModule, FilesModule, DatabaseConnectionsModule, DatabasesModule],
   controllers: [AnalysesController, BranchAnalysesController],
   providers: [AnalysesService, AnalysesRepository, AnalysisContextFactory],
   exports: [AnalysesService, AnalysisContextFactory],

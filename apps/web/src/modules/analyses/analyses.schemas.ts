@@ -1,4 +1,4 @@
-import { AnalysisSchema } from '@tomato/constants';
+import { AddOn, AnalysisSchema } from '@tomato/constants';
 import { z } from 'zod';
 import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { logFileSchema } from '@/shared/lib/log-file.schemas';
@@ -11,16 +11,20 @@ const commonShape = {
   title: requiredText(),
 };
 
+const addOnSchema = z.enum(Object.values(AddOn)).optional();
+
 const apiMetricAnalysisSchema = z.object({
   ...commonShape,
   schema: z.enum(analysisSchemaValues).exclude([AnalysisSchema.DATABASE, AnalysisSchema.BUG]),
   [API_METRIC_FILE_FIELD.name]: logFileSchema,
+  addOn: addOnSchema,
 });
 
 const bugAnalysisSchema = z.object({
   ...commonShape,
   schema: z.literal(AnalysisSchema.BUG),
   [BUG_LOG_FILE_FIELD.name]: logFileSchema,
+  addOn: addOnSchema,
 });
 
 const databaseAnalysisSchema = z.object({

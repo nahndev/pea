@@ -46,5 +46,5 @@ It is NDJSON: one JSON object per line, one line per logged error, with flat
 
 ## Producing the file
 
-`LeaneoExceptionsConvert` add-on (`/add-ons/leaneo-exceptions-convert`) converts a Monolog `exceptions.log`,
+Turn on the **Leaneo add-on** in the new analysis form to upload a Leaneo Monolog `exceptions.log` instead,
 see [add-ons.md](add-ons.md).

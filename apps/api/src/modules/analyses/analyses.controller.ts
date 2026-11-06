@@ -18,7 +18,7 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { AnalysisSchema } from "@tomato/constants";
+import { AddOn, AnalysisSchema } from "@tomato/constants";
 import { memoryStorage } from "multer";
 import { LogFileField, MAX_LOG_FILE_SIZE } from "./analyses.constants";
 import { AnalysesService } from "./analyses.service";
@@ -43,6 +43,7 @@ export class AnalysesController {
         [LogFileField.API_METRIC]: { type: "string", format: "binary", description: "Required when schema is API or QUERY" },
         [LogFileField.BUG_LOG]: { type: "string", format: "binary", description: "Required when schema is BUG" },
         databaseId: { type: "string", format: "uuid", description: "Required when schema is DATABASE" },
+        addOn: { type: "string", enum: Object.values(AddOn), description: "Converts the uploaded log from this add-on's format" },
       },
     },
   })

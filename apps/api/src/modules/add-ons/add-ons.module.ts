@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { LeaneoExceptionsConvertController } from './leaneo-exceptions-convert/leaneo-exceptions-convert.controller';
+import { AddOnsService } from './add-ons.service';
 import { LeaneoExceptionsConvertService } from './leaneo-exceptions-convert/leaneo-exceptions-convert.service';
-import { LeaneoSlowApiConvertController } from './leaneo-slow-api-convert/leaneo-slow-api-convert.controller';
 import { LeaneoSlowApiConvertService } from './leaneo-slow-api-convert/leaneo-slow-api-convert.service';
 
 @Module({
-  controllers: [LeaneoSlowApiConvertController, LeaneoExceptionsConvertController],
-  providers: [LeaneoSlowApiConvertService, LeaneoExceptionsConvertService],
+  providers: [AddOnsService, LeaneoSlowApiConvertService, LeaneoExceptionsConvertService],
+  exports: [AddOnsService],
 })
 export class AddOnsModule {}

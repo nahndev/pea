@@ -41,6 +41,12 @@ describe('createAnalysisSchema', () => {
     expect(messages({ ...base, schema: 'API', api_metric: big })).toContain('api_metric:too_large');
   });
 
+  it('accepts the Leaneo add-on and rejects an unknown one', () => {
+    expect(createAnalysisSchema.parse({ ...base, schema: 'API', api_metric: file(), addOn: 'LEANEO' })).toMatchObject({ addOn: 'LEANEO' });
+    expect(createAnalysisSchema.parse({ ...base, schema: 'BUG', bug_log: file(), addOn: 'LEANEO' })).toMatchObject({ addOn: 'LEANEO' });
+    expect(messages({ ...base, schema: 'API', api_metric: file(), addOn: 'NOPE' })).toContain('addOn:invalid_value');
+  });
+
   describe('bug', () => {
     it('accepts a bug log', () => {
       expect(createAnalysisSchema.parse({ ...base, schema: 'BUG', bug_log: file() })).toMatchObject({ schema: 'BUG' });

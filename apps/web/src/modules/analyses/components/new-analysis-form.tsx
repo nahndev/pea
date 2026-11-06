@@ -1,7 +1,7 @@
 'use client';
 
-import { AnalysisSchema } from '@tomato/constants';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@tomato/ui';
+import { AddOn, AnalysisSchema } from '@tomato/constants';
+import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from '@tomato/ui';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
@@ -35,6 +35,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
   const [schema, setSchema] = useState<AnalysisSchema>(initialSchema);
   const [databaseId, setDatabaseId] = useState('');
   const [logFile, setLogFile] = useState<File>();
+  const [isLeaneo, setIsLeaneo] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isDatabase = schema === AnalysisSchema.DATABASE;
@@ -51,7 +52,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
     const raw = {
       ...Object.fromEntries(form),
       schema,
-      ...(logFileField ? { [logFileField.name]: logFile } : { databaseId }),
+      ...(logFileField ? { [logFileField.name]: logFile, addOn: isLeaneo ? AddOn.LEANEO : undefined } : { databaseId }),
     };
     const parsed = createAnalysisSchema.safeParse(raw);
     if (!parsed.success) {
@@ -94,8 +95,15 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
           <FieldError id="title-error" message={fieldErrors.title} />
         </div>
         {logFileField ? (
+          <div className="flex items-center gap-3">
+            <Switch id="leaneo" checked={isLeaneo} onCheckedChange={setIsLeaneo} disabled={isPending} />
+            <Label htmlFor="leaneo">Leaneo add-on</Label>
+          </div>
+        ) : null}
+        {logFileField ? (
           <LogFileInput
             field={logFileField}
+            isLeaneo={isLeaneo}
             value={logFile}
             onChange={(file) => {
               setLogFile(file);
