@@ -11,7 +11,7 @@ import { PageHeader } from '@/shared/components/page-header';
 import { ANALYSIS_SCHEMA_LABEL, DEFAULT_ANALYSIS_SCHEMA, analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { LOG_FILE_ERRORS } from '@/shared/lib/log-file.constants';
 import { DatabaseSelect } from '@/modules/databases';
-import { LOG_FILE_FIELD_BY_SCHEMA } from '../analyses.constants';
+import { LEANEO_ADD_ON, LOG_FILE_FIELD_BY_SCHEMA } from '../analyses.constants';
 import { createAnalysisSchema } from '../analyses.schemas';
 import { useCreateAnalysis } from '../hooks/use-analyses';
 import { LogFileInput } from './log-file-input';
@@ -95,15 +95,19 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
           <FieldError id="title-error" message={fieldErrors.title} />
         </div>
         {logFileField ? (
-          <div className="flex items-center gap-3">
-            <Switch id="leaneo" checked={isLeaneo} onCheckedChange={setIsLeaneo} disabled={isPending} />
-            <Label htmlFor="leaneo">Leaneo add-on</Label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <Switch id="leaneo" checked={isLeaneo} onCheckedChange={setIsLeaneo} disabled={isPending} aria-describedby="leaneo-hint" />
+              <Label htmlFor="leaneo">{LEANEO_ADD_ON.label}</Label>
+            </div>
+            <p id="leaneo-hint" className="text-xs text-muted-foreground">
+              {LEANEO_ADD_ON.hint}
+            </p>
           </div>
         ) : null}
         {logFileField ? (
           <LogFileInput
             field={logFileField}
-            isLeaneo={isLeaneo}
             value={logFile}
             onChange={(file) => {
               setLogFile(file);

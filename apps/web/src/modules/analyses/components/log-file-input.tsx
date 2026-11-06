@@ -4,21 +4,20 @@ import type { LOG_FILE_FIELD_BY_SCHEMA } from '../analyses.constants';
 
 interface LogFileInputProps {
   field: (typeof LOG_FILE_FIELD_BY_SCHEMA)[keyof typeof LOG_FILE_FIELD_BY_SCHEMA];
-  isLeaneo: boolean;
   value?: File;
   onChange: (file?: File) => void;
   error?: string;
   disabled?: boolean;
 }
 
-export function LogFileInput({ field: { name, label, hint, leaneo }, isLeaneo, ...props }: LogFileInputProps) {
+export function LogFileInput({ field: { name, label, hint }, ...props }: LogFileInputProps) {
   return (
     <FileUploader
       id={name}
-      label={isLeaneo ? leaneo.label : label}
+      label={label}
       accept={LOG_FILE_ACCEPT}
       maxSize={MAX_LOG_FILE_SIZE}
-      hint={isLeaneo ? leaneo.hint : hint}
+      hint={hint}
       {...props}
     />
   );
