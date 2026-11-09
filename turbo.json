@@ -41,6 +41,16 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "start": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "API_URL"
+      ]
     }
   }
 }
