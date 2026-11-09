@@ -4,6 +4,7 @@ import { AppConfigModule } from '@tomato/config';
 import { HealthController } from './health/health.controller';
 import { BranchesModule } from './modules/branches/branches.module';
 import { AnalysisResultModule } from './modules/analysis-result/analysis-result.module';
+import { AddOnsModule } from './modules/add-ons/add-ons.module';
 import { AnalysesModule } from './modules/analyses/analyses.module';
 import { ConditionsModule } from './modules/conditions/conditions.module';
 import { DatabasesModule } from './modules/databases/databases.module';
@@ -19,6 +20,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     BranchesModule,
     AnalysesModule,
+    AddOnsModule,
     RulesModule,
     IssuesModule,
     MetricsModule,

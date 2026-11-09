@@ -1,26 +1,46 @@
 # Add-ons
 
-Add-ons let an analysis be created from a log in another tool's format. The new analysis form shows a switch
-per add-on for the log schemas (`API`, `QUERY`, `BUG`); when it is on, the uploaded file is the add-on's format and
-the server converts it before saving it as the analysis log.
+Add-ons let an analysis be created from a log in another tool's format. They work like editor extensions: each
+add-on is a folder that declares what it contributes in a manifest, and the API discovers the folders at startup.
 
-- Request: `POST /rest/analyses` with `addOn` (`AddOn` in `@tomato/constants`) next to the log file field
-- The converter is picked by add-on and schema in `AddOnsService` (`apps/api/src/modules/add-ons/add-ons.service.ts`)
-- Errors: `LOG_FILE_INVALID` when no line could be converted; skipped lines are dropped silently
+```
+apps/api/src/modules/add-ons/plugins/<id>/
+  index.ts             default export: AddOnPlugin = { manifest, converters }
+  <id>.manifest.ts     AddOnManifest (@tomato/types): id, version, label, description, converters[]
+  *.converter.ts       one LineConverter per manifest converter
+```
 
-| Add-on   | Schema           | Upload           | Converter                 |
-| -------- | ---------------- | ---------------- | ------------------------- |
-| `LEANEO` | `API`, `QUERY`   | `slow_api.log`   | LeaneoSlowApiConvert      |
-| `LEANEO` | `BUG`            | `exceptions.log` | LeaneoExceptionsConvert   |
+- `AddOnRegistry` loads every `plugins/*/index` and checks each manifest: unique id, at most one converter per schema,
+  an implementation for every declared converter. A broken add-on stops the API at startup.
+- `GET /rest/add-ons` returns the manifests. The new analysis form shows one switch per add-on that converts the
+  selected schema, with the converter `input` and `hint`; nothing in the web app names an add-on.
+- `POST /rest/analyses` takes `addOn` (an add-on id) next to the log file. Unknown id or schema not converted:
+  `ADD_ON_NOT_FOUND`. No line converted: `LOG_FILE_INVALID`.
 
-Each converter lives in its own folder, `apps/api/src/modules/add-ons/<slug>/` (service, constants, types, specs).
+## Converter contract
 
-## LeaneoSlowApiConvert
+```ts
+type LineConverter = (line: string) => object | null;
+```
+
+One input line in, one output record out, `null` (or a thrown error) to skip the line. The host
+(`convert-lines.ts`) reads the upload line by line, skips blank lines, writes each record as one NDJSON line and
+counts converted and skipped lines. Uploads are written to a temporary folder by multer and streamed from disk to
+storage, so a 50 MB log is never held in memory; the temporary files are removed when the request ends.
+
+## Leaneo
+
+| Converter    | Schemas        | Upload           | Output                       |
+| ------------ | -------------- | ---------------- | ---------------------------- |
+| `slow-api`   | `API`, `QUERY` | `slow_api.log`   | [api_metric](api_metric.md) |
+| `exceptions` | `BUG`          | `exceptions.log` | [bug_log](bug_log.md)       |
+
+### `slow-api`
 
 Converts a `slow_api.log` file to the NDJSON format of the `api_metric` log ([api_metric.md](api_metric.md)),
-used by `LEANEO` for the `API` and `QUERY` schemas.
+for the `API` and `QUERY` schemas.
 
-### Input
+#### Input
 
 One JSON record per line:
 
@@ -28,7 +48,7 @@ One JSON record per line:
 {"message": "API response time", "context": {"request": {"url": "/api/activite_equipement/gets", "method": "GET"}, "IPs": ["172.71.232.3"], "user": "someone@example.com", "requestTime: ": 1793216768.344719, "responseTime": 1793216775.601549, "elapsedMilleSecond": 7257}, "level": 500, "level_name": "CRITICAL", "datetime": "2026-10-28T19:46:15.601578+00:00"}
 ```
 
-### Mapping
+#### Mapping
 
 One line in, one `api_metric` line out.
 
@@ -45,17 +65,17 @@ Not carried over: `user`, `IPs`, the request time and the free-form fields, so n
 
 Lines that are blank, not valid JSON, or missing the url, method, duration or a response time are skipped and counted.
 
-### Example
+#### Example
 
 `GET /api/process/generate-pdf-wopi/87472/1/1/1018?timeZone=-60` taking 5378 ms becomes route
 `/api/process/generate-pdf-wopi/{id}/{id}/{id}/{id}` and `ms` 5378.
 
-## LeaneoExceptionsConvert
+### `exceptions`
 
 Converts a Monolog `exceptions.log` file to the NDJSON format of the bug log ([bug_log.md](bug_log.md)),
-used by `LEANEO` for the `BUG` schema.
+for the `BUG` schema.
 
-### Mapping
+#### Mapping
 
 One line in, one `bug_log` line out.
 
@@ -80,8 +100,9 @@ Lines that are blank, not valid JSON, or have neither an exception class nor a m
 
 ## Adding an add-on
 
-1. Add a key to `AddOn` in `@tomato/constants`.
-2. Create `apps/api/src/modules/add-ons/<slug>/` with a service implementing `LogConverter`, provide it in `AddOnsModule`
-   and map it per schema in `AddOnsService`.
-3. Add the switch and the upload label/hint (`LOG_FILE_FIELD_BY_SCHEMA`) to the new analysis form.
-4. Add a section to this file.
+1. Create `apps/api/src/modules/add-ons/plugins/<id>/` with a manifest, one `LineConverter` per converter and an
+   `index.ts` default-exporting the `AddOnPlugin`.
+2. Add specs for the converters (`convertWith` in `add-ons.testing.ts` runs one the way uploads are converted).
+3. Add a section to this file.
+
+No other module, constant or web file changes.

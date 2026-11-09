@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { EventEmitter2 } from "@nestjs/event-emitter";
-import { AddOn, AnalysisEvent, AnalysisSchema, ErrorCode } from "@tomato/constants";
+import { AnalysisEvent, AnalysisSchema, ErrorCode } from "@tomato/constants";
 import { AddOnsService } from "../add-ons/add-ons.service";
 import { BranchesService } from "../branches/branches.service";
 import { DatabasesService } from "../databases/databases.service";
@@ -80,18 +80,19 @@ describe("AnalysesService", () => {
     expect(result).toBe(analysis);
   });
 
-  it("converts the upload with the add-on before saving it", async () => {
-    const converted = { ...UPLOAD, originalname: "converted" } as Express.Multer.File;
-    addOnsService.convert.mockReturnValue(converted);
+  it("stores the upload converted by the add-on instead of the raw file", async () => {
+    const converted: StoredFile = { file: "a.jsonl", path: "converted" };
+    addOnsService.convert.mockResolvedValue(converted);
     analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
 
     await analysesService.create(
-      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1", addOn: AddOn.LEANEO },
+      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1", addOn: "leaneo" },
       { bug_log: [UPLOAD] },
     );
 
-    expect(addOnsService.convert).toHaveBeenCalledWith(AddOn.LEANEO, AnalysisSchema.BUG, UPLOAD);
-    expect(storageService.save).toHaveBeenCalledWith(converted);
+    expect(addOnsService.convert).toHaveBeenCalledWith("leaneo", AnalysisSchema.BUG, UPLOAD);
+    expect(storageService.save).not.toHaveBeenCalled();
+    expect(analysesRepository.create).toHaveBeenCalledWith(expect.objectContaining({ file: converted }));
   });
 
   it("saves the upload as is without an add-on", async () => {

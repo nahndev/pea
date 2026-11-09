@@ -1,4 +1,4 @@
-import { AddOn, AnalysisSchema } from '@tomato/constants';
+import { AnalysisSchema } from '@tomato/constants';
 import { Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
 
@@ -27,6 +27,8 @@ export class CreateAnalysisDto {
   databaseId?: string;
 
   @IsOptional()
-  @IsIn(Object.values(AddOn))
-  addOn?: AddOn;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(64)
+  addOn?: string;
 }

@@ -1,4 +1,4 @@
-import { ID_PLACEHOLDER, ID_SEGMENT } from './add-ons.constants';
+import { ID_PLACEHOLDER, ID_SEGMENT } from './leaneo.constants';
 
 /** Path of a url without query string, numeric and uuid segments as `{id}` */
 export const toRoute = (url: string): string => {

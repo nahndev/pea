@@ -33,3 +33,8 @@ export const MESSAGE_REPLACEMENTS: readonly [RegExp, string][] = [
   [/\b[0-9a-f]{16,}\b/gi, '{id}'],
   [/\s+/g, ' '],
 ];
+
+export const ID_SEGMENT = /^(-?\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+export const ID_PLACEHOLDER = '{id}';
+
+export const MS_PER_SECOND = 1000;

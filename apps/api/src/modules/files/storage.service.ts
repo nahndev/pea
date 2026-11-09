@@ -3,8 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import type { Env } from '@tomato/config';
 import { ErrorCode } from '@tomato/constants';
 import { randomUUID } from 'node:crypto';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { copyFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 export interface StoredFile {
   file: string;
@@ -19,16 +22,30 @@ export class StorageService {
     this.rootDir = resolve(configService.get('UPLOAD_DIR', { infer: true }));
   }
 
-  async save({ originalname, buffer }: Express.Multer.File): Promise<StoredFile> {
+  /** Stores an upload kept in memory or on disk */
+  save({ originalname, buffer, path }: Express.Multer.File): Promise<StoredFile> {
+    return this.write(originalname, (target) => (path ? copyFile(path, target) : writeFile(target, buffer)));
+  }
+
+  saveStream(file: string, source: Readable): Promise<StoredFile> {
+    return this.write(file, (target) => pipeline(source, createWriteStream(target)));
+  }
+
+  /** Reads an upload kept in memory or on disk */
+  open({ buffer, path }: Express.Multer.File): Readable {
+    return path ? createReadStream(path) : Readable.from([buffer]);
+  }
+
+  private async write(file: string, writeTo: (target: string) => Promise<void>): Promise<StoredFile> {
     await mkdir(this.rootDir, { recursive: true });
     const path = randomUUID();
     try {
-      await writeFile(this.resolve(path), buffer);
+      await writeTo(this.resolve(path));
     } catch (error) {
       await this.remove([{ path }]).catch(() => undefined);
       throw error;
     }
-    return { file: originalname, path };
+    return { file, path };
   }
 
   async saveMany(files: Express.Multer.File[]): Promise<StoredFile[]> {

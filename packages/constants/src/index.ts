@@ -10,7 +10,6 @@ export * from './metric-unit.constants';
 export * from './metric-condition-operator.constants';
 export * from './metric-evaluation-status.constants';
 export * from './theme.constants';
-export * from './add-on.constants';
 export * from './subject-type.constants';
 export * from './metric-condition-aggregate.constants';
 export * from './database-connection-mode.constants';

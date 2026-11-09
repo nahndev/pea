@@ -7,3 +7,4 @@ export * from './metric.types';
 export * from './rule.types';
 export * from './condition.types';
 export * from './database.types';
+export * from './add-on.types';

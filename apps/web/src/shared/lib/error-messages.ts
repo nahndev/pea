@@ -26,6 +26,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.LOG_FILE_REQUIRED]: 'A log file is required.',
   [ErrorCode.LOG_FILE_INVALID]: 'The log file is invalid.',
   [ErrorCode.LOG_FILE_DUPLICATED]: 'The log file was already uploaded.',
+  [ErrorCode.ADD_ON_NOT_FOUND]: 'This add-on does not exist or does not support this schema.',
   [ErrorCode.DATABASE_CONNECTION_FAILED]: 'Unable to connect to the database. Check the connection details.',
   [ErrorCode.DATABASE_HOST_UNREACHABLE]: 'The host cannot be reached. Check the host and port.',
   [ErrorCode.DATABASE_CONNECTION_TIMEOUT]: 'The connection timed out. Check that the server accepts connections from this app.',

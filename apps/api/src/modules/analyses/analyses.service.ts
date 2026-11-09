@@ -56,10 +56,9 @@ export class AnalysesService {
     const upload = files[LOG_FILE_FIELD_BY_SCHEMA[schema]]?.[0];
     if (!upload)
       throw new BadRequestException({ code: ErrorCode.LOG_FILE_REQUIRED });
-    const log = addOn ? this.addOnsService.convert(addOn, schema, upload) : upload;
-    const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
-    const file = await this.storageService.save(log);
+    const file = addOn ? await this.addOnsService.convert(addOn, schema, upload) : await this.storageService.save(upload);
     try {
+      const { id: branchId } = await this.branchesService.findOrCreateByName(branch);
       return await this.analysesRepository.create({ branchId, schema, title, file });
     } catch (error) {
       await this.storageService.remove([file]).catch(() => undefined);

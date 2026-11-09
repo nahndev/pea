@@ -1,34 +1,52 @@
-import { AddOn, AnalysisSchema } from '@tomato/constants';
+import { BadRequestException } from '@nestjs/common';
+import { AnalysisSchema, ErrorCode } from '@tomato/constants';
+import { Readable } from 'node:stream';
+import type { StorageService, StoredFile } from '../files/storage.service';
+import type { AddOnRegistry } from './add-on.registry';
 import { AddOnsService } from './add-ons.service';
-import type { LeaneoExceptionsConvertService } from './leaneo-exceptions-convert/leaneo-exceptions-convert.service';
-import type { LeaneoSlowApiConvertService } from './leaneo-slow-api-convert/leaneo-slow-api-convert.service';
 
-const UPLOAD = { originalname: 'raw.log', buffer: Buffer.from('raw'), size: 3 } as Express.Multer.File;
-const RESULT = { content: 'converted\n', converted: 1, skipped: 0 };
+const UPLOAD = { originalname: 'raw.log' } as Express.Multer.File;
+const STORED: StoredFile = { file: 'raw.log', path: 'p-1' };
 
 describe('AddOnsService', () => {
-  const slowApi = { convert: jest.fn().mockReturnValue(RESULT) };
-  const exceptions = { convert: jest.fn().mockReturnValue(RESULT) };
-  const addOnsService = new AddOnsService(
-    slowApi as unknown as LeaneoSlowApiConvertService,
-    exceptions as unknown as LeaneoExceptionsConvertService,
-  );
+  let written: string;
+  let registry: jest.Mocked<Pick<AddOnRegistry, 'list' | 'converterFor'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'open' | 'saveStream' | 'remove'>>;
+  let addOnsService: AddOnsService;
 
-  beforeEach(() => jest.clearAllMocks());
+  const uploadOf = (text: string) => storageService.open.mockReturnValue(Readable.from([Buffer.from(text)]));
 
-  it.each([AnalysisSchema.API, AnalysisSchema.QUERY])('converts a Leaneo slow api log for %s', (schema) => {
-    const file = addOnsService.convert(AddOn.LEANEO, schema, UPLOAD);
-
-    expect(slowApi.convert).toHaveBeenCalledWith(UPLOAD);
-    expect(exceptions.convert).not.toHaveBeenCalled();
-    expect(file).toMatchObject({ originalname: 'raw.log', size: RESULT.content.length });
-    expect(file.buffer.toString()).toBe(RESULT.content);
+  beforeEach(() => {
+    written = '';
+    registry = { list: jest.fn(), converterFor: jest.fn().mockReturnValue((line: string) => (line === 'bad' ? null : { line })) };
+    storageService = {
+      open: jest.fn(),
+      saveStream: jest.fn(async (_file: string, source: Readable) => {
+        for await (const chunk of source) written += String(chunk);
+        return STORED;
+      }),
+      remove: jest.fn().mockResolvedValue(undefined),
+    };
+    addOnsService = new AddOnsService(registry as unknown as AddOnRegistry, storageService as unknown as StorageService);
   });
 
-  it('converts a Leaneo exceptions log for BUG', () => {
-    addOnsService.convert(AddOn.LEANEO, AnalysisSchema.BUG, UPLOAD);
+  it('streams the upload through the converter of the add-on into storage', async () => {
+    uploadOf('a\nbad\nb\n');
 
-    expect(exceptions.convert).toHaveBeenCalledWith(UPLOAD);
-    expect(slowApi.convert).not.toHaveBeenCalled();
+    await expect(addOnsService.convert('leaneo', AnalysisSchema.API, UPLOAD)).resolves.toBe(STORED);
+
+    expect(registry.converterFor).toHaveBeenCalledWith('leaneo', AnalysisSchema.API);
+    expect(storageService.open).toHaveBeenCalledWith(UPLOAD);
+    expect(storageService.saveStream).toHaveBeenCalledWith('raw.log', expect.any(Readable));
+    expect(written).toBe('{"line":"a"}\n{"line":"b"}\n');
+  });
+
+  it('removes the output and throws LOG_FILE_INVALID when no line converts', async () => {
+    uploadOf('bad\n\n');
+
+    const error = await addOnsService.convert('leaneo', AnalysisSchema.API, UPLOAD).catch((e: BadRequestException) => e);
+
+    expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.LOG_FILE_INVALID });
+    expect(storageService.remove).toHaveBeenCalledWith([STORED]);
   });
 });

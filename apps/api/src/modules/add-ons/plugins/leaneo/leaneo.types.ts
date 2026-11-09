@@ -10,3 +10,9 @@ export interface BugEvent {
   'error.message'?: string;
   'error.stack_trace'?: string;
 }
+export interface SlowApiRecord {
+  url: string;
+  method: string;
+  durationMs: number;
+  endSeconds: number;
+}

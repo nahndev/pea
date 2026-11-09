@@ -1,7 +1,8 @@
 import { ConfigService } from '@nestjs/config';
-import { mkdtemp, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import { StorageService } from './storage.service';
 
 const multerFile = (originalname: string, content = 'x') =>
@@ -23,6 +24,33 @@ describe('StorageService', () => {
 
     expect(stored.file).toBe('b.jsonl');
     await expect(readFile(storageService.resolve(stored.path), 'utf8')).resolves.toBe('select 1');
+  });
+
+  it('saves an upload kept on disk', async () => {
+    const path = join(dir, 'upload.tmp');
+    await writeFile(path, 'on disk');
+
+    const stored = await storageService.save({ originalname: 'a.log', path } as Express.Multer.File);
+
+    await expect(readFile(storageService.resolve(stored.path), 'utf8')).resolves.toBe('on disk');
+  });
+
+  it('saves a stream and reads an upload back', async () => {
+    const stored = await storageService.saveStream('a.log', Readable.from(['a\n', 'b\n']));
+    const upload = { path: storageService.resolve(stored.path) } as Express.Multer.File;
+
+    const chunks: Buffer[] = [];
+    for await (const chunk of storageService.open(upload)) chunks.push(chunk as Buffer);
+
+    expect(stored.file).toBe('a.log');
+    expect(Buffer.concat(chunks).toString()).toBe('a\nb\n');
+  });
+
+  it('removes a partly written stream that fails', async () => {
+    const source = new Readable({ read() { this.destroy(new Error('broken')); } });
+
+    await expect(storageService.saveStream('a.log', source)).rejects.toThrow('broken');
+    await expect(readdir(dir)).resolves.toEqual([]);
   });
 
   it('never uses the uploaded name as the stored path', async () => {

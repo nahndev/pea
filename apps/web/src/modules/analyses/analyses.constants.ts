@@ -24,11 +24,6 @@ export const BUG_LOG_FILE_FIELD = {
   hint: 'NDJSON, one error per line: {"@timestamp","log.level","message","error.type","error.message","error.stack_trace","http.response.status_code"…}. Used for metrics and issues.',
 } as const;
 
-export const LEANEO_ADD_ON = {
-  label: 'Leaneo add-on',
-  hint: 'Upload a Leaneo slow_api.log (API, Query) or exceptions.log (Bug); the server converts it on upload.',
-} as const;
-
 export const LOG_FILE_FIELD_BY_SCHEMA = {
   [AnalysisSchema.API]: API_METRIC_FILE_FIELD,
   [AnalysisSchema.QUERY]: API_METRIC_FILE_FIELD,
