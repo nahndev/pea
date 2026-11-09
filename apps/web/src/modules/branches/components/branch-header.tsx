@@ -8,6 +8,7 @@ import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
 import { buildHref } from '@/shared/lib/pagination';
 import { useBranch } from '../hooks/use-branches';
+import { DeleteBranchDialog } from './delete-branch-dialog';
 
 interface BranchHeaderProps {
   branchId: string;
@@ -25,9 +26,12 @@ export function BranchHeader({ branchId, schema }: BranchHeaderProps) {
       <PageHeader title={data.name} description="Analysis results for this branch, newest first.">
         <Breadcrumbs entries={[{ label: 'Branches', href: '/branches' }, { label: data.name }]} />
       </PageHeader>
-      <Link href={buildHref('/analyses/new', { branch: data.name, schema })} className={buttonVariants({ variant: 'outlined', size: 'sm' })}>
-        New analysis
-      </Link>
+      <div className="flex gap-2">
+        <Link href={buildHref('/analyses/new', { branch: data.name, schema })} className={buttonVariants({ variant: 'outlined', size: 'sm' })}>
+          New analysis
+        </Link>
+        <DeleteBranchDialog branch={data} />
+      </div>
     </div>
   );
 }

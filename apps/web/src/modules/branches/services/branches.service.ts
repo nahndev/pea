@@ -26,4 +26,8 @@ export const branchesService = {
     const { data } = await apiClient.post<Branch>('/branches', input);
     return data;
   },
+
+  async remove(id: string) {
+    await apiClient.delete(`/branches/${id}`);
+  },
 };

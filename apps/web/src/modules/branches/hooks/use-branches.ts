@@ -21,3 +21,12 @@ export const useCreateBranch = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['branches'] }),
   });
 };
+
+export const useDeleteBranch = (branchId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => branchesService.remove(branchId),
+    onSuccess: () => queryClient.removeQueries({ queryKey: ['branches', branchId] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['branches', 'list'] }),
+  });
+};

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
@@ -37,5 +38,13 @@ export class BranchesController {
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     const { id: branchId, name } = await this.branchesService.findOne(id);
     return { id: branchId, name };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse()
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.branchesService.remove(id);
   }
 }

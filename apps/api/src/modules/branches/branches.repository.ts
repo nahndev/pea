@@ -31,6 +31,15 @@ export class BranchesRepository {
     return this.prismaService.branch.create({ data: { name } });
   }
 
+  /** Deletes the branch with its analyses and returns their stored log paths */
+  delete(id: string): Promise<{ path: string }[]> {
+    return this.prismaService.$transaction(async (tx) => {
+      const files = await tx.apiAnalysisData.findMany({ where: { analysis: { branchId: id } }, select: { path: true } });
+      await tx.branch.delete({ where: { id } });
+      return files;
+    });
+  }
+
   async findActivities(
     search: string | undefined,
     limit: number,

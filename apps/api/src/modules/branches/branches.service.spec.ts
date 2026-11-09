@@ -1,6 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ErrorCode, SortOrder } from '@tomato/constants';
 import { Prisma } from '../../generated/client';
+import type { StorageService } from '../files/storage.service';
 import { BranchesRepository } from './branches.repository';
 import { BranchesService } from './branches.service';
 
@@ -10,7 +11,7 @@ describe('BranchesService', () => {
 
   beforeEach(() => {
     branchesRepository = { upsertByName: jest.fn() };
-    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository);
+    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository, {} as StorageService);
   });
 
   it('finds or creates by name through a single upsert', async () => {
@@ -26,7 +27,7 @@ describe('BranchesService create', () => {
 
   beforeEach(() => {
     branchesRepository = { create: jest.fn() };
-    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository);
+    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository, {} as StorageService);
   });
 
   it('creates the branch', async () => {
@@ -59,7 +60,7 @@ describe('BranchesService reads', () => {
 
   beforeEach(() => {
     branchesRepository = { findById: jest.fn(), findActivities: jest.fn() };
-    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository);
+    branchesService = new BranchesService(branchesRepository as unknown as BranchesRepository, {} as StorageService);
   });
 
   it('throws BRANCH_NOT_FOUND for an unknown id', async () => {
@@ -96,5 +97,48 @@ describe('BranchesService reads', () => {
     const page = await branchesService.findAll({ limit: 10, offset: 0 });
 
     expect(page.items).toEqual([{ id: 'br-2', name: 'feat/y', analysisCount: 0, latestAnalysisAt: null }]);
+  });
+});
+
+describe('BranchesService remove', () => {
+  let branchesRepository: jest.Mocked<Pick<BranchesRepository, 'findById' | 'delete'>>;
+  let storageService: jest.Mocked<Pick<StorageService, 'remove'>>;
+  let branchesService: BranchesService;
+
+  beforeEach(() => {
+    branchesRepository = { findById: jest.fn(), delete: jest.fn() };
+    storageService = { remove: jest.fn() };
+    branchesService = new BranchesService(
+      branchesRepository as unknown as BranchesRepository,
+      storageService as unknown as StorageService,
+    );
+  });
+
+  it('deletes the branch and its stored log files', async () => {
+    branchesRepository.findById.mockResolvedValue({ id: 'br-1', name: 'feat/x' });
+    branchesRepository.delete.mockResolvedValue([{ path: 'a' }, { path: 'b' }]);
+    storageService.remove.mockResolvedValue();
+
+    await branchesService.remove('br-1');
+
+    expect(branchesRepository.delete).toHaveBeenCalledWith('br-1');
+    expect(storageService.remove).toHaveBeenCalledWith([{ path: 'a' }, { path: 'b' }]);
+  });
+
+  it('ignores file cleanup failures', async () => {
+    branchesRepository.findById.mockResolvedValue({ id: 'br-1', name: 'feat/x' });
+    branchesRepository.delete.mockResolvedValue([{ path: 'a' }]);
+    storageService.remove.mockRejectedValue(new Error('disk'));
+
+    await expect(branchesService.remove('br-1')).resolves.toBeUndefined();
+  });
+
+  it('throws BRANCH_NOT_FOUND without deleting', async () => {
+    branchesRepository.findById.mockResolvedValue(null);
+
+    const error = await branchesService.remove('missing').catch((e: NotFoundException) => e);
+
+    expect((error as NotFoundException).getResponse()).toEqual({ code: ErrorCode.BRANCH_NOT_FOUND });
+    expect(branchesRepository.delete).not.toHaveBeenCalled();
   });
 });

@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { ErrorCode } from '@tomato/constants';
 import type { BranchSummary, Paginated } from '@tomato/types';
 import { Prisma, type Branch } from '../../generated/client';
+import { StorageService } from '../files/storage.service';
 import { BranchesRepository } from './branches.repository';
 import { ListBranchesQueryDto } from './dto/list-branches-query.dto';
 
@@ -9,7 +10,10 @@ const UNIQUE_VIOLATION_CODE = 'P2002';
 
 @Injectable()
 export class BranchesService {
-  constructor(private readonly branchesRepository: BranchesRepository) {}
+  constructor(
+    private readonly branchesRepository: BranchesRepository,
+    private readonly storageService: StorageService,
+  ) {}
 
   findOrCreateByName(name: string): Promise<Branch> {
     return this.branchesRepository.upsertByName(name);
@@ -30,6 +34,12 @@ export class BranchesService {
     const branch = await this.branchesRepository.findById(id);
     if (!branch) throw new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND });
     return branch;
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    const files = await this.branchesRepository.delete(id);
+    await this.storageService.remove(files).catch(() => undefined);
   }
 
   async findAll({ search, limit, offset, ordering }: ListBranchesQueryDto): Promise<Paginated<BranchSummary>> {
