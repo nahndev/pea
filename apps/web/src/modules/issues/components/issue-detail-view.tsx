@@ -9,6 +9,7 @@ import { formatDateTime } from '@/shared/lib/format';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssue } from '../hooks/use-issues';
 import { RULE_TYPE_LABEL } from '../issues.constants';
+import { IssueCopyButton } from './issue-copy-button';
 import { IssueSubjectStatusSelect } from './issue-subject-status-select';
 
 interface IssueDetailViewProps {
@@ -24,12 +25,16 @@ export function IssueDetailView({ analysisId, issueId }: IssueDetailViewProps) {
 
   const { rule, subject, issueSubject } = data;
   const ruleLabel = RULE_TYPE_LABEL[rule.type];
+  const detail = data.description ?? rule.description;
 
   return (
     <section className="flex max-w-2xl flex-col gap-4">
-      <Breadcrumbs entries={[{ label: 'Issues', href: `/analyses/${analysisId}/issues` }, { label: ruleLabel }]} />
+      <div className="flex items-center justify-between gap-4">
+        <Breadcrumbs entries={[{ label: 'Issues', href: `/analyses/${analysisId}/issues` }, { label: ruleLabel }]} />
+        <IssueCopyButton text={`[${ruleLabel}] ${subject.description} - ${detail}`} />
+      </div>
       <div className="flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-card">
-        <p className="text-sm">{data.description ?? rule.description}</p>
+        <p className="text-sm">{detail}</p>
         <dl className="grid grid-cols-[max-content_1fr] items-center gap-x-6 gap-y-3 text-sm">
           <dt className="text-muted-foreground">Rule</dt>
           <dd>
