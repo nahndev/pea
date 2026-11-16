@@ -138,6 +138,7 @@ const CONDITIONS = [
   { schema: AnalysisSchema.BUG, metricType: MetricType.CRITICAL_ERROR_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.BUG, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.P95, operator: MetricConditionOperator.GT, threshold: 10000 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.PAGE_P95, operator: MetricConditionOperator.GT, threshold: 10000 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
 ];
