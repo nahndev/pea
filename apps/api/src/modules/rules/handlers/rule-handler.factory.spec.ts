@@ -21,6 +21,7 @@ import { SlowApiHandler } from './api/slow-api.handler';
 import { SlowRouteHandler } from './api/slow-route.handler';
 import { ErrorGroupHandler } from './bug/error-group.handler';
 import { ErrorEndpointHandler } from './bug/error-endpoint.handler';
+import { PageRuleHandler } from './frontend/page-rule.handler';
 
 describe('RuleHandlerFactory', () => {
   const latencyHandler = {} as LatencyHandler;
@@ -43,6 +44,7 @@ describe('RuleHandlerFactory', () => {
   const readWriteRatioHandler = {} as ReadWriteRatioHandler;
   const errorGroupHandler = {} as ErrorGroupHandler;
   const errorEndpointHandler = {} as ErrorEndpointHandler;
+  const pageRuleHandler = {} as PageRuleHandler;
   const ruleHandlerFactory = new RuleHandlerFactory(
     latencyHandler,
     rateHandler,
@@ -64,6 +66,7 @@ describe('RuleHandlerFactory', () => {
     readWriteRatioHandler,
     errorGroupHandler,
     errorEndpointHandler,
+    pageRuleHandler,
   );
 
   it.each([
@@ -130,6 +133,11 @@ describe('RuleHandlerFactory', () => {
     [RuleType.CRITICAL_ERROR, errorGroupHandler],
     [RuleType.FREQUENT_ERROR, errorGroupHandler],
     [RuleType.ERROR_ENDPOINT, errorEndpointHandler],
+    [RuleType.SLOW_PAGE, pageRuleHandler],
+    [RuleType.SLOW_VISIBLE_PAGE, pageRuleHandler],
+    [RuleType.LONG_FRAME_PAGE, pageRuleHandler],
+    [RuleType.CHATTY_PAGE, pageRuleHandler],
+    [RuleType.ABORTED_PAGE, pageRuleHandler],
   ])('returns the handler of %s', (type, handler) => {
     expect(ruleHandlerFactory.create(type)).toBe(handler);
   });

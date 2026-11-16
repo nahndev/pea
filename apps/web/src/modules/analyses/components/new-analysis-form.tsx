@@ -79,7 +79,7 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
         <div className="flex flex-col gap-2">
           <Label htmlFor="schema">Schema</Label>
           <Select value={schema} onValueChange={(value) => changeSchema(value as AnalysisSchema)}>
-            <SelectTrigger id="schema" className="w-40" aria-invalid={Boolean(fieldErrors.schema)}>
+            <SelectTrigger id="schema" className="w-56" aria-invalid={Boolean(fieldErrors.schema)}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

@@ -62,4 +62,14 @@ export class RuleConfigDto {
   @IsInt()
   @Min(1)
   minCount?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minLoads?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxRequests?: number;
 }

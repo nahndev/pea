@@ -3,7 +3,7 @@ import type { AnalysisDetail, AnalysisSummary, Paginated } from '@tomato/types';
 import { apiClient } from '@/shared/lib/api-client';
 import { toOffset } from '@/shared/lib/pagination';
 import { PAGE_SIZE } from '@/shared/lib/pagination.constants';
-import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD } from '../analyses.constants';
+import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, FRONTEND_METRIC_FILE_FIELD } from '../analyses.constants';
 import type { CreateAnalysisInput } from '../analyses.schemas';
 
 export const analysesService = {
@@ -28,6 +28,8 @@ export const analysesService = {
       body.set('databaseId', input.databaseId);
     } else if (input.schema === AnalysisSchema.BUG) {
       body.set(BUG_LOG_FILE_FIELD.name, input.bug_log);
+    } else if (input.schema === AnalysisSchema.FRONTEND) {
+      body.set(FRONTEND_METRIC_FILE_FIELD.name, input.frontend_metric);
     } else {
       body.set(API_METRIC_FILE_FIELD.name, input.api_metric);
     }

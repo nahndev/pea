@@ -4,6 +4,7 @@ import type { AddOnManifest } from '@tomato/types';
 export const LeaneoConverter = {
   SLOW_API: 'slow-api',
   EXCEPTIONS: 'exceptions',
+  FRONTEND_PERFORMANCE: 'frontend-performance',
 } as const;
 
 export type LeaneoConverter = (typeof LeaneoConverter)[keyof typeof LeaneoConverter];
@@ -25,6 +26,12 @@ export const LEANEO_MANIFEST: AddOnManifest = {
       schemas: [AnalysisSchema.BUG],
       input: 'exceptions.log',
       hint: 'Monolog JSON Lines with message, level_name, datetime and context.exception. Personal data is dropped.',
+    },
+    {
+      id: LeaneoConverter.FRONTEND_PERFORMANCE,
+      schemas: [AnalysisSchema.FRONTEND],
+      input: 'frontend_performance.log',
+      hint: 'Monolog JSON Lines with datetime and context.metric (route, status, duration, detail…). Session and user ids are dropped.',
     },
   ],
 };

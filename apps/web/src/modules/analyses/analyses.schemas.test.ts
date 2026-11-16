@@ -58,6 +58,16 @@ describe('createAnalysisSchema', () => {
     });
   });
 
+  describe('frontend', () => {
+    it('accepts a frontend metric log', () => {
+      expect(createAnalysisSchema.parse({ ...base, schema: 'FRONTEND', frontend_metric: file(), addOn: 'leaneo' })).toMatchObject({ schema: 'FRONTEND', addOn: 'leaneo' });
+    });
+
+    it('requires the frontend metric log, not the API metric log', () => {
+      expect(messages({ ...base, schema: 'FRONTEND', api_metric: file() })).toContain('frontend_metric:file_required');
+    });
+  });
+
   describe('database', () => {
     it('accepts a database without a file', () => {
       expect(createAnalysisSchema.parse({ ...base, schema: 'DATABASE', databaseId: 'db-1' })).toMatchObject({ schema: 'DATABASE', databaseId: 'db-1' });

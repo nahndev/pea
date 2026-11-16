@@ -68,6 +68,13 @@ const RULES = [
   { schema: AnalysisSchema.BUG, type: RuleType.CRITICAL_ERROR, description: 'Critical error', severity: Severity.HIGH, config: { minCount: 1 } },
   { schema: AnalysisSchema.BUG, type: RuleType.FREQUENT_ERROR, description: 'Frequent error', severity: Severity.MEDIUM, config: { minCount: 100 } },
   { schema: AnalysisSchema.BUG, type: RuleType.ERROR_ENDPOINT, description: 'Endpoint raising errors', severity: Severity.LOW, config: { minCount: 20 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.P50_FAILURE, description: 'P50 page load failure', severity: Severity.MEDIUM, config: { thresholdMs: 3000 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.P95_FAILURE, description: 'P95 page load failure', severity: Severity.HIGH, config: { thresholdMs: 10000 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.SLOW_PAGE, description: 'Slow page', severity: Severity.MEDIUM, config: { thresholdMs: 5000, minLoads: 5 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.SLOW_VISIBLE_PAGE, description: 'Slow first render', severity: Severity.MEDIUM, config: { thresholdMs: 2500, minLoads: 5 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.LONG_FRAME_PAGE, description: 'Janky page', severity: Severity.LOW, config: { thresholdMs: 1000, minLoads: 5 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.CHATTY_PAGE, description: 'Page with many requests', severity: Severity.LOW, config: { maxRequests: 50, minLoads: 5 } },
+  { schema: AnalysisSchema.FRONTEND, type: RuleType.ABORTED_PAGE, description: 'Often aborted page', severity: Severity.LOW, config: { maxPercent: 30, minLoads: 5 } },
 ];
 
 const METRICS = [
@@ -103,6 +110,20 @@ const METRICS = [
   { schema: AnalysisSchema.BUG, type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
   { schema: AnalysisSchema.BUG, type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
   { schema: AnalysisSchema.BUG, type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.P50, unit: MetricUnit.MILLISECOND, description: 'P50 page load duration' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.P90, unit: MetricUnit.MILLISECOND, description: 'P90 page load duration' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.P95, unit: MetricUnit.MILLISECOND, description: 'P95 page load duration' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.PAGE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 load duration per page' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.VISIBLE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 time to visible' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.LONG_FRAME_P95, unit: MetricUnit.MILLISECOND, description: 'P95 long frame time' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.REQUEST_COUNT_P95, unit: MetricUnit.COUNT, description: 'P95 requests per page load' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.PAGE_LOAD_COUNT, unit: MetricUnit.COUNT, description: 'Page loads' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.ABORTED_PAGE_LOAD_RATE, unit: MetricUnit.PERCENT, description: 'Aborted page loads' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.BLOCKER_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Blocker issues' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.HIGH_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'High issues' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.MEDIUM_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Medium issues' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.LOW_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Low issues' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.INFO_ISSUE_COUNT, unit: MetricUnit.COUNT, description: 'Info issues' },
 ];
 
 const CONDITIONS = [
@@ -116,6 +137,9 @@ const CONDITIONS = [
   { schema: AnalysisSchema.DATABASE, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.BUG, metricType: MetricType.CRITICAL_ERROR_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.BUG, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.P95, operator: MetricConditionOperator.GT, threshold: 10000 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
 ];
 
 async function main() {

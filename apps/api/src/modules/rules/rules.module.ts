@@ -21,6 +21,7 @@ import { QueryVariantsHandler } from './handlers/database/query-variants.handler
 import { ReadWriteRatioHandler } from './handlers/database/read-write-ratio.handler';
 import { ErrorGroupHandler } from './handlers/bug/error-group.handler';
 import { ErrorEndpointHandler } from './handlers/bug/error-endpoint.handler';
+import { PageRuleHandler } from './handlers/frontend/page-rule.handler';
 import { RulesController } from './rules.controller';
 import { RulesRepository } from './rules.repository';
 import { RulesService } from './rules.service';
@@ -51,6 +52,7 @@ import { RulesService } from './rules.service';
     ReadWriteRatioHandler,
     ErrorGroupHandler,
     ErrorEndpointHandler,
+    PageRuleHandler,
     RuleHandlerFactory,
   ],
   exports: [RulesService, RuleHandlerFactory],

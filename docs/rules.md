@@ -7,7 +7,7 @@ An analysis has one log file, the NDJSON request log described in [api_metric.md
 
 ## Schemas
 
-Every analysis, rule and metric has a `schema` (`API`, `QUERY` or `BUG`, constant `AnalysisSchema`). A condition has no column of its own: its schema is the schema of its metric.
+Every analysis, rule and metric has a `schema` (`API`, `QUERY`, `BUG`, `DATABASE` or `FRONTEND`, constant `AnalysisSchema`). A condition has no column of its own: its schema is the schema of its metric.
 An analysis only runs the rules, measures the metrics and evaluates the conditions of its own schema, so an analysis of a schema with no rules or metrics completes with no issue.
 `POST /analyses` takes a `schema` field next to `branch` and the log file; the list and trend endpoints of a branch (`GET /branches/:id/analyses`, `GET /branches/:id/metrics/trend`) take a `schema` query (default `API`),
 and `GET /rules` and `GET /metrics` accept it as a filter. A branch has many analyses; its page shows one tab per schema, each with its own trend chart.
@@ -85,6 +85,8 @@ so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
 | `maxPercent`  | Maximum allowed share of requests, in percent                |
 | `minRequests` | Per-route rules only: skip routes with fewer requests (default `10`) |
 | `minCount`    | Bug rules only: minimum occurrences of an error or endpoint  |
+| `minLoads`    | Frontend page rules only: skip pages with fewer loads        |
+| `maxRequests` | `CHATTY_PAGE` only: maximum requests per page load           |
 
 A rule with a missing or non-numeric required field produces no issue.
 
@@ -154,6 +156,28 @@ Issue examples:
 - `290 critical occurrences: Missing captcha`
 - `Raised 1556 times: Not Found`
 - `200 errors raised, 0 with a 5xx status`
+
+## Frontend pages
+
+`FRONTEND` analyses read a frontend metric log ([frontend_metric.md](frontend_metric.md)). The overall latency rules
+(`P50_FAILURE`…`MAX_LATENCY`) measure settled page loads; seeded: `P50_FAILURE` `3000` ms (medium), `P95_FAILURE` `10000` ms (high).
+
+The page rules create one issue per page (subject `PAGE`, its route), worst first, at most 100 per rule (`MAX_FRONTEND_ISSUES`).
+Pages with fewer than `minLoads` loads are ignored. Handler: `PageRuleHandler`.
+
+| Type                | Violation when                                    | Config                     | Default            |
+| ------------------- | ------------------------------------------------- | -------------------------- | ------------------ |
+| `SLOW_PAGE`         | page P95 load duration > `thresholdMs`            | `thresholdMs`, `minLoads`  | `5000` ms, `5`     |
+| `SLOW_VISIBLE_PAGE` | page P95 time to visible > `thresholdMs`          | `thresholdMs`, `minLoads`  | `2500` ms, `5`     |
+| `LONG_FRAME_PAGE`   | page P95 long frame time > `thresholdMs`          | `thresholdMs`, `minLoads`  | `1000` ms, `5`     |
+| `CHATTY_PAGE`       | page P95 requests per load > `maxRequests`        | `maxRequests`, `minLoads`  | `50`, `5`          |
+| `ABORTED_PAGE`      | share of aborted loads of the page > `maxPercent` | `maxPercent`, `minLoads`   | `30` %, `5`        |
+
+Issue examples:
+
+- `P95 load 11900.0ms exceeds threshold 5000ms`
+- `P95 57.5 requests per load exceeds 50`
+- `33.3% of loads aborted, above 30%`
 
 ## Seed data behaviour
 

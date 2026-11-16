@@ -25,6 +25,12 @@ export const METRIC_LABEL: Record<MetricType, string> = {
   [MetricType.CRITICAL_ERROR_COUNT]: 'Critical errors',
   [MetricType.ERROR_GROUP_COUNT]: 'Distinct errors',
   [MetricType.ERROR_OCCURRENCES]: 'Occurrences per error',
+  [MetricType.PAGE_P95]: 'P95 load duration per page',
+  [MetricType.VISIBLE_P95]: 'P95 time to visible',
+  [MetricType.LONG_FRAME_P95]: 'P95 long frame time',
+  [MetricType.REQUEST_COUNT_P95]: 'P95 requests per page load',
+  [MetricType.PAGE_LOAD_COUNT]: 'Page loads',
+  [MetricType.ABORTED_PAGE_LOAD_RATE]: 'Aborted page loads',
 };
 
 export const METRIC_UNIT_LABEL: Record<MetricUnit, string> = {

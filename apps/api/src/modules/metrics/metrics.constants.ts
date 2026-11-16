@@ -1,6 +1,12 @@
 import { MetricType, Severity } from '@tomato/constants';
 import { CACHE_HIT_RATIO_SQL } from '../database-connections/postgres-stats';
 import { BUG_LOG_GROUP_COLUMN, BUG_LOG_IS_CRITICAL_COLUMN } from '../files/bug-log-events';
+import {
+  FRONTEND_IS_ABORTED_COLUMN,
+  FRONTEND_LONG_FRAME_COLUMN,
+  FRONTEND_REQUEST_COUNT_COLUMN,
+  FRONTEND_VISIBLE_COLUMN,
+} from '../files/frontend-page-loads';
 
 /** Metric types shown as summary cards on an analysis */
 export const SUMMARY_METRIC_TYPES = [MetricType.P50, MetricType.P90, MetricType.P95] as const;
@@ -16,6 +22,7 @@ export const PERCENTILE_BY_METRIC_TYPE: ReadonlyMap<string, number> = new Map([
   [MetricType.P90, 0.9],
   [MetricType.P95, 0.95],
   [MetricType.ENDPOINT_P95, 0.95],
+  [MetricType.PAGE_P95, 0.95],
 ]);
 
 export const SEVERITY_BY_METRIC_TYPE: ReadonlyMap<string, Severity> = new Map([
@@ -47,4 +54,13 @@ export const BUG_LOG_AGGREGATE_BY_METRIC_TYPE: ReadonlyMap<string, string> = new
   [MetricType.ERROR_COUNT, 'count(*)'],
   [MetricType.CRITICAL_ERROR_COUNT, `count(*) FILTER (WHERE ${BUG_LOG_IS_CRITICAL_COLUMN})`],
   [MetricType.ERROR_GROUP_COUNT, `count(DISTINCT ${BUG_LOG_GROUP_COLUMN})`],
+]);
+
+/** Aggregate over the frontend_metric page loads of an analysis; a null value is not measured */
+export const FRONTEND_AGGREGATE_BY_METRIC_TYPE: ReadonlyMap<string, string> = new Map([
+  [MetricType.VISIBLE_P95, `quantile_cont(${FRONTEND_VISIBLE_COLUMN}, 0.95)`],
+  [MetricType.LONG_FRAME_P95, `quantile_cont(${FRONTEND_LONG_FRAME_COLUMN}, 0.95)`],
+  [MetricType.REQUEST_COUNT_P95, `quantile_cont(${FRONTEND_REQUEST_COUNT_COLUMN}, 0.95)`],
+  [MetricType.PAGE_LOAD_COUNT, 'count(*)'],
+  [MetricType.ABORTED_PAGE_LOAD_RATE, `100 * avg(${FRONTEND_IS_ABORTED_COLUMN}::int)`],
 ]);

@@ -2,7 +2,7 @@ import { AnalysisSchema } from '@tomato/constants';
 import { z } from 'zod';
 import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 import { logFileSchema } from '@/shared/lib/log-file.schemas';
-import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD } from './analyses.constants';
+import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, FRONTEND_METRIC_FILE_FIELD } from './analyses.constants';
 
 const requiredText = (max = 255) => z.string('required').trim().min(1, 'required').max(max, 'too_long');
 
@@ -15,7 +15,7 @@ const addOnSchema = z.string().min(1, 'invalid').max(64, 'invalid').optional();
 
 const apiMetricAnalysisSchema = z.object({
   ...commonShape,
-  schema: z.enum(analysisSchemaValues).exclude([AnalysisSchema.DATABASE, AnalysisSchema.BUG]),
+  schema: z.enum(analysisSchemaValues).exclude([AnalysisSchema.DATABASE, AnalysisSchema.BUG, AnalysisSchema.FRONTEND]),
   [API_METRIC_FILE_FIELD.name]: logFileSchema,
   addOn: addOnSchema,
 });
@@ -27,6 +27,13 @@ const bugAnalysisSchema = z.object({
   addOn: addOnSchema,
 });
 
+const frontendAnalysisSchema = z.object({
+  ...commonShape,
+  schema: z.literal(AnalysisSchema.FRONTEND),
+  [FRONTEND_METRIC_FILE_FIELD.name]: logFileSchema,
+  addOn: addOnSchema,
+});
+
 const databaseAnalysisSchema = z.object({
   ...commonShape,
   schema: z.literal(AnalysisSchema.DATABASE),
@@ -35,7 +42,7 @@ const databaseAnalysisSchema = z.object({
 
 export const createAnalysisSchema = z.discriminatedUnion(
   'schema',
-  [apiMetricAnalysisSchema, bugAnalysisSchema, databaseAnalysisSchema],
+  [apiMetricAnalysisSchema, bugAnalysisSchema, frontendAnalysisSchema, databaseAnalysisSchema],
   'required',
 );
 

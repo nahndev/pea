@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { AnalysisSchema } from '@tomato/constants';
 import type { Rule } from '../../../../generated/client';
 import type { AnalysisContext } from '../../../analyses/analyses.types';
-import { API_METRIC_DURATION_COLUMN, apiMetricRequests } from '../../../files/api-metric-requests';
 import { queryRows } from '../../../files/duckdb-query';
+import { logDurations } from '../../../files/log-durations';
 import { LATENCY_STAT_BY_RULE_TYPE } from '../../rules.constants';
 import type { RuleConfig } from '../../rules.types';
 import type { RuleHandler, RuleIssue } from '../rule-handler.types';
@@ -16,9 +16,8 @@ export class LatencyHandler implements RuleHandler {
     const { thresholdMs } = rule.config as RuleConfig;
     if (!stat || typeof thresholdMs !== 'number') return [];
 
-    const [row] = await queryRows(
-      `SELECT ${stat.sql(API_METRIC_DURATION_COLUMN)} AS value FROM ${apiMetricRequests(context.logPath)}`,
-    );
+    const { source, column } = logDurations(context.schema, context.logPath);
+    const [row] = await queryRows(`SELECT ${stat.sql(column)} AS value FROM ${source}`);
     if (row?.value === null || row?.value === undefined) return [];
 
     const value = Number(row.value);

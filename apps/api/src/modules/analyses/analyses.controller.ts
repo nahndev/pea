@@ -44,6 +44,7 @@ export class AnalysesController {
         title: { type: "string", minLength: 1, maxLength: 255 },
         [LogFileField.API_METRIC]: { type: "string", format: "binary", description: "Required when schema is API or QUERY" },
         [LogFileField.BUG_LOG]: { type: "string", format: "binary", description: "Required when schema is BUG" },
+        [LogFileField.FRONTEND_METRIC]: { type: "string", format: "binary", description: "Required when schema is FRONTEND" },
         databaseId: { type: "string", format: "uuid", description: "Required when schema is DATABASE" },
         addOn: { type: "string", description: "Id of an add-on (GET /add-ons) converting the uploaded log from its format" },
       },

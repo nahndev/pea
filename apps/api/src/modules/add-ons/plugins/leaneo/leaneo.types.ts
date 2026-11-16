@@ -16,3 +16,20 @@ export interface SlowApiRecord {
   durationMs: number;
   endSeconds: number;
 }
+
+/** One line of a frontend_metric file (docs/frontend_metric.md) */
+export interface PageLoad {
+  '@timestamp'?: string;
+  name?: string;
+  route?: string;
+  previousRoute?: string | null;
+  status?: string;
+  startTime?: number;
+  duration: number;
+  visibleDuration?: number;
+  requestCount?: number;
+  requestDuration?: number;
+  longFrameCount?: number;
+  longFrameDuration?: number;
+  addedNodes?: number;
+}

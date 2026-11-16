@@ -72,6 +72,11 @@ export const RULE_TYPE_LABEL: Record<RuleType, string> = {
   [RuleType.CRITICAL_ERROR]: 'Critical error',
   [RuleType.FREQUENT_ERROR]: 'Frequent error',
   [RuleType.ERROR_ENDPOINT]: 'Endpoint raising errors',
+  [RuleType.SLOW_PAGE]: 'Slow page',
+  [RuleType.SLOW_VISIBLE_PAGE]: 'Slow first render',
+  [RuleType.LONG_FRAME_PAGE]: 'Janky page',
+  [RuleType.CHATTY_PAGE]: 'Page with many requests',
+  [RuleType.ABORTED_PAGE]: 'Often aborted page',
 };
 
 export const ALL_FILTER = 'all';

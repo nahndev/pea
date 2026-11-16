@@ -5,6 +5,7 @@ import type { ComponentType } from 'react';
 import { ApiTrendChart } from './api-trend-chart';
 import { BugTrendChart } from './bug-trend-chart';
 import { DatabaseTrendChart } from './database-trend-chart';
+import { FrontendTrendChart } from './frontend-trend-chart';
 import type { TrendChartProps } from './metric-trend-chart';
 import { QueryTrendChart } from './query-trend-chart';
 
@@ -13,6 +14,7 @@ const TREND_CHART_BY_SCHEMA: Record<AnalysisSchema, ComponentType<TrendChartProp
   [AnalysisSchema.QUERY]: QueryTrendChart,
   [AnalysisSchema.BUG]: BugTrendChart,
   [AnalysisSchema.DATABASE]: DatabaseTrendChart,
+  [AnalysisSchema.FRONTEND]: FrontendTrendChart,
 };
 
 export function TrendChartBySchema({ schema, ...props }: TrendChartProps & { schema: AnalysisSchema }) {

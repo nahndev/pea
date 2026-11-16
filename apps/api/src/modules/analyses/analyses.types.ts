@@ -57,7 +57,7 @@ export interface MetricTrendPick {
 
 export interface ApiAnalysisContext {
   schema: Exclude<AnalysisSchema, typeof AnalysisSchema.DATABASE>;
-  /** Absolute path of the uploaded log: api_metric, or bug_log for `BUG` */
+  /** Absolute path of the uploaded log: api_metric, bug_log for `BUG` or frontend_metric for `FRONTEND` */
   logPath: string;
 }
 

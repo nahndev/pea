@@ -132,6 +132,18 @@ describe("AnalysesService", () => {
     expect(storageService.save).toHaveBeenCalledWith(bugLog);
   });
 
+  it("reads the frontend metric log of a FRONTEND analysis", async () => {
+    const frontendMetric = { fieldname: "frontend_metric", originalname: "frontend_metric.log" } as Express.Multer.File;
+    analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
+
+    await analysesService.create(
+      { branch: "feat/x", schema: AnalysisSchema.FRONTEND, title: "Nightly" },
+      { api_metric: [UPLOAD], frontend_metric: [frontendMetric] },
+    );
+
+    expect(storageService.save).toHaveBeenCalledWith(frontendMetric);
+  });
+
   it("rejects a BUG analysis sent with an API metric log only", async () => {
     await expect(
       codeOf(
@@ -393,6 +405,7 @@ describe("AnalysesService reads", () => {
         QUERY: 0,
         BUG: 0,
         DATABASE: 1,
+        FRONTEND: 0,
       });
       expect(analysesRepository.countBySchema).toHaveBeenCalledWith("br-1");
     });

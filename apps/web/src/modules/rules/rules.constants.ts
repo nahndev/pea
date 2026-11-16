@@ -13,11 +13,37 @@ export const RULE_CONFIG_FIELDS = {
   maxBytes: { label: 'Max size', unit: 'B', step: 1 },
   maxItems: { label: 'Max items', unit: '', step: 1 },
   minCount: { label: 'Min occurrences', unit: '', step: 1 },
+  minLoads: { label: 'Min page loads', unit: '', step: 1 },
+  maxRequests: { label: 'Max requests', unit: '', step: 1 },
 } as const;
 
 export type RuleConfigField = keyof typeof RULE_CONFIG_FIELDS;
 
 export const isRuleConfigField = (field: string): field is RuleConfigField => field in RULE_CONFIG_FIELDS;
+
+/** Frontend rules evaluated per page over its loads */
+export const PAGE_RULE_CONFIG: Partial<Record<RuleType, { fields: readonly RuleConfigField[]; hint: string }>> = {
+  [RuleType.SLOW_PAGE]: {
+    fields: ['thresholdMs', 'minLoads'],
+    hint: 'An issue is created for each page whose P95 load duration is above the threshold.',
+  },
+  [RuleType.SLOW_VISIBLE_PAGE]: {
+    fields: ['thresholdMs', 'minLoads'],
+    hint: 'An issue is created for each page whose P95 time until its content is visible is above the threshold.',
+  },
+  [RuleType.LONG_FRAME_PAGE]: {
+    fields: ['thresholdMs', 'minLoads'],
+    hint: 'An issue is created for each page whose P95 time spent in long frames while loading is above the threshold: the page freezes.',
+  },
+  [RuleType.CHATTY_PAGE]: {
+    fields: ['maxRequests', 'minLoads'],
+    hint: 'An issue is created for each page sending more than the max requests per load (P95).',
+  },
+  [RuleType.ABORTED_PAGE]: {
+    fields: ['maxPercent', 'minLoads'],
+    hint: 'An issue is created for each page whose share of loads aborted before settling, usually by navigating away, is above the max share.',
+  },
+};
 
 /** Rules read from `pg_stat_statements`; they report nothing without the extension. */
 export const PG_STAT_STATEMENTS_RULE_CONFIG: Partial<Record<RuleType, { fields: readonly RuleConfigField[]; hint: string }>> = {

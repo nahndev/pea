@@ -10,6 +10,8 @@ import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
 import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
 import { ErrorCountHandler } from './bug/error-count.handler';
 import { ErrorOccurrencesHandler } from './bug/error-occurrences.handler';
+import { PageLoadStatHandler } from './frontend/page-load-stat.handler';
+import { PagePercentileHandler } from './frontend/page-percentile.handler';
 
 @Injectable()
 export class MetricHandlerFactory {
@@ -25,6 +27,8 @@ export class MetricHandlerFactory {
     queryMeanDurationHandler: QueryMeanDurationHandler,
     errorCountHandler: ErrorCountHandler,
     errorOccurrencesHandler: ErrorOccurrencesHandler,
+    pageLoadStatHandler: PageLoadStatHandler,
+    pagePercentileHandler: PagePercentileHandler,
   ) {
     this.handlers = new Map<string, MetricHandler>([
       [MetricType.P50, percentileHandler],
@@ -49,6 +53,12 @@ export class MetricHandlerFactory {
       [MetricType.CRITICAL_ERROR_COUNT, errorCountHandler],
       [MetricType.ERROR_GROUP_COUNT, errorCountHandler],
       [MetricType.ERROR_OCCURRENCES, errorOccurrencesHandler],
+      [MetricType.PAGE_P95, pagePercentileHandler],
+      [MetricType.VISIBLE_P95, pageLoadStatHandler],
+      [MetricType.LONG_FRAME_P95, pageLoadStatHandler],
+      [MetricType.REQUEST_COUNT_P95, pageLoadStatHandler],
+      [MetricType.PAGE_LOAD_COUNT, pageLoadStatHandler],
+      [MetricType.ABORTED_PAGE_LOAD_RATE, pageLoadStatHandler],
     ]);
   }
 

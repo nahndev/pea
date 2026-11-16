@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { Rule } from '../../../../generated/client';
 import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
 import { apiRequestLine } from '../../../files/api-metric.fixtures';
+import { pageLoadLine } from '../../../files/frontend-metric.fixtures';
 import { LatencyHandler } from './latency.handler';
 
 describe('LatencyHandler', () => {
@@ -69,5 +70,15 @@ describe('LatencyHandler', () => {
   it('returns no issue for an unknown rule type', async () => {
     await writeLog([1000]);
     await expect(latencyHandler.handle(rule({ thresholdMs: 1 }, 'UNKNOWN'), context())).resolves.toEqual([]);
+  });
+
+  it('measures settled page loads of a FRONTEND analysis', async () => {
+    const logPath = join(dir, 'frontend_metric.log');
+    await writeFile(
+      logPath,
+      [pageLoadLine({ durationMs: 100 }), pageLoadLine({ durationMs: 300 }), pageLoadLine({ durationMs: 9000, status: 'aborted' })].join('\n'),
+    );
+    const [issue] = await latencyHandler.handle(rule({ thresholdMs: 1 }, RuleType.P50_FAILURE), { schema: AnalysisSchema.FRONTEND, logPath });
+    expect(issue.description).toBe('P50 200.0ms exceeds threshold 1ms');
   });
 });

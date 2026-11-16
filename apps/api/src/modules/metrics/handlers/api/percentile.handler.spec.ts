@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import type { Metric } from '../../../../generated/client';
 import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
 import { apiRequestLine } from '../../../files/api-metric.fixtures';
+import { pageLoadLine } from '../../../files/frontend-metric.fixtures';
 import { PercentileHandler } from './percentile.handler';
 
 describe('PercentileHandler', () => {
@@ -55,5 +56,15 @@ describe('PercentileHandler', () => {
   it('returns no measurement for a metric type without a percentile', async () => {
     await writeLog([1000]);
     await expect(percentileHandler.handle(metric('UNKNOWN'), context())).resolves.toEqual([]);
+  });
+
+  it('reads settled page loads of a FRONTEND analysis', async () => {
+    const logPath = join(dir, 'frontend_metric.log');
+    await writeFile(
+      logPath,
+      [pageLoadLine({ durationMs: 100 }), pageLoadLine({ durationMs: 300 }), pageLoadLine({ durationMs: 9000, status: 'aborted' })].join('\n'),
+    );
+    const [measurement] = await percentileHandler.handle(metric(MetricType.P50), { schema: AnalysisSchema.FRONTEND, logPath });
+    expect(measurement.value).toBeCloseTo(200);
   });
 });

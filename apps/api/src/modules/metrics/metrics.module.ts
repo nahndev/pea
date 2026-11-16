@@ -12,6 +12,8 @@ import { TableDeadTuplesHandler } from './handlers/database/table-dead-tuples.ha
 import { QueryMeanDurationHandler } from './handlers/database/query-mean-duration.handler';
 import { ErrorCountHandler } from './handlers/bug/error-count.handler';
 import { ErrorOccurrencesHandler } from './handlers/bug/error-occurrences.handler';
+import { PageLoadStatHandler } from './handlers/frontend/page-load-stat.handler';
+import { PagePercentileHandler } from './handlers/frontend/page-percentile.handler';
 import { MetricResultsRepository } from './metric-results.repository';
 import { MetricsController } from './metrics.controller';
 import { MetricsRepository } from './metrics.repository';
@@ -33,6 +35,8 @@ import { MetricsService } from './metrics.service';
     QueryMeanDurationHandler,
     ErrorCountHandler,
     ErrorOccurrencesHandler,
+    PageLoadStatHandler,
+    PagePercentileHandler,
     MetricHandlerFactory,
   ],
   exports: [MetricsService],

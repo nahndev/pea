@@ -1,7 +1,14 @@
 import { RuleType } from '@tomato/constants';
 import { API_METRIC_DURATION_COLUMN, API_METRIC_STATUS_CODE_COLUMN } from '../files/api-metric-requests';
 import { BUG_LOG_IS_CRITICAL_COLUMN } from '../files/bug-log-events';
-import type { ErrorGroupRule, LatencyStat, RateDefinition, RuleConfig } from './rules.types';
+import {
+  FRONTEND_DURATION_COLUMN,
+  FRONTEND_IS_ABORTED_COLUMN,
+  FRONTEND_LONG_FRAME_COLUMN,
+  FRONTEND_REQUEST_COUNT_COLUMN,
+  FRONTEND_VISIBLE_COLUMN,
+} from '../files/frontend-page-loads';
+import type { ErrorGroupRule, LatencyStat, PageRule, RateDefinition, RuleConfig } from './rules.types';
 
 export const DEFAULT_MIN_REQUESTS = 10;
 export const ROUTE_PERCENTILE = 0.95;
@@ -9,6 +16,8 @@ export const ROUTE_PERCENTILE = 0.95;
 export const MAX_DATABASE_ISSUES = 100;
 /** Issues created per bug rule, most frequent first */
 export const MAX_BUG_ISSUES = 100;
+/** Issues created per frontend rule, worst first */
+export const MAX_FRONTEND_ISSUES = 100;
 export const MAX_ISSUE_MESSAGE_LENGTH = 200;
 
 export const SERVER_ERROR_CONDITION = `${API_METRIC_STATUS_CODE_COLUMN} BETWEEN 500 AND 599`;
@@ -39,6 +48,31 @@ export const RATE_BY_RULE_TYPE: ReadonlyMap<string, RateDefinition> = new Map([
 export const ERROR_GROUP_RULE_BY_TYPE: ReadonlyMap<string, ErrorGroupRule> = new Map([
   [RuleType.CRITICAL_ERROR, { condition: BUG_LOG_IS_CRITICAL_COLUMN, describe: (count: number) => `${count} critical occurrences` }],
   [RuleType.FREQUENT_ERROR, { condition: 'true', describe: (count: number) => `Raised ${count} times` }],
+]);
+
+const p95 = (column: string) => `quantile_cont(${column}, 0.95)`;
+
+export const PAGE_RULE_BY_TYPE: ReadonlyMap<string, PageRule> = new Map([
+  [
+    RuleType.SLOW_PAGE,
+    { value: p95(FRONTEND_DURATION_COLUMN), limit: 'thresholdMs', describe: (value: number, limit: number) => `P95 load ${value.toFixed(1)}ms exceeds threshold ${limit}ms` },
+  ],
+  [
+    RuleType.SLOW_VISIBLE_PAGE,
+    { value: p95(FRONTEND_VISIBLE_COLUMN), limit: 'thresholdMs', describe: (value: number, limit: number) => `P95 visible after ${value.toFixed(1)}ms exceeds threshold ${limit}ms` },
+  ],
+  [
+    RuleType.LONG_FRAME_PAGE,
+    { value: p95(FRONTEND_LONG_FRAME_COLUMN), limit: 'thresholdMs', describe: (value: number, limit: number) => `P95 long frames ${value.toFixed(1)}ms exceed threshold ${limit}ms` },
+  ],
+  [
+    RuleType.CHATTY_PAGE,
+    { value: p95(FRONTEND_REQUEST_COUNT_COLUMN), limit: 'maxRequests', describe: (value: number, limit: number) => `P95 ${value.toFixed(1)} requests per load exceeds ${limit}` },
+  ],
+  [
+    RuleType.ABORTED_PAGE,
+    { value: `100 * avg(${FRONTEND_IS_ABORTED_COLUMN}::int)`, limit: 'maxPercent', describe: (value: number, limit: number) => `${value.toFixed(1)}% of loads aborted, above ${limit}%` },
+  ],
 ]);
 
 export const CONFIG_FIELDS_BY_RULE_TYPE: Readonly<Record<RuleType, readonly (keyof RuleConfig)[]>> = {
@@ -105,4 +139,9 @@ export const CONFIG_FIELDS_BY_RULE_TYPE: Readonly<Record<RuleType, readonly (key
   [RuleType.CRITICAL_ERROR]: ['minCount'],
   [RuleType.FREQUENT_ERROR]: ['minCount'],
   [RuleType.ERROR_ENDPOINT]: ['minCount'],
+  [RuleType.SLOW_PAGE]: ['thresholdMs', 'minLoads'],
+  [RuleType.SLOW_VISIBLE_PAGE]: ['thresholdMs', 'minLoads'],
+  [RuleType.LONG_FRAME_PAGE]: ['thresholdMs', 'minLoads'],
+  [RuleType.CHATTY_PAGE]: ['maxRequests', 'minLoads'],
+  [RuleType.ABORTED_PAGE]: ['maxPercent', 'minLoads'],
 };

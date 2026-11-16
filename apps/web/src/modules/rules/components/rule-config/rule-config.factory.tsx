@@ -19,7 +19,8 @@ import { PgStatStatementsRuleConfig } from './pg-stat-statements-rule-config';
 import { CriticalErrorRuleConfig } from './critical-error-rule-config';
 import { FrequentErrorRuleConfig } from './frequent-error-rule-config';
 import { ErrorEndpointRuleConfig } from './error-endpoint-rule-config';
-import { PG_STAT_STATEMENTS_RULE_CONFIG } from '../../rules.constants';
+import { PAGE_RULE_CONFIG, PG_STAT_STATEMENTS_RULE_CONFIG } from '../../rules.constants';
+import { PageRuleConfig } from './page-rule-config';
 
 const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProps>>> = {
   [RuleType.P50_FAILURE]: LatencyRuleConfig,
@@ -45,6 +46,7 @@ const RULE_CONFIG_BY_TYPE: Partial<Record<RuleType, ComponentType<RuleConfigProp
   [RuleType.FREQUENT_ERROR]: FrequentErrorRuleConfig,
   [RuleType.ERROR_ENDPOINT]: ErrorEndpointRuleConfig,
   ...Object.fromEntries(Object.keys(PG_STAT_STATEMENTS_RULE_CONFIG).map((type) => [type, PgStatStatementsRuleConfig])),
+  ...Object.fromEntries(Object.keys(PAGE_RULE_CONFIG).map((type) => [type, PageRuleConfig])),
 };
 
 export function createRuleConfig(rule: RuleView): ReactElement | null {

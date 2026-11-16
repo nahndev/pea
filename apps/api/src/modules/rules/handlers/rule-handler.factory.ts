@@ -21,6 +21,7 @@ import { SlowApiHandler } from './api/slow-api.handler';
 import { SlowRouteHandler } from './api/slow-route.handler';
 import { ErrorGroupHandler } from './bug/error-group.handler';
 import { ErrorEndpointHandler } from './bug/error-endpoint.handler';
+import { PageRuleHandler } from './frontend/page-rule.handler';
 
 @Injectable()
 export class RuleHandlerFactory {
@@ -47,6 +48,7 @@ export class RuleHandlerFactory {
     readWriteRatioHandler: ReadWriteRatioHandler,
     errorGroupHandler: ErrorGroupHandler,
     errorEndpointHandler: ErrorEndpointHandler,
+    pageRuleHandler: PageRuleHandler,
   ) {
     this.handlers = new Map<string, RuleHandler>([
       [RuleType.P50_FAILURE, latencyHandler],
@@ -112,6 +114,11 @@ export class RuleHandlerFactory {
       [RuleType.CRITICAL_ERROR, errorGroupHandler],
       [RuleType.FREQUENT_ERROR, errorGroupHandler],
       [RuleType.ERROR_ENDPOINT, errorEndpointHandler],
+      [RuleType.SLOW_PAGE, pageRuleHandler],
+      [RuleType.SLOW_VISIBLE_PAGE, pageRuleHandler],
+      [RuleType.LONG_FRAME_PAGE, pageRuleHandler],
+      [RuleType.CHATTY_PAGE, pageRuleHandler],
+      [RuleType.ABORTED_PAGE, pageRuleHandler],
     ]);
   }
 

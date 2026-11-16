@@ -19,6 +19,8 @@ const FIELD_SCHEMAS = {
   maxBytes: numeric.pipe(z.number('invalid').int('invalid').min(0, 'invalid')),
   maxItems: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
   minCount: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
+  minLoads: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
+  maxRequests: numeric.pipe(z.number('invalid').int('invalid').min(1, 'invalid')),
 } satisfies Record<RuleConfigField, z.ZodType>;
 
 export const buildRuleConfigSchema = (fields: string[]) =>

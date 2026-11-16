@@ -34,6 +34,7 @@ storage, so a 50 MB log is never held in memory; the temporary files are removed
 | ------------ | -------------- | ---------------- | ---------------------------- |
 | `slow-api`   | `API`, `QUERY` | `slow_api.log`   | [api_metric](api_metric.md) |
 | `exceptions` | `BUG`          | `exceptions.log` | [bug_log](bug_log.md)       |
+| `frontend-performance` | `FRONTEND` | `frontend_performance.log` | [frontend_metric](frontend_metric.md) |
 
 ### `slow-api`
 
@@ -97,6 +98,24 @@ numbers of 3+ digits or with decimals (`{n}`), so one error keeps one type and n
 Nothing else of `context` is carried over (form fields, user, IP, mobile diagnostics).
 Lines that are blank, not valid JSON, or have neither an exception class nor a message are skipped and counted.
 `channel` is dropped: nothing reads it.
+
+### `frontend-performance`
+
+Converts a Monolog `frontend_performance.log` file (channel `frontend_performance`) to the NDJSON format of the
+frontend metric log ([frontend_metric.md](frontend_metric.md)), for the `FRONTEND` schema.
+
+#### Mapping
+
+One line in, one `frontend_metric` line out.
+
+| frontend_metric                                                          | Source                                       |
+| ------------------------------------------------------------------------ | -------------------------------------------- |
+| `@timestamp`                                                             | `datetime`, ISO 8601 in UTC (milliseconds)   |
+| `name`, `route`, `previousRoute`, `status`, `startTime`, `duration`, `visibleDuration` | same keys of `context.metric`  |
+| `requestCount`, `requestDuration`, `longFrameCount`, `longFrameDuration`, `addedNodes` | same keys of `context.metric.detail` |
+
+`context.batch` (session, tenant and account ids) and `detail.slowRequests` (urls) are dropped.
+Lines that are blank, not valid JSON, or have no non-negative `context.metric.duration` are skipped and counted.
 
 ## Adding an add-on
 

@@ -10,6 +10,8 @@ import { TableDeadTuplesHandler } from './database/table-dead-tuples.handler';
 import { QueryMeanDurationHandler } from './database/query-mean-duration.handler';
 import { ErrorCountHandler } from './bug/error-count.handler';
 import { ErrorOccurrencesHandler } from './bug/error-occurrences.handler';
+import { PageLoadStatHandler } from './frontend/page-load-stat.handler';
+import { PagePercentileHandler } from './frontend/page-percentile.handler';
 
 describe('MetricHandlerFactory', () => {
   const percentileHandler = {} as PercentileHandler;
@@ -21,6 +23,8 @@ describe('MetricHandlerFactory', () => {
   const queryMeanDurationHandler = {} as QueryMeanDurationHandler;
   const errorCountHandler = {} as ErrorCountHandler;
   const errorOccurrencesHandler = {} as ErrorOccurrencesHandler;
+  const pageLoadStatHandler = {} as PageLoadStatHandler;
+  const pagePercentileHandler = {} as PagePercentileHandler;
   const metricHandlerFactory = new MetricHandlerFactory(
     percentileHandler,
     issueCountHandler,
@@ -31,6 +35,8 @@ describe('MetricHandlerFactory', () => {
     queryMeanDurationHandler,
     errorCountHandler,
     errorOccurrencesHandler,
+    pageLoadStatHandler,
+    pagePercentileHandler,
   );
 
   it.each([MetricType.P50, MetricType.P90, MetricType.P95])('returns the percentile handler for %s', (type) => {
@@ -64,6 +70,17 @@ describe('MetricHandlerFactory', () => {
     [MetricType.ERROR_GROUP_COUNT, errorCountHandler],
     [MetricType.ERROR_OCCURRENCES, errorOccurrencesHandler],
   ])('returns the bug handler of %s', (type, handler) => {
+    expect(metricHandlerFactory.create(type)).toBe(handler);
+  });
+
+  it.each([
+    [MetricType.PAGE_P95, pagePercentileHandler],
+    [MetricType.VISIBLE_P95, pageLoadStatHandler],
+    [MetricType.LONG_FRAME_P95, pageLoadStatHandler],
+    [MetricType.REQUEST_COUNT_P95, pageLoadStatHandler],
+    [MetricType.PAGE_LOAD_COUNT, pageLoadStatHandler],
+    [MetricType.ABORTED_PAGE_LOAD_RATE, pageLoadStatHandler],
+  ])('returns the frontend handler of %s', (type, handler) => {
     expect(metricHandlerFactory.create(type)).toBe(handler);
   });
 

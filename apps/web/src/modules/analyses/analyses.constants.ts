@@ -24,10 +24,17 @@ export const BUG_LOG_FILE_FIELD = {
   hint: 'NDJSON, one error per line: {"@timestamp","log.level","message","error.type","error.message","error.stack_trace","http.response.status_code"…}. Used for metrics and issues.',
 } as const;
 
+export const FRONTEND_METRIC_FILE_FIELD = {
+  name: 'frontend_metric',
+  label: 'Frontend metric log',
+  hint: 'NDJSON, one page load per line: {"@timestamp","route","status","duration","visibleDuration","requestCount","longFrameDuration"…}. Used for metrics and issues.',
+} as const;
+
 export const LOG_FILE_FIELD_BY_SCHEMA = {
   [AnalysisSchema.API]: API_METRIC_FILE_FIELD,
   [AnalysisSchema.QUERY]: API_METRIC_FILE_FIELD,
   [AnalysisSchema.BUG]: BUG_LOG_FILE_FIELD,
+  [AnalysisSchema.FRONTEND]: FRONTEND_METRIC_FILE_FIELD,
 } as const;
 
 export const POLL_INTERVAL_MS = 2000;
