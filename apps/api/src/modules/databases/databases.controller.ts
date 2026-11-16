@@ -9,6 +9,8 @@ import {
   ApiTags,
   ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { DatabasesService } from './databases.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
 import { InspectDatabaseDto } from './dto/inspect-database.dto';
@@ -17,10 +19,12 @@ import { UpdateDatabaseDto } from './dto/update-database.dto';
 
 @ApiTags('databases')
 @Controller('databases')
+@RequirePermission(Permission.MANAGER_DATABASE)
 export class DatabasesController {
   constructor(private readonly databasesService: DatabasesService) {}
 
   @Get()
+  @RequirePermission(Permission.MANAGER_DATABASE, Permission.BRANCH_ANALYSIS)
   @ApiOkResponse()
   findAll(@Query() { ordering }: ListDatabasesQueryDto) {
     return this.databasesService.findAll(ordering);

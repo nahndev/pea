@@ -1,15 +1,19 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiAcceptedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { ListIssuesQueryDto } from '../issues/dto/list-issues-query.dto';
 import { ListMetricResultsQueryDto } from '../metrics/dto/list-metric-results-query.dto';
 import { AnalysisResultService } from './analysis-result.service';
 
 @ApiTags('analyses')
 @Controller('analyses/:analysisId')
+@RequirePermission(Permission.BRANCH_VIEW)
 export class AnalysisResultController {
   constructor(private readonly analysisResultService: AnalysisResultService) {}
 
   @Post('results')
+  @RequirePermission(Permission.BRANCH_ANALYSIS)
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse()
   @ApiNotFoundResponse()

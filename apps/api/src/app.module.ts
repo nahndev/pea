@@ -6,11 +6,14 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { AnalysisResultModule } from './modules/analysis-result/analysis-result.module';
 import { AddOnsModule } from './modules/add-ons/add-ons.module';
 import { AnalysesModule } from './modules/analyses/analyses.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { ConditionsModule } from './modules/conditions/conditions.module';
 import { DatabasesModule } from './modules/databases/databases.module';
+import { GroupsModule } from './modules/groups/groups.module';
 import { IssuesModule } from './modules/issues/issues.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { RulesModule } from './modules/rules/rules.module';
+import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -18,6 +21,9 @@ import { PrismaModule } from './prisma/prisma.module';
     AppConfigModule,
     EventEmitterModule.forRoot(),
     PrismaModule,
+    AuthModule,
+    GroupsModule,
+    UsersModule,
     BranchesModule,
     AnalysesModule,
     AddOnsModule,

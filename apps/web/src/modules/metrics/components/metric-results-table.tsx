@@ -1,8 +1,9 @@
-import { MetricResultSortField, type MetricUnit } from '@tomato/constants';
+import { MetricResultSortField, type MetricUnit, Permission } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@tomato/ui';
 import type { MetricResultView } from '@tomato/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { RequirePermission } from '@/modules/auth';
 import { GateStatusBadge } from '@/modules/analyses';
 import { SortableTableHead } from '@/shared/components/sortable-table-head';
 import { SortTable } from '@/shared/lib/sort.constants';
@@ -70,9 +71,18 @@ export function MetricResultsTable({ results, pickedKeys, pickedUnit, onToggle, 
                   />
                 </TableCell>
                 <TableCell className="font-medium">
-                  <Link href={`/metrics/${metric.id}`} title={METRIC_LABEL[metric.type]} className="block truncate hover:underline focus-ring rounded-sm">
-                    {METRIC_LABEL[metric.type]}
-                  </Link>
+                  <RequirePermission
+                    permission={Permission.MANAGER_METRIC}
+                    fallback={
+                      <span title={METRIC_LABEL[metric.type]} className="block truncate">
+                        {METRIC_LABEL[metric.type]}
+                      </span>
+                    }
+                  >
+                    <Link href={`/metrics/${metric.id}`} title={METRIC_LABEL[metric.type]} className="block truncate hover:underline focus-ring rounded-sm">
+                      {METRIC_LABEL[metric.type]}
+                    </Link>
+                  </RequirePermission>
                 </TableCell>
                 <TableCell className="truncate font-mono text-xs" title={subject?.description}>
                   {subject?.description ?? <span className="font-sans text-muted-foreground">All requests</span>}

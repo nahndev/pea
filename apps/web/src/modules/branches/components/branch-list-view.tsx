@@ -1,8 +1,9 @@
 'use client';
 
-import { BranchSortField } from '@tomato/constants';
+import { BranchSortField, Permission } from '@tomato/constants';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@tomato/ui';
 import Link from 'next/link';
+import { RequirePermission } from '@/modules/auth';
 import { EmptyState } from '@/shared/components/empty-state';
 import { ErrorState } from '@/shared/components/error-state';
 import { PaginationBar } from '@/shared/components/pagination-bar';
@@ -36,9 +37,11 @@ export function BranchListView({ params }: BranchListViewProps) {
           {search ? (
             'Try a different name.'
           ) : (
-            <Link href="/branches/new" className="underline">
-              Create your first branch
-            </Link>
+            <RequirePermission permission={Permission.BRANCH_ANALYSIS}>
+              <Link href="/branches/new" className="underline">
+                Create your first branch
+              </Link>
+            </RequirePermission>
           )}
         </EmptyState>
       ) : null}

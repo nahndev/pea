@@ -1,6 +1,8 @@
+import { Permission } from '@tomato/constants';
 import { buttonVariants } from '@tomato/ui';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { RequirePermission } from '@/modules/auth';
 import { BranchListView, branchListParamsSchema } from '@/modules/branches';
 import { PageHeader } from '@/shared/components/page-header';
 import { withCachedOrdering } from '@/shared/lib/sort-cache';
@@ -19,9 +21,11 @@ export default async function BranchesPage({ searchParams }: BranchesPageProps) 
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageHeader title="Branches" description="Branches, most recently analysed first." />
-        <Link href="/branches/new" className={buttonVariants({ size: 'sm' })}>
-          Create branch
-        </Link>
+        <RequirePermission permission={Permission.BRANCH_ANALYSIS}>
+          <Link href="/branches/new" className={buttonVariants({ size: 'sm' })}>
+            Create branch
+          </Link>
+        </RequirePermission>
       </div>
       <BranchListView params={params} />
     </>

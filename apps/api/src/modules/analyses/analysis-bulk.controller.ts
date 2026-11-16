@@ -1,7 +1,9 @@
 import { Body, Controller, Post, UploadedFiles, UseInterceptors } from '@nestjs/common';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ApiBadRequestResponse, ApiBody, ApiConsumes, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
 import { diskStorage } from 'multer';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { RemoveUploadsInterceptor } from '../../common/interceptors/remove-uploads.interceptor';
 import { UPLOAD_TMP_DIR } from '../files/files.constants';
 import { MAX_BULK_ANALYSES, MAX_LOG_FILE_SIZE } from './analyses.constants';
@@ -10,6 +12,7 @@ import { CreateAnalysesDto } from './dto/create-analyses.dto';
 
 @ApiTags('analyses')
 @Controller('analysis-bulk')
+@RequirePermission(Permission.BRANCH_ANALYSIS)
 export class AnalysisBulkController {
   constructor(private readonly analysesService: AnalysesService) {}
 

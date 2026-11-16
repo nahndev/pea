@@ -7,6 +7,8 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { CreateMetricConditionDto } from './dto/create-metric-condition.dto';
 import { ListMetricConditionsQueryDto } from './dto/list-metric-conditions-query.dto';
 import { UpdateMetricConditionDto } from './dto/update-metric-condition.dto';
@@ -14,6 +16,7 @@ import { MetricConditionsService } from './metric-conditions.service';
 
 @ApiTags('conditions')
 @Controller('conditions')
+@RequirePermission(Permission.MANAGER_CONDITION)
 export class MetricConditionsController {
   constructor(private readonly metricConditionsService: MetricConditionsService) {}
 

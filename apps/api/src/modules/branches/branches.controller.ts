@@ -8,12 +8,15 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { ListBranchesQueryDto } from './dto/list-branches-query.dto';
 
 @ApiTags('branches')
 @Controller('branches')
+@RequirePermission(Permission.BRANCH_VIEW)
 export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 
@@ -24,6 +27,7 @@ export class BranchesController {
   }
 
   @Post()
+  @RequirePermission(Permission.BRANCH_ANALYSIS)
   @ApiCreatedResponse()
   @ApiBadRequestResponse()
   @ApiConflictResponse()
@@ -41,6 +45,7 @@ export class BranchesController {
   }
 
   @Delete(':idOrSlug')
+  @RequirePermission(Permission.BRANCH_DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @ApiNotFoundResponse()

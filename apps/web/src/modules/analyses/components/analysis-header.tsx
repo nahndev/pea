@@ -1,8 +1,10 @@
 'use client';
 
+import { Permission } from '@tomato/constants';
 import { Button, Skeleton, Tabs, TabsList, TabsTrigger } from '@tomato/ui';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { RequirePermission } from '@/modules/auth';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
@@ -43,9 +45,11 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
             ]}
           />
         </PageHeader>
-        <Button variant="outlined" size="sm" onClick={() => rerun()} disabled={isRerunning || isRunning}>
-          {isRerunning || isRunning ? 'Analysing…' : 'Re-analyse'}
-        </Button>
+        <RequirePermission permission={Permission.BRANCH_ANALYSIS}>
+          <Button variant="outlined" size="sm" onClick={() => rerun()} disabled={isRerunning || isRunning}>
+            {isRerunning || isRunning ? 'Analysing…' : 'Re-analyse'}
+          </Button>
+        </RequirePermission>
       </div>
       {rerunError ? <ErrorState error={rerunError} title="Unable to re-analyse" /> : null}
       <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
@@ -74,9 +78,11 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
           <div className="flex items-center gap-2">
             <dt className="text-muted-foreground">Database</dt>
             <dd className="flex flex-wrap items-baseline gap-2">
-              <Link href={`/databases/${database.id}`} className="font-medium hover:underline focus-ring rounded-sm">
-                {database.name}
-              </Link>
+              <RequirePermission permission={Permission.MANAGER_DATABASE} fallback={<span className="font-medium">{database.name}</span>}>
+                <Link href={`/databases/${database.id}`} className="font-medium hover:underline focus-ring rounded-sm">
+                  {database.name}
+                </Link>
+              </RequirePermission>
               <span className="break-all font-mono text-xs text-muted-foreground">{database.address}</span>
             </dd>
           </div>

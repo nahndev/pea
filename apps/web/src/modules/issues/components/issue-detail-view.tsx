@@ -1,14 +1,16 @@
 'use client';
 
+import { Permission } from '@tomato/constants';
 import { Skeleton } from '@tomato/ui';
 import Link from 'next/link';
+import { RequirePermission } from '@/modules/auth';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { StatusBadge } from '@/shared/components/status-badge';
 import { formatDateTime } from '@/shared/lib/format';
 import { SEVERITY_STYLE } from '@/shared/lib/severity.constants';
 import { useIssue } from '../hooks/use-issues';
-import { RULE_TYPE_LABEL } from '../issues.constants';
+import { ISSUE_SUBJECT_STATUS_STYLE, RULE_TYPE_LABEL } from '../issues.constants';
 import { IssueCopyButton } from './issue-copy-button';
 import { IssueSubjectStatusSelect } from './issue-subject-status-select';
 
@@ -38,9 +40,11 @@ export function IssueDetailView({ analysisId, issueId }: IssueDetailViewProps) {
         <dl className="grid grid-cols-[max-content_1fr] items-center gap-x-6 gap-y-3 text-sm">
           <dt className="text-muted-foreground">Rule</dt>
           <dd>
-            <Link href={`/rules/${rule.id}`} className="font-medium hover:underline focus-ring rounded-sm">
-              {ruleLabel}
-            </Link>
+            <RequirePermission permission={Permission.MANAGER_RULE} fallback={<span className="font-medium">{ruleLabel}</span>}>
+              <Link href={`/rules/${rule.id}`} className="font-medium hover:underline focus-ring rounded-sm">
+                {ruleLabel}
+              </Link>
+            </RequirePermission>
           </dd>
           <dt className="text-muted-foreground">Subject</dt>
           <dd className="break-all font-mono text-xs">{subject.description}</dd>
@@ -50,7 +54,9 @@ export function IssueDetailView({ analysisId, issueId }: IssueDetailViewProps) {
           </dd>
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <IssueSubjectStatusSelect issueSubject={issueSubject} />
+            <RequirePermission permission={Permission.BRANCH_ANALYSIS} fallback={<StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issueSubject.status]} />}>
+              <IssueSubjectStatusSelect issueSubject={issueSubject} />
+            </RequirePermission>
           </dd>
           <dt className="text-muted-foreground">Count</dt>
           <dd className="tabular-nums">{data.issueCount}</dd>

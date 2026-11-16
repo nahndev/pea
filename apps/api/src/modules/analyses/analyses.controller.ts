@@ -18,8 +18,9 @@ import {
   ApiOkResponse,
   ApiTags,
 } from "@nestjs/swagger";
-import { AnalysisSchema } from "@tomato/constants";
+import { AnalysisSchema, Permission } from "@tomato/constants";
 import { diskStorage } from "multer";
+import { RequirePermission } from "../../common/decorators/require-permission.decorator";
 import { RemoveUploadsInterceptor } from "../../common/interceptors/remove-uploads.interceptor";
 import { UPLOAD_TMP_DIR } from "../files/files.constants";
 import { LogFileField, MAX_LOG_FILE_SIZE } from "./analyses.constants";
@@ -33,6 +34,7 @@ export class AnalysesController {
   constructor(private readonly analysesService: AnalysesService) {}
 
   @Post()
+  @RequirePermission(Permission.BRANCH_ANALYSIS)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
@@ -67,6 +69,7 @@ export class AnalysesController {
   }
 
   @Get(":id")
+  @RequirePermission(Permission.BRANCH_VIEW)
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param("id", ParseUUIDPipe) id: string) {

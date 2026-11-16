@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { ListMetricHistoryQueryDto } from './dto/list-metric-history-query.dto';
 import { ListMetricsQueryDto } from './dto/list-metrics-query.dto';
 import { UpdateMetricDto } from './dto/update-metric.dto';
@@ -7,10 +9,12 @@ import { MetricsService } from './metrics.service';
 
 @ApiTags('metrics')
 @Controller('metrics')
+@RequirePermission(Permission.MANAGER_METRIC)
 export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}
 
   @Get()
+  @RequirePermission(Permission.MANAGER_METRIC, Permission.MANAGER_CONDITION)
   @ApiOkResponse()
   findAll(@Query() { isActive, schema, ordering }: ListMetricsQueryDto) {
     return this.metricsService.findAll({ isActive, schema }, ordering);

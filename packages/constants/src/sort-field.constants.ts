@@ -78,3 +78,20 @@ export const DatabaseSortField = {
 } as const;
 
 export type DatabaseSortField = (typeof DatabaseSortField)[keyof typeof DatabaseSortField];
+
+export const UserSortField = {
+  NAME: 'name',
+  USERNAME: 'username',
+  GROUP: 'group',
+  CREATED_AT: 'createdAt',
+} as const;
+
+export type UserSortField = (typeof UserSortField)[keyof typeof UserSortField];
+
+export const GroupSortField = {
+  NAME: 'name',
+  PERMISSION_COUNT: 'permissionCount',
+  USER_COUNT: 'userCount',
+} as const;
+
+export type GroupSortField = (typeof GroupSortField)[keyof typeof GroupSortField];

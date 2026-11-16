@@ -8,3 +8,5 @@ export * from './rule.types';
 export * from './condition.types';
 export * from './database.types';
 export * from './add-on.types';
+export * from './user.types';
+export * from './group.types';

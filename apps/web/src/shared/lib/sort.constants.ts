@@ -8,6 +8,8 @@ export const SortTable = {
   RULES: 'rules',
   CONDITIONS: 'conditions',
   DATABASES: 'databases',
+  USERS: 'users',
+  GROUPS: 'groups',
 } as const;
 export type SortTable = (typeof SortTable)[keyof typeof SortTable];
 

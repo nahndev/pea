@@ -5,6 +5,7 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   UPLOAD_DIR: z.string().min(1),
   DATABASE_CONNECTION_KEY: z.string().min(32),
+  SESSION_COOKIE_SECURE: z.stringbool().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

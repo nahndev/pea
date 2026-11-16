@@ -1,7 +1,9 @@
 'use client';
 
+import { Permission } from '@tomato/constants';
 import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Skeleton } from '@tomato/ui';
 import Link from 'next/link';
+import { RequirePermission } from '@/modules/auth';
 import { ErrorState } from '@/shared/components/error-state';
 import { FieldError } from '@/shared/components/field-error';
 import { useDatabases } from '../hooks/use-databases';
@@ -23,10 +25,12 @@ export function DatabaseSelect({ value, onChange, error }: DatabaseSelectProps) 
       {data?.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No database yet.{' '}
-          <Link href="/databases/new" className="text-foreground underline focus-ring rounded-sm">
-            Add a database
-          </Link>{' '}
-          first.
+          <RequirePermission permission={Permission.MANAGER_DATABASE} fallback="Ask an administrator to add one.">
+            <Link href="/databases/new" className="text-foreground underline focus-ring rounded-sm">
+              Add a database
+            </Link>{' '}
+            first.
+          </RequirePermission>
         </p>
       ) : null}
       {data && data.length > 0 ? (
@@ -46,9 +50,11 @@ export function DatabaseSelect({ value, onChange, error }: DatabaseSelectProps) 
       ) : null}
       <p id="databaseId-hint" className="text-xs text-muted-foreground">
         Connects read-only and counts the rows of every table the user can read.{' '}
-        <Link href="/databases" className="underline focus-ring rounded-sm">
-          Manage databases
-        </Link>
+        <RequirePermission permission={Permission.MANAGER_DATABASE}>
+          <Link href="/databases" className="underline focus-ring rounded-sm">
+            Manage databases
+          </Link>
+        </RequirePermission>
       </p>
       <FieldError id="databaseId-error" message={error} />
     </div>

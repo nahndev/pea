@@ -7,6 +7,8 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Permission } from '@tomato/constants';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { ListRulesQueryDto } from './dto/list-rules-query.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
@@ -14,6 +16,7 @@ import { RulesService } from './rules.service';
 
 @ApiTags('rules')
 @Controller('rules')
+@RequirePermission(Permission.MANAGER_RULE)
 export class RulesController {
   constructor(private readonly rulesService: RulesService) {}
 

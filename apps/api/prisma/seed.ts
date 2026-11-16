@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { AnalysisSchema, MetricConditionOperator, MetricType, MetricUnit, RuleType, Severity } from '@tomato/constants';
+import { AnalysisSchema, MetricConditionOperator, MetricType, MetricUnit, Permission, RuleType, Severity } from '@tomato/constants';
+import { hashPassword } from '../src/common/crypto/password';
 import { PrismaClient } from '../src/generated/client';
+import { PASSWORD_MIN_LENGTH } from '../src/modules/users/users.constants';
 import { DEFAULT_SUBJECT } from '../src/modules/subjects/subject';
 
 const RULES = [
@@ -165,6 +167,10 @@ const DEFAULT_TREND_METRIC_TYPES: string[] = [
 /** Replaced metric types, deleted with their results and conditions */
 const OBSOLETE_METRICS = [{ schema: AnalysisSchema.FRONTEND, type: 'PAGE_P95' }];
 
+/** Always granted every permission */
+const ADMIN_GROUP_NAME = 'Administrators';
+const ADMIN = { name: 'Administrator', username: 'admin' };
+
 async function main() {
   const prismaClient = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -198,6 +204,21 @@ async function main() {
       const existing = await prismaClient.metricCondition.findFirst({ where: { metricId: metric.id }, select: { id: true } });
       if (existing) await prismaClient.metricCondition.update({ where: { id: existing.id }, data: { operator, threshold } });
       else await prismaClient.metricCondition.create({ data: { metricId: metric.id, operator, threshold } });
+    }
+
+    const permissions = Object.values(Permission);
+    const adminGroup = await prismaClient.group.upsert({
+      where: { name: ADMIN_GROUP_NAME },
+      create: { name: ADMIN_GROUP_NAME, permissions },
+      update: { permissions },
+    });
+
+    if (!(await prismaClient.user.count())) {
+      const password = process.env.ADMIN_PASSWORD;
+      if (!password || password.length < PASSWORD_MIN_LENGTH) {
+        throw new Error(`Set ADMIN_PASSWORD (at least ${PASSWORD_MIN_LENGTH} characters) to create the first user`);
+      }
+      await prismaClient.user.create({ data: { ...ADMIN, passwordHash: await hashPassword(password), groupId: adminGroup.id } });
     }
   } finally {
     await prismaClient.$disconnect();

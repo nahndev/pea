@@ -37,6 +37,13 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.DATABASE_NOT_FOUND]: 'This database does not exist.',
   [ErrorCode.DATABASE_ALREADY_EXISTS]: 'A database with this name already exists.',
   [ErrorCode.DATABASE_IN_USE]: 'This database is used by analyses and cannot be deleted.',
+  [ErrorCode.INVALID_CREDENTIALS]: 'The username or password is incorrect.',
+  [ErrorCode.USER_NOT_FOUND]: 'This user does not exist.',
+  [ErrorCode.USER_ALREADY_EXISTS]: 'A user with this username already exists.',
+  [ErrorCode.USER_SELF_DELETE]: 'You cannot delete your own account.',
+  [ErrorCode.GROUP_NOT_FOUND]: 'This group does not exist.',
+  [ErrorCode.GROUP_ALREADY_EXISTS]: 'A group with this name already exists.',
+  [ErrorCode.GROUP_IN_USE]: 'This group still has users and cannot be deleted.',
 };
 
 export const getErrorMessage = (code: ErrorCode) => ERROR_MESSAGES[code];

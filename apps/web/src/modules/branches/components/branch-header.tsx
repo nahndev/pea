@@ -1,8 +1,9 @@
 'use client';
 
-import type { AnalysisSchema } from '@tomato/constants';
+import { type AnalysisSchema, Permission } from '@tomato/constants';
 import { Skeleton, buttonVariants } from '@tomato/ui';
 import Link from 'next/link';
+import { RequirePermission } from '@/modules/auth';
 import { Breadcrumbs } from '@/shared/components/breadcrumbs';
 import { ErrorState } from '@/shared/components/error-state';
 import { PageHeader } from '@/shared/components/page-header';
@@ -27,10 +28,14 @@ export function BranchHeader({ branchId, schema }: BranchHeaderProps) {
         <Breadcrumbs entries={[{ label: 'Branches', href: '/branches' }, { label: data.name }]} />
       </PageHeader>
       <div className="flex gap-2">
-        <Link href={buildHref('/analyses/new', { branch: data.name, schema })} className={buttonVariants({ variant: 'outlined', size: 'sm' })}>
-          New analysis
-        </Link>
-        <DeleteBranchDialog branch={data} />
+        <RequirePermission permission={Permission.BRANCH_ANALYSIS}>
+          <Link href={buildHref('/analyses/new', { branch: data.name, schema })} className={buttonVariants({ variant: 'outlined', size: 'sm' })}>
+            New analysis
+          </Link>
+        </RequirePermission>
+        <RequirePermission permission={Permission.BRANCH_DELETE}>
+          <DeleteBranchDialog branch={data} />
+        </RequirePermission>
       </div>
     </div>
   );
