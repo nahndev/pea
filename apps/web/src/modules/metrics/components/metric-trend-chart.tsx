@@ -56,7 +56,7 @@ export function MetricTrendChart({ schema, title, repoId, picks = NO_PICKS, limi
           <div className="flex flex-col gap-1">
             <CardTitle>{title}</CardTitle>
             <CardDescription>
-              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${DEFAULT_METRICS} (tick rows below to pick others)` : DEFAULT_METRICS}, averaged per analysis over this repo’s last {TREND_LIMIT} analyses.
+              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${DEFAULT_METRICS} (tick rows below to pick others)` : DEFAULT_METRICS}, averaged per analysis over this repository’s last {TREND_LIMIT} analyses.
               {hasLimits ? ' Dashed lines mark the condition limits.' : ''}
             </CardDescription>
           </div>

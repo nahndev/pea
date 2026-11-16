@@ -5,7 +5,7 @@ import { schemaSlugParamsSchema } from '@/shared/lib/schema-params';
 import { withCachedOrdering } from '@/shared/lib/sort-cache';
 import { SortTable } from '@/shared/lib/sort.constants';
 
-export const metadata: Metadata = { title: 'Repo analyses' };
+export const metadata: Metadata = { title: 'Repository analyses' };
 
 interface RepoSchemaRoutePageProps {
   params: Promise<{ id: string; type: string }>;

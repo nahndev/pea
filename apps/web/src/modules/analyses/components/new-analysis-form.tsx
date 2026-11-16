@@ -67,12 +67,12 @@ export function NewAnalysisForm({ repo = '', schema: initialSchema = DEFAULT_ANA
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="New analysis" description="Upload a log file or pick a database to analyse a repo. Results appear once processing finishes.">
-        <Breadcrumbs entries={[{ label: 'Repos', href: '/repos' }, { label: 'New analysis' }]} />
+      <PageHeader title="New analysis" description="Upload a log file or pick a database to analyse a repository. Results appear once processing finishes.">
+        <Breadcrumbs entries={[{ label: 'Repositories', href: '/repos' }, { label: 'New analysis' }]} />
       </PageHeader>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="repo">Repo</Label>
+          <Label htmlFor="repo">Repository</Label>
           <Input id="repo" name="repo" defaultValue={repo} placeholder="acme/shop-api" maxLength={255} aria-invalid={Boolean(fieldErrors.repo)} aria-describedby="repo-error" required />
           <FieldError id="repo-error" message={fieldErrors.repo} />
         </div>

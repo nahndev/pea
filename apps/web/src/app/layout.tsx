@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 export const metadata: Metadata = {
   title: { default: 'Pea', template: '%s · Pea' },
-  description: 'Performance analysis of your repos',
+  description: 'Performance analysis of your repositories',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

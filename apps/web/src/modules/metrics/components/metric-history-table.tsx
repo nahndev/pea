@@ -26,7 +26,7 @@ export function MetricHistoryTable({ metric, items, ordering, sortHref }: Metric
               Analysis
             </SortableTableHead>
             <SortableTableHead field={MetricHistorySortField.REPO} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref} className="w-[14%]">
-              Repo
+              Repository
             </SortableTableHead>
             <SortableTableHead field={MetricHistorySortField.SUBJECT} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref}>
               Subject

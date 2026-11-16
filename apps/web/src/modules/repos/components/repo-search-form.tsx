@@ -26,8 +26,8 @@ export function RepoSearchForm({ search = '', ordering }: RepoSearchFormProps) {
         type="search"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Search repos"
-        aria-label="Search repos"
+        placeholder="Search repositories"
+        aria-label="Search repositories"
         maxLength={255}
       />
       <Button type="submit" variant="soft" size="icon" aria-label="Search">

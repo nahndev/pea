@@ -24,8 +24,8 @@ export function RepoHeader({ repoId, schema }: RepoHeaderProps) {
 
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <PageHeader title={data.name} description="Analysis results for this repo, newest first.">
-        <Breadcrumbs entries={[{ label: 'Repos', href: '/repos' }, { label: data.name }]} />
+      <PageHeader title={data.name} description="Analysis results for this repository, newest first.">
+        <Breadcrumbs entries={[{ label: 'Repositories', href: '/repos' }, { label: data.name }]} />
       </PageHeader>
       <div className="flex gap-2">
         <RequirePermission permission={Permission.REPO_ANALYSIS}>

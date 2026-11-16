@@ -8,7 +8,7 @@ import { PageHeader } from '@/shared/components/page-header';
 import { withCachedOrdering } from '@/shared/lib/sort-cache';
 import { SortTable } from '@/shared/lib/sort.constants';
 
-export const metadata: Metadata = { title: 'Repos' };
+export const metadata: Metadata = { title: 'Repositories' };
 
 interface ReposPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,10 +20,10 @@ export default async function ReposPage({ searchParams }: ReposPageProps) {
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageHeader title="Repos" description="Repos, most recently analysed first." />
+        <PageHeader title="Repositories" description="Repositories, most recently analysed first." />
         <RequirePermission permission={Permission.REPO_ANALYSIS}>
           <Link href="/repos/new" className={buttonVariants({ size: 'sm' })}>
-            Create repo
+            Create repository
           </Link>
         </RequirePermission>
       </div>

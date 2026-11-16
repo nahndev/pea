@@ -35,24 +35,24 @@ export function DeleteRepoDialog({ repo }: DeleteRepoDialogProps) {
     <Dialog open={isOpen} onOpenChange={changeOpen}>
       <DialogTrigger asChild>
         <Button variant="outlined" intent="danger" size="sm">
-          Delete repo
+          Delete repository
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete repo</DialogTitle>
+          <DialogTitle>Delete repository</DialogTitle>
           <DialogDescription>
             Deletes <span className="font-medium text-foreground">{repo.name}</span> with all its analyses, results, issues and uploaded
             logs. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        {error ? <ErrorState error={error} title="Unable to delete repo" /> : null}
+        {error ? <ErrorState error={error} title="Unable to delete repository" /> : null}
         <DialogFooter>
           <Button type="button" variant="ghost" intent="neutral" onClick={() => changeOpen(false)} disabled={isPending}>
             Cancel
           </Button>
           <Button type="button" intent="danger" onClick={() => mutate(undefined, { onSuccess: () => router.push('/repos') })} disabled={isPending}>
-            {isPending ? 'Deleting…' : 'Delete repo'}
+            {isPending ? 'Deleting…' : 'Delete repository'}
           </Button>
         </DialogFooter>
       </DialogContent>

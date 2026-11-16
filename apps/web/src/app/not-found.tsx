@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <EmptyState title="Page not found">
       <Link href="/repos" className="underline">
-        Back to repos
+        Back to repositories
       </Link>
     </EmptyState>
   );

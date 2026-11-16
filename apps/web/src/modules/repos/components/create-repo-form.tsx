@@ -34,21 +34,21 @@ export function CreateRepoForm() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="Create repo" description="Register a repo so analyses can be attached to it.">
-        <Breadcrumbs entries={[{ label: 'Repos', href: '/repos' }, { label: 'Create repo' }]} />
+      <PageHeader title="Create repository" description="Register a repository so analyses can be attached to it.">
+        <Breadcrumbs entries={[{ label: 'Repositories', href: '/repos' }, { label: 'Create repository' }]} />
       </PageHeader>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="name">Repo name</Label>
+          <Label htmlFor="name">Repository name</Label>
           <Input id="name" name="name" placeholder="acme/shop-api" maxLength={255} aria-invalid={Boolean(nameError)} aria-describedby="name-error" required />
           <p id="name-error" role={nameError ? 'alert' : undefined} className="text-xs text-danger empty:hidden">
             {nameError}
           </p>
         </div>
-        {requestError ? <ErrorState error={requestError} title="Unable to create repo" /> : null}
+        {requestError ? <ErrorState error={requestError} title="Unable to create repository" /> : null}
         <div className="flex gap-3">
           <Button type="submit" disabled={isPending}>
-            {isPending ? 'Creating…' : 'Create repo'}
+            {isPending ? 'Creating…' : 'Create repository'}
           </Button>
           <Button type="button" variant="ghost" intent="neutral" onClick={() => router.back()} disabled={isPending}>
             Cancel

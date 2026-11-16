@@ -39,7 +39,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
         <PageHeader title={title} description={`Analysed on ${formatDateTime(createdAt)}`}>
           <Breadcrumbs
             entries={[
-              { label: 'Repos', href: '/repos' },
+              { label: 'Repositories', href: '/repos' },
               { label: repo.name, href: `/repos/${repo.slug}/${schema.toLowerCase()}` },
               { label: title },
             ]}
@@ -54,7 +54,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
       {rerunError ? <ErrorState error={rerunError} title="Unable to re-analyse" /> : null}
       <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <div className="flex items-center gap-2">
-          <dt className="text-muted-foreground">Repo</dt>
+          <dt className="text-muted-foreground">Repository</dt>
           <dd className="break-all font-medium">{repo.name}</dd>
         </div>
         <div className="flex items-center gap-2">

@@ -33,13 +33,13 @@ export function RepoListView({ params }: RepoListViewProps) {
       {isPending ? <TableSkeleton /> : null}
       {error ? <ErrorState error={error} /> : null}
       {data && data.items.length === 0 ? (
-        <EmptyState title={search ? 'No repo matches your search' : 'No repo yet'}>
+        <EmptyState title={search ? 'No repository matches your search' : 'No repository yet'}>
           {search ? (
             'Try a different name.'
           ) : (
             <RequirePermission permission={Permission.REPO_ANALYSIS}>
               <Link href="/repos/new" className="underline">
-                Create your first repo
+                Create your first repository
               </Link>
             </RequirePermission>
           )}
@@ -52,7 +52,7 @@ export function RepoListView({ params }: RepoListViewProps) {
               <TableHeader>
                 <TableRow>
                   <SortableTableHead field={RepoSortField.NAME} cacheKey={SortTable.REPOS} ordering={ordering} href={sortHref}>
-                    Repo
+                    Repository
                   </SortableTableHead>
                   <SortableTableHead field={RepoSortField.ANALYSIS_COUNT} cacheKey={SortTable.REPOS} ordering={ordering} href={sortHref} className="text-right">
                     Analyses

@@ -35,7 +35,7 @@ export function AnalysisListView({ repoId, schema, params: { page, ordering } }:
       </h2>
       {isPending ? <TableSkeleton /> : null}
       {error ? <ErrorState error={error} /> : null}
-      {data && data.items.length === 0 ? <EmptyState title="No analysis for this repo yet" /> : null}
+      {data && data.items.length === 0 ? <EmptyState title="No analysis for this repository yet" /> : null}
       {data && data.items.length > 0 ? (
         <>
           <div className="rounded-lg border bg-card shadow-card">
