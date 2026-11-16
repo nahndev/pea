@@ -17,17 +17,17 @@ const STORED_FILE: StoredFile = { file: "a.jsonl", path: "p-1" };
 
 describe("AnalysesService", () => {
   let analysesRepository: jest.Mocked<
-    Pick<AnalysesRepository, "create" | "findById">
+    Pick<AnalysesRepository, "create" | "createMany" | "findById">
   >;
   let branchesService: jest.Mocked<Pick<BranchesService, "findOrCreateByName">>;
   let storageService: jest.Mocked<Pick<StorageService, "save" | "remove">>;
   let databasesService: jest.Mocked<Pick<DatabasesService, "verify">>;
-  let addOnsService: jest.Mocked<Pick<AddOnsService, "convert">>;
+  let addOnsService: jest.Mocked<Pick<AddOnsService, "convert" | "verify">>;
   let eventEmitter2: jest.Mocked<Pick<EventEmitter2, "emit">>;
   let analysesService: AnalysesService;
 
   beforeEach(() => {
-    analysesRepository = { create: jest.fn(), findById: jest.fn() };
+    analysesRepository = { create: jest.fn(), createMany: jest.fn(), findById: jest.fn() };
     branchesService = {
       findOrCreateByName: jest
         .fn()
@@ -38,7 +38,7 @@ describe("AnalysesService", () => {
       remove: jest.fn().mockResolvedValue(undefined),
     };
     databasesService = { verify: jest.fn().mockResolvedValue(undefined) };
-    addOnsService = { convert: jest.fn() };
+    addOnsService = { convert: jest.fn(), verify: jest.fn() };
     eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
@@ -203,6 +203,82 @@ describe("AnalysesService", () => {
       await expect(analysesService.create(dto)).rejects.toThrow("unreachable");
       expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
       expect(analysesRepository.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createMany", () => {
+    const upload = (fieldname: string) => ({ fieldname, originalname: "a.log" }) as Express.Multer.File;
+    const api = { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" };
+    const bug = { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1" };
+    const database = { branch: "main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" };
+
+    beforeEach(() => {
+      analysesRepository.createMany.mockImplementation(async (items) => items.map((item, index) => ({ id: `an-${index}`, ...item }) as never));
+    });
+
+    it("creates every analysis in one call and emits CREATED for each", async () => {
+      const apiLog = upload("analyses[0][api_metric]");
+      const bugLog = upload("analyses[1][bug_log]");
+      const bugStored: StoredFile = { file: "b.log", path: "p-2" };
+      storageService.save.mockResolvedValueOnce(STORED_FILE).mockResolvedValueOnce(bugStored);
+      branchesService.findOrCreateByName.mockImplementation(async (name) => ({ id: `br-${name}`, name, slug: name }));
+
+      const result = await analysesService.createMany({ analyses: [api, bug, database] }, [bugLog, apiLog]);
+
+      expect(branchesService.findOrCreateByName.mock.calls).toEqual([["feat/x"], ["main"]]);
+      expect(analysesRepository.createMany).toHaveBeenCalledWith([
+        { branchId: "br-feat/x", schema: AnalysisSchema.API, title: "Release 1", file: STORED_FILE },
+        { branchId: "br-feat/x", schema: AnalysisSchema.BUG, title: "Release 1", file: bugStored },
+        { branchId: "br-main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" },
+      ]);
+      expect(storageService.save.mock.calls).toEqual([[apiLog], [bugLog]]);
+      expect(eventEmitter2.emit.mock.calls).toEqual(result.map((analysis) => [AnalysisEvent.CREATED, analysis]));
+    });
+
+    it("rejects every item when one misses its file, before writing anything", async () => {
+      const error = await codeOf(analysesService.createMany({ analyses: [api, bug] }, [upload("analyses[0][api_metric]")]));
+
+      expect(error).toEqual({ code: ErrorCode.LOG_FILE_REQUIRED, details: { "analyses.1": [ErrorCode.LOG_FILE_REQUIRED] } });
+      expect(storageService.save).not.toHaveBeenCalled();
+      expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
+      expect(eventEmitter2.emit).not.toHaveBeenCalled();
+    });
+
+    it("rejects an unknown add-on before storing any file", async () => {
+      addOnsService.verify.mockImplementation(() => {
+        throw new BadRequestException({ code: ErrorCode.ADD_ON_NOT_FOUND });
+      });
+
+      const error = await codeOf(
+        analysesService.createMany({ analyses: [{ ...api, addOn: "nope" }] }, [upload("analyses[0][api_metric]")]),
+      );
+
+      expect(error).toEqual({ code: ErrorCode.ADD_ON_NOT_FOUND, details: { "analyses.0": [ErrorCode.ADD_ON_NOT_FOUND] } });
+      expect(storageService.save).not.toHaveBeenCalled();
+    });
+
+    it("removes the files already stored when another one fails to convert", async () => {
+      addOnsService.convert.mockRejectedValue(new BadRequestException({ code: ErrorCode.LOG_FILE_INVALID }));
+
+      const error = await codeOf(
+        analysesService.createMany({ analyses: [api, { ...bug, addOn: "leaneo" }] }, [
+          upload("analyses[0][api_metric]"),
+          upload("analyses[1][bug_log]"),
+        ]),
+      );
+
+      expect(error).toEqual({ code: ErrorCode.LOG_FILE_INVALID, details: { "analyses.1": [ErrorCode.LOG_FILE_INVALID] } });
+      expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);
+      expect(analysesRepository.createMany).not.toHaveBeenCalled();
+    });
+
+    it("removes the stored files when inserting the analyses fails", async () => {
+      analysesRepository.createMany.mockRejectedValue(new Error("db down"));
+
+      await expect(analysesService.createMany({ analyses: [api] }, [upload("analyses[0][api_metric]")])).rejects.toThrow("db down");
+
+      expect(storageService.remove).toHaveBeenCalledWith([STORED_FILE]);
+      expect(eventEmitter2.emit).not.toHaveBeenCalled();
     });
   });
 

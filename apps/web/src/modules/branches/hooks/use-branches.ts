@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Branch } from '@tomato/types';
 import type { BranchListParams, CreateBranchInput } from '../branches.schemas';
 import { branchesService } from '../services/branches.service';
 
@@ -22,11 +23,12 @@ export const useCreateBranch = () => {
   });
 };
 
-export const useDeleteBranch = (branchId: string) => {
+/** Pages query a branch by uuid or slug, so both caches are dropped */
+export const useDeleteBranch = ({ id, slug }: Branch) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => branchesService.remove(branchId),
-    onSuccess: () => queryClient.removeQueries({ queryKey: ['branches', branchId] }),
+    mutationFn: () => branchesService.remove(id),
+    onSuccess: () => [id, slug].forEach((key) => queryClient.removeQueries({ queryKey: ['branches', key] })),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['branches', 'list'] }),
   });
 };

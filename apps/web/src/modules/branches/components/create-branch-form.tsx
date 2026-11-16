@@ -29,7 +29,7 @@ export function CreateBranchForm() {
       return;
     }
     setNameError(undefined);
-    mutate(parsed.data, { onSuccess: ({ id }) => router.push(branchSchemaHref(id, DEFAULT_ANALYSIS_SCHEMA)) });
+    mutate(parsed.data, { onSuccess: ({ slug }) => router.push(branchSchemaHref(slug, DEFAULT_ANALYSIS_SCHEMA)) });
   };
 
   return (

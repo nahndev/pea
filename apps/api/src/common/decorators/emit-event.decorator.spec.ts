@@ -10,6 +10,11 @@ class SampleService {
     if (fail) throw new Error('boom');
     return { id: 'x-1' };
   }
+
+  @EmitEvent('sample.done', { each: true })
+  async runMany(): Promise<{ id: string }[]> {
+    return [{ id: 'x-1' }, { id: 'x-2' }];
+  }
 }
 
 describe('EmitEvent', () => {
@@ -35,5 +40,10 @@ describe('EmitEvent', () => {
   it('does not emit when the method throws', async () => {
     await expect(sampleService.run(true)).rejects.toThrow('boom');
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('emits once per returned item with `each`', async () => {
+    await sampleService.runMany();
+    expect(listener.mock.calls).toEqual([[{ id: 'x-1' }], [{ id: 'x-2' }]]);
   });
 });

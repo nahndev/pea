@@ -18,6 +18,11 @@ export class AddOnsService {
     return this.addOnRegistry.list();
   }
 
+  /** Throws ADD_ON_NOT_FOUND unless the add-on converts logs for the schema */
+  verify(addOnId: string, schema: LogAnalysisSchema): void {
+    this.addOnRegistry.converterFor(addOnId, schema);
+  }
+
   /** Converts an uploaded log to the format the schema reads and stores it */
   async convert(addOnId: string, schema: LogAnalysisSchema, upload: Express.Multer.File): Promise<StoredFile> {
     const converter = this.addOnRegistry.converterFor(addOnId, schema);

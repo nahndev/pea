@@ -6,13 +6,14 @@ import { DatabaseConnectionsModule } from '../database-connections/database-conn
 import { DatabasesModule } from '../databases/databases.module';
 import { BranchAnalysesController } from './branch-analyses.controller';
 import { AnalysesController } from './analyses.controller';
+import { AnalysisBulkController } from './analysis-bulk.controller';
 import { AnalysisContextFactory } from './analysis-context.factory';
 import { AnalysesRepository } from './analyses.repository';
 import { AnalysesService } from './analyses.service';
 
 @Module({
   imports: [AddOnsModule, BranchesModule, FilesModule, DatabaseConnectionsModule, DatabasesModule],
-  controllers: [AnalysesController, BranchAnalysesController],
+  controllers: [AnalysesController, AnalysisBulkController, BranchAnalysesController],
   providers: [AnalysesService, AnalysesRepository, AnalysisContextFactory],
   exports: [AnalysesService, AnalysisContextFactory],
 })

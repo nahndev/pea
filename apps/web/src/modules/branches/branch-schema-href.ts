@@ -1,4 +1,5 @@
 import type { AnalysisSchema } from '@tomato/constants';
 
-export const branchSchemaHref = (branchId: string, schema: AnalysisSchema) =>
-  `/branches/${branchId}/${schema.toLowerCase()}`;
+/** `idOrSlug`: links use the slug, the uuid still resolves */
+export const branchSchemaHref = (idOrSlug: string, schema: AnalysisSchema) =>
+  `/branches/${idOrSlug}/${schema.toLowerCase()}`;

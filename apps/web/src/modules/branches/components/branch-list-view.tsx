@@ -64,7 +64,7 @@ export function BranchListView({ params }: BranchListViewProps) {
                   <TableRow key={branch.id}>
                     <TableCell className="font-medium">
                       <Link
-                        href={branchSchemaHref(branch.id, DEFAULT_ANALYSIS_SCHEMA)}
+                        href={branchSchemaHref(branch.slug, DEFAULT_ANALYSIS_SCHEMA)}
                         className="break-all hover:underline focus-ring rounded-sm"
                       >
                         {branch.name}

@@ -19,16 +19,33 @@ export interface BranchActivity extends Branch {
 export class BranchesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  upsertByName(name: string): Promise<Branch> {
-    return this.prismaService.branch.upsert({ where: { name }, create: { name }, update: {} });
+  upsertByName(name: string, slug: string): Promise<Branch> {
+    return this.prismaService.branch.upsert({ where: { name }, create: { name, slug }, update: {} });
   }
 
   findById(id: string): Promise<Branch | null> {
     return this.prismaService.branch.findUnique({ where: { id } });
   }
 
-  create(name: string): Promise<Branch> {
-    return this.prismaService.branch.create({ data: { name } });
+  findByName(name: string): Promise<Branch | null> {
+    return this.prismaService.branch.findUnique({ where: { name } });
+  }
+
+  findBySlug(slug: string): Promise<Branch | null> {
+    return this.prismaService.branch.findUnique({ where: { slug } });
+  }
+
+  /** Slugs equal to `slug` or suffixed from it (`slug-…`) */
+  async findSlugsLike(slug: string): Promise<Set<string>> {
+    const rows = await this.prismaService.branch.findMany({
+      where: { OR: [{ slug }, { slug: { startsWith: `${slug}-` } }] },
+      select: { slug: true },
+    });
+    return new Set(rows.map((row) => row.slug));
+  }
+
+  create(name: string, slug: string): Promise<Branch> {
+    return this.prismaService.branch.create({ data: { name, slug } });
   }
 
   /** Deletes the branch with its analyses and returns their stored log paths */
@@ -50,7 +67,7 @@ export class BranchesRepository {
     const orderBy = toSqlOrderBy(ordering, ORDER_BY);
     const [items, total] = await Promise.all([
       this.prismaService.$queryRaw<BranchActivity[]>`
-        SELECT b.id, b.name, COUNT(a.id)::int AS "analysisCount", MAX(a.created_at) AS "latestAnalysisAt"
+        SELECT b.id, b.name, b.slug, COUNT(a.id)::int AS "analysisCount", MAX(a.created_at) AS "latestAnalysisAt"
         FROM branches b
         LEFT JOIN analyses a ON a.branch_id = b.id
         WHERE b.name ILIKE ${pattern}

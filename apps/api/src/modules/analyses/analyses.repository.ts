@@ -23,7 +23,7 @@ const ORDER_BY: Record<AnalysisSortField, Prisma.Sql> = {
   issueCount: Prisma.sql`r.issue_count`,
 };
 
-interface CreateAnalysisData {
+export interface CreateAnalysisData {
   branchId: string;
   schema: AnalysisSchema;
   title: string;
@@ -35,16 +35,15 @@ interface CreateAnalysisData {
 export class AnalysesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create({ branchId, schema, title, file, databaseId }: CreateAnalysisData): Promise<Analysis> {
-    return this.prismaService.analysis.create({
-      data: {
-        branchId,
-        schema,
-        title,
-        apiData: file ? { create: file } : undefined,
-        databaseData: databaseId ? { create: { databaseId } } : undefined,
-      },
-    });
+  create(data: CreateAnalysisData): Promise<Analysis> {
+    return this.prismaService.analysis.create({ data: this.toCreateInput(data) });
+  }
+
+  /** Inserts all analyses in one transaction */
+  createMany(items: CreateAnalysisData[]): Promise<Analysis[]> {
+    return this.prismaService.$transaction(
+      items.map((data) => this.prismaService.analysis.create({ data: this.toCreateInput(data) })),
+    );
   }
 
   findById(id: string): Promise<AnalysisWithData | null> {
@@ -123,5 +122,15 @@ export class AnalysesRepository {
         },
       },
     });
+  }
+
+  private toCreateInput({ branchId, schema, title, file, databaseId }: CreateAnalysisData): Prisma.AnalysisUncheckedCreateInput {
+    return {
+      branchId,
+      schema,
+      title,
+      apiData: file ? { create: file } : undefined,
+      databaseData: databaseId ? { create: { databaseId } } : undefined,
+    };
   }
 }

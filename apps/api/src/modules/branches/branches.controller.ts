@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -28,23 +28,23 @@ export class BranchesController {
   @ApiBadRequestResponse()
   @ApiConflictResponse()
   async create(@Body() dto: CreateBranchDto) {
-    const { id, name } = await this.branchesService.create(dto.name);
-    return { id, name };
+    const { id, name, slug } = await this.branchesService.create(dto.name);
+    return { id, name, slug };
   }
 
-  @Get(':id')
+  @Get(':idOrSlug')
   @ApiOkResponse()
   @ApiNotFoundResponse()
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const { id: branchId, name } = await this.branchesService.findOne(id);
-    return { id: branchId, name };
+  async findOne(@Param('idOrSlug') idOrSlug: string) {
+    const { id, name, slug } = await this.branchesService.findOne(idOrSlug);
+    return { id, name, slug };
   }
 
-  @Delete(':id')
+  @Delete(':idOrSlug')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
   @ApiNotFoundResponse()
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.branchesService.remove(id);
+  remove(@Param('idOrSlug') idOrSlug: string) {
+    return this.branchesService.remove(idOrSlug);
   }
 }

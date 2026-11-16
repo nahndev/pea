@@ -54,7 +54,7 @@ export function MetricHistoryTable({ metric, items, ordering, sortHref }: Metric
               </TableCell>
               <TableCell>
                 <Link
-                  href={`/branches/${analysis.branch.id}`}
+                  href={`/branches/${analysis.branch.slug}`}
                   title={analysis.branch.name}
                   className="block truncate text-muted-foreground hover:underline focus-ring rounded-sm"
                 >

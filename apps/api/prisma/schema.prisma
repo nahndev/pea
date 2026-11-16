@@ -12,6 +12,7 @@ datasource db {
 model Branch {
   id       String     @id @default(uuid(7)) @db.Uuid
   name     String     @unique @db.VarChar(255)
+  slug     String     @unique @db.VarChar(255)
   analyses Analysis[]
 
   @@map("branches")

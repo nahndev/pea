@@ -22,7 +22,7 @@ interface DeleteBranchDialogProps {
 
 export function DeleteBranchDialog({ branch }: DeleteBranchDialogProps) {
   const router = useRouter();
-  const { mutate, isPending, error, reset } = useDeleteBranch(branch.id);
+  const { mutate, isPending, error, reset } = useDeleteBranch(branch);
   const [isOpen, setIsOpen] = useState(false);
 
   const changeOpen = (isNextOpen: boolean) => {
