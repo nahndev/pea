@@ -22,12 +22,12 @@ describe('frontendPageLoads', () => {
   it('reads one page load per line', async () => {
     await expect(
       read([
-        '{"@timestamp":"2026-11-16T03:09:36.343Z","name":"page-load","route":"/synthese/:id?","previousRoute":null,"status":"settled","duration":12183,"visibleDuration":3729,"requestCount":58,"requestDuration":29880,"longFrameCount":9,"longFrameDuration":3554,"addedNodes":1825}',
-        '{"name":"page-load","route":"/groupe","status":"settled","duration":1012,"visibleDuration":66,"requestCount":2,"longFrameDuration":116}',
+        '{"@timestamp":"2026-11-16T03:09:36.343Z","name":"page-load","source":"route","route":"/synthese/:id?","previousRoute":null,"status":"settled","duration":12183,"visibleDuration":3729,"requestCount":58,"requestDuration":29880,"longFrameCount":9,"longFrameDuration":3554,"addedNodes":1825}',
+        '{"name":"page-load","source":"route","route":"/groupe","previousRoute":"/synthese/:id?","status":"settled","duration":1012,"visibleDuration":66,"requestCount":2,"longFrameDuration":116}',
       ]),
     ).resolves.toEqual([
-      { page: '/groupe', duration_ms: 1012, visible_ms: 66, long_frame_ms: 116, request_count: 2, is_aborted: false },
-      { page: '/synthese/:id?', duration_ms: 12183, visible_ms: 3729, long_frame_ms: 3554, request_count: 58, is_aborted: false },
+      { page: '[page-load][route] /groupe - from /synthese/:id?', duration_ms: 1012, visible_ms: 66, long_frame_ms: 116, request_count: 2, is_aborted: false },
+      { page: '[page-load][route] /synthese/:id?', duration_ms: 12183, visible_ms: 3729, long_frame_ms: 3554, request_count: 58, is_aborted: false },
     ]);
   });
 
@@ -35,7 +35,7 @@ describe('frontendPageLoads', () => {
     await expect(
       read(['{"route":"/tableau/:id","status":"Aborted","duration":2129,"visibleDuration":273,"requestCount":9,"longFrameDuration":448}']),
     ).resolves.toEqual([
-      { page: '/tableau/:id', duration_ms: null, visible_ms: null, long_frame_ms: 448, request_count: 9, is_aborted: true },
+      { page: '[page-load] /tableau/:id', duration_ms: null, visible_ms: null, long_frame_ms: 448, request_count: 9, is_aborted: true },
     ]);
   });
 

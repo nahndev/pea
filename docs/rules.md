@@ -162,7 +162,7 @@ Issue examples:
 `FRONTEND` analyses read a frontend metric log ([frontend_metric.md](frontend_metric.md)). The overall latency rules
 (`P50_FAILURE`…`MAX_LATENCY`) measure settled page loads; seeded: `P50_FAILURE` `3000` ms (medium), `P95_FAILURE` `10000` ms (high).
 
-The page rules create one issue per page (subject `PAGE`, its route), worst first, at most 100 per rule (`MAX_FRONTEND_ISSUES`).
+The page rules create one issue per page (subject `PAGE`, `[name][source] route - from previousRoute`), worst first, at most 100 per rule (`MAX_FRONTEND_ISSUES`).
 Pages with fewer than `minLoads` loads are ignored. Handler: `PageRuleHandler`.
 
 | Type                | Violation when                                    | Config                     | Default            |

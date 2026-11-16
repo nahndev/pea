@@ -21,6 +21,7 @@ export interface SlowApiRecord {
 export interface PageLoad {
   '@timestamp'?: string;
   name?: string;
+  source?: string;
   route?: string;
   previousRoute?: string | null;
   status?: string;

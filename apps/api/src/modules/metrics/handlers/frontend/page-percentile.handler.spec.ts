@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Metric } from '../../../../generated/client';
 import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
-import { type PageLoadFixture, pageLoadLine } from '../../../files/frontend-metric.fixtures';
+import { type PageLoadFixture, pageLoadLine, pageOf } from '../../../files/frontend-metric.fixtures';
 import { createSubject } from '../../../subjects/subject';
 import { PagePercentileHandler } from './page-percentile.handler';
 
@@ -29,8 +29,9 @@ describe('PagePercentileHandler', () => {
 
   it('returns one measurement per page, slowest first, without aborted loads', async () => {
     await writeLog([
-      { durationMs: 1000, route: '/groupe' },
-      { durationMs: 2000, route: '/groupe' },
+      { durationMs: 1000, route: '/groupe', previousRoute: '/agenda' },
+      { durationMs: 2000, route: '/groupe', previousRoute: '/agenda' },
+      { durationMs: 3000, route: '/groupe' },
       { durationMs: 9000, route: '/synthese/:id?' },
       { durationMs: 10000, route: '/synthese/:id?' },
       { durationMs: 90000, route: '/synthese/:id?', status: 'aborted' },
@@ -39,10 +40,11 @@ describe('PagePercentileHandler', () => {
 
     const measurements = await pagePercentileHandler.handle(metric(), context());
 
-    expect(measurements.map(({ subject }) => subject?.description)).toEqual(['/synthese/:id?', '/groupe']);
-    expect(measurements[0].subject).toEqual(createSubject(SubjectType.PAGE, '/synthese/:id?'));
+    expect(measurements.map(({ subject }) => subject?.description)).toEqual([pageOf('/synthese/:id?'), pageOf('/groupe'), pageOf('/groupe', '/agenda')]);
+    expect(measurements[0].subject).toEqual(createSubject(SubjectType.PAGE, pageOf('/synthese/:id?')));
     expect(measurements[0].value).toBeCloseTo(9950);
-    expect(measurements[1].value).toBeCloseTo(1950);
+    expect(measurements[1].value).toBe(3000);
+    expect(measurements[2].value).toBeCloseTo(1950);
   });
 
   it('measures nothing for another schema or metric type', async () => {

@@ -4,7 +4,7 @@ The **frontend metric log** of a `FRONTEND` analysis (upload field `frontend_met
 It is NDJSON: one JSON object per line, one line per page load measured in the browser.
 
 ```json
-{"@timestamp":"2026-11-16T03:09:36.343Z","name":"page-load","route":"/synthese/:id?","previousRoute":null,"status":"settled","startTime":0,"duration":12183,"visibleDuration":3729,"requestCount":58,"requestDuration":29880,"longFrameCount":9,"longFrameDuration":3554,"addedNodes":1825}
+{"@timestamp":"2026-11-16T03:09:36.343Z","name":"page-load","source":"route","route":"/synthese/:id?","previousRoute":null,"status":"settled","startTime":0,"duration":12183,"visibleDuration":3729,"requestCount":58,"requestDuration":29880,"longFrameCount":9,"longFrameDuration":3554,"addedNodes":1825}
 ```
 
 ## Fields
@@ -18,17 +18,20 @@ It is NDJSON: one JSON object per line, one line per page load measured in the b
 | `requestCount`      | integer | Requests sent while loading                                                |
 | `longFrameDuration` | number  | Time in ms spent in long frames (the page froze) while loading             |
 | `name`              | string  | Kind of measure; only `page-load` (or none) is read                        |
+| `source`            | string  | What triggered the load (`route`)                                          |
+| `previousRoute`     | string  | Route the user came from, `null` on a first load                           |
 | `@timestamp`        | string  | When it was logged, ISO 8601; accepted, not used yet                       |
-| `previousRoute`, `startTime`, `requestDuration`, `longFrameCount`, `addedNodes` | | Accepted, not used yet |
+| `startTime`, `requestDuration`, `longFrameCount`, `addedNodes` | | Accepted, not used yet |
 
 - A line needs `duration`; others are ignored. A line that is not valid JSON makes the whole file unreadable.
 - Aborted loads count as page loads but their `duration` and `visibleDuration` are ignored, so they don't lower percentiles.
-- A **page** (subject `PAGE`) is its `route`; a load without route only counts in the overall metrics.
+- A **page** (subject `PAGE`) is `[name][source] route - from previousRoute`, e.g. `[page-load][route] /agenda - from /gamme/:id`;
+  missing `source` or `previousRoute` are left out. A load without route only counts in the overall metrics.
 - Do not put personal data in the file (user, session, urls with ids…): nothing reads it.
 
 ## What reads it
 
-`frontendPageLoads` in `apps/api/src/modules/files/frontend-page-loads.ts` exposes `page`, `duration_ms`, `visible_ms`,
+`frontendPageLoads` in `apps/api/src/modules/files/frontend-page-loads.ts` exposes `page` (see above), `duration_ms`, `visible_ms`,
 `long_frame_ms`, `request_count` and `is_aborted` to DuckDB.
 
 | Consumer                                                              | Uses                     |

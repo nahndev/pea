@@ -25,6 +25,7 @@ export const convertFrontendPerformanceLine: LineConverter = (line) => {
   const pageLoad: PageLoad = {
     '@timestamp': toTimestamp(entry?.datetime),
     name: asText(metric.name),
+    source: asText(metric.source),
     route: asText(metric.route),
     previousRoute: asText(metric.previousRoute) ?? null,
     status: asText(metric.status),

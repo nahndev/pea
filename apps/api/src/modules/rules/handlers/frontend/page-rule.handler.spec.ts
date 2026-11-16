@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Rule } from '../../../../generated/client';
 import type { ApiAnalysisContext } from '../../../analyses/analyses.types';
-import { type PageLoadFixture, pageLoadLine } from '../../../files/frontend-metric.fixtures';
+import { type PageLoadFixture, pageLoadLine, pageOf } from '../../../files/frontend-metric.fixtures';
 import { createSubject } from '../../../subjects/subject';
 import { PageRuleHandler } from './page-rule.handler';
 
@@ -42,7 +42,7 @@ describe('PageRuleHandler', () => {
       {
         ruleId: 'r-1',
         description: 'P95 load 11900.0ms exceeds threshold 5000ms',
-        subject: createSubject(SubjectType.PAGE, '/synthese/:id?'),
+        subject: createSubject(SubjectType.PAGE, pageOf('/synthese/:id?')),
       },
     ]);
   });
@@ -54,12 +54,12 @@ describe('PageRuleHandler', () => {
     [RuleType.ABORTED_PAGE, { maxPercent: 30 }, '33.3% of loads aborted, above 30%'],
   ])('describes %s', async (type, config, description) => {
     const issues = await pageRuleHandler.handle(rule(type, { ...config, minLoads: 2 }), context());
-    expect(issues.map((issue) => [issue.subject?.description, issue.description])).toEqual([['/synthese/:id?', description]]);
+    expect(issues.map((issue) => [issue.subject?.description, issue.description])).toEqual([[pageOf('/synthese/:id?'), description]]);
   });
 
   it('ignores pages with fewer loads than the minimum', async () => {
     const issues = await pageRuleHandler.handle(rule(RuleType.ABORTED_PAGE, { maxPercent: 30, minLoads: 1 }), context());
-    expect(issues.map(({ subject }) => subject?.description)).toEqual(['/tableau/:id', '/synthese/:id?']);
+    expect(issues.map(({ subject }) => subject?.description)).toEqual([pageOf('/tableau/:id'), pageOf('/synthese/:id?')]);
   });
 
   it('returns no issue for another schema, an unknown type or a missing config', async () => {

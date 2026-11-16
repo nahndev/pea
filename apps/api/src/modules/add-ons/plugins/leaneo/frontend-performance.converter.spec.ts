@@ -47,6 +47,7 @@ describe('convertFrontendPerformanceLine', () => {
     expect(JSON.parse(content)).toEqual({
       '@timestamp': '2026-11-16T03:10:46.564Z',
       name: 'page-load',
+      source: 'route',
       route: '/tableau/:id',
       previousRoute: '/synthese/:id?',
       status: 'aborted',
@@ -85,8 +86,8 @@ describe('convertFrontendPerformanceLine', () => {
       const path = join(dir, 'frontend_metric.log');
       await writeFile(path, content);
       await expect(queryRows(`SELECT page, duration_ms, request_count, is_aborted FROM ${frontendPageLoads(path)} ORDER BY page`)).resolves.toEqual([
-        { page: '/groupe', duration_ms: 1012, request_count: 9, is_aborted: false },
-        { page: '/tableau/:id', duration_ms: null, request_count: 9, is_aborted: true },
+        { page: '[page-load][route] /groupe - from /synthese/:id?', duration_ms: 1012, request_count: 9, is_aborted: false },
+        { page: '[page-load][route] /tableau/:id - from /synthese/:id?', duration_ms: null, request_count: 9, is_aborted: true },
       ]);
     } finally {
       await rm(dir, { recursive: true, force: true });

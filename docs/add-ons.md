@@ -111,7 +111,7 @@ One line in, one `frontend_metric` line out.
 | frontend_metric                                                          | Source                                       |
 | ------------------------------------------------------------------------ | -------------------------------------------- |
 | `@timestamp`                                                             | `datetime`, ISO 8601 in UTC (milliseconds)   |
-| `name`, `route`, `previousRoute`, `status`, `startTime`, `duration`, `visibleDuration` | same keys of `context.metric`  |
+| `name`, `source`, `route`, `previousRoute`, `status`, `startTime`, `duration`, `visibleDuration` | same keys of `context.metric`  |
 | `requestCount`, `requestDuration`, `longFrameCount`, `longFrameDuration`, `addedNodes` | same keys of `context.metric.detail` |
 
 `context.batch` (session, tenant and account ids) and `detail.slowRequests` (urls) are dropped.
