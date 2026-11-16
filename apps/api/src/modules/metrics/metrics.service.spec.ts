@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { AnalysisSchema, ErrorCode, SortOrder, SubjectType } from "@tomato/constants";
 import { MetricHandlerFactory } from "./handlers/metric-handler.factory";
 import type { MetricHandler } from "./handlers/metric-handler.types";
@@ -21,7 +21,7 @@ describe("MetricsService", () => {
       | "createMany"
       | "findByAnalysisResult"
       | "findDetailedPage"
-      | "findSummarySources"
+      | "findCardSources"
       | "findHistoryByMetric"
     >
   >;
@@ -59,7 +59,7 @@ describe("MetricsService", () => {
         .mockImplementation((_, items: unknown[]) => items.length),
       findByAnalysisResult: jest.fn(),
       findDetailedPage: jest.fn(),
-      findSummarySources: jest.fn(),
+      findCardSources: jest.fn(),
       findHistoryByMetric: jest.fn(),
     };
     subjectsService = {
@@ -295,11 +295,11 @@ describe("MetricsService", () => {
     expect(subjectsService.findByAnalysisResult).toHaveBeenCalledWith("res-1");
   });
 
-  it("summarizes the duration metrics of an analysis result", async () => {
-    metricResultsRepository.findSummarySources.mockResolvedValue([
+  it("summarizes the card metrics of an analysis result", async () => {
+    metricResultsRepository.findCardSources.mockResolvedValue([
       {
         value: 300,
-        metric: { type: "P90" },
+        metric: { id: "m-1", type: "P90", unit: "MILLISECOND" },
         evaluations: [
           {
             status: "FAILED",
@@ -314,15 +314,13 @@ describe("MetricsService", () => {
     await expect(metricsService.findSummaries("res-1")).resolves.toEqual([
       {
         type: "P90",
+        unit: "MILLISECOND",
         worstValue: 300,
         gateStatus: "FAILED",
         limit: { operator: "GT", threshold: 200 },
       },
     ]);
-    expect(metricResultsRepository.findSummarySources).toHaveBeenCalledWith(
-      "res-1",
-      ["P50", "P90", "P95"],
-    );
+    expect(metricResultsRepository.findCardSources).toHaveBeenCalledWith("res-1");
   });
 
   it("lists the metrics with their unit", async () => {
@@ -334,6 +332,8 @@ describe("MetricsService", () => {
         unit: "MILLISECOND",
         description: "P90 duration",
         isActive: false,
+        isCard: true,
+        isTrend: null,
         config: {},
       },
     ] as never);
@@ -348,6 +348,8 @@ describe("MetricsService", () => {
         unit: "MILLISECOND",
         description: "P90 duration",
         isActive: false,
+        isCard: true,
+        isTrend: false,
         include: [],
         exclude: [],
       },
@@ -374,6 +376,8 @@ describe("MetricsService", () => {
       unit: "MILLISECOND",
       description: "d",
       isActive: true,
+      isCard: false,
+      isTrend: false,
       include: [],
       exclude: [],
     });
@@ -513,6 +517,26 @@ describe("MetricsService", () => {
         description: "New",
         isActive: false,
       });
+    });
+
+    it("shows a metric as a card and a trend line", async () => {
+      metricsRepository.findById.mockResolvedValue(row as never);
+      metricsRepository.update.mockResolvedValue({ ...row, isCard: true, isTrend: true } as never);
+
+      await expect(metricsService.update("m-1", { isCard: true, isTrend: true })).resolves.toMatchObject({
+        isCard: true,
+        isTrend: true,
+      });
+      expect(metricsRepository.update).toHaveBeenCalledWith("m-1", { isCard: true, isTrend: true });
+    });
+
+    it("rejects a trend line for a metric measured per subject", async () => {
+      metricsRepository.findById.mockResolvedValue({ ...row, type: "ENDPOINT_P95" } as never);
+
+      const error = await metricsService.update("m-1", { isTrend: true }).catch((e: BadRequestException) => e);
+
+      expect((error as BadRequestException).getResponse()).toEqual({ code: ErrorCode.METRIC_TREND_UNSUPPORTED });
+      expect(metricsRepository.update).not.toHaveBeenCalled();
     });
 
     it("stores include and exclude in the config and keeps the other keys", async () => {

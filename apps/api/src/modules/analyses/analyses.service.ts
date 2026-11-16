@@ -30,7 +30,7 @@ import { AddOnsService } from "../add-ons/add-ons.service";
 import { BranchesService } from "../branches/branches.service";
 import { DatabasesService } from "../databases/databases.service";
 import { StorageService, type StoredFile } from "../files/storage.service";
-import { DEFAULT_TREND_METRIC_TYPES, LOG_FILE_FIELD_BY_SCHEMA } from "./analyses.constants";
+import { LOG_FILE_FIELD_BY_SCHEMA } from "./analyses.constants";
 import { AnalysesRepository, type CreateAnalysisData } from "./analyses.repository";
 import type { AnalysisWithData, AnalysisWithLatestResult, MetricTrendPick, UploadedLogFiles } from "./analyses.types";
 import { groupBulkLogFiles } from "./bulk-log-files";
@@ -204,8 +204,9 @@ export class AnalysesService {
   }
 
   private sortSeries(series: MetricTrendSeries[], picks: string[]): MetricTrendSeries[] {
+    if (!picks.length) return series.sort((a, b) => a.metric.id.localeCompare(b.metric.id));
     const rank = (item: MetricTrendSeries) => {
-      const index = picks.length ? picks.indexOf(item.key) : DEFAULT_TREND_METRIC_TYPES.indexOf(item.metric.type);
+      const index = picks.indexOf(item.key);
       return index === -1 ? Number.MAX_SAFE_INTEGER : index;
     };
     return series.sort((a, b) => rank(a) - rank(b));

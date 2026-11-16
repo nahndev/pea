@@ -10,9 +10,6 @@ import {
   FRONTEND_VISIBLE_COLUMN,
 } from '../files/frontend-page-loads';
 
-/** Metric types shown as summary cards on an analysis */
-export const SUMMARY_METRIC_TYPES = [MetricType.P50, MetricType.P90, MetricType.P95] as const;
-
 export const MAX_METRIC_SUBJECT_FILTERS = 200;
 /** Query subjects measured per analysis, by total execution time */
 export const MAX_QUERY_SUBJECTS = 50;

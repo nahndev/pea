@@ -24,6 +24,9 @@ export function AppHeader() {
           <Link href="/databases" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
             Databases
           </Link>
+          <Link href="/charts" className="text-sm text-muted-foreground hover:text-foreground focus-ring rounded-sm">
+            Chart
+          </Link>
         </nav>
         <ThemeToggle />
       </div>

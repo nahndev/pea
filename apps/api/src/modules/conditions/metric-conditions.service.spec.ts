@@ -81,7 +81,7 @@ describe('MetricConditionsService', () => {
     });
 
     it('throws METRIC_DISABLED for a disabled metric', async () => {
-      metricsService.findOne.mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API, isActive: false, include: [], exclude: [] });
+      metricsService.findOne.mockResolvedValue({ ...view.metric, schema: AnalysisSchema.API, isActive: false, isCard: false, isTrend: false, include: [], exclude: [] });
 
       const error = await metricConditionsService.create(input).catch((e: BadRequestException) => e);
 

@@ -4,5 +4,5 @@ import { AnalysisSchema } from '@tomato/constants';
 import { MetricTrendChart, type TrendChartProps } from './metric-trend-chart';
 
 export const DatabaseTrendChart = (props: TrendChartProps) => (
-  <MetricTrendChart schema={AnalysisSchema.DATABASE} title="Database trend" defaultMetrics="Connections, waiting locks and deadlocks" {...props} />
+  <MetricTrendChart schema={AnalysisSchema.DATABASE} title="Database trend" {...props} />
 );

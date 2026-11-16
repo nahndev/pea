@@ -25,7 +25,10 @@ export class MetricsRepository {
     return this.prismaService.metric.findUnique({ where: { id } });
   }
 
-  update(id: string, data: { description?: string; isActive?: boolean; config?: Prisma.InputJsonObject }): Promise<Metric> {
+  update(
+    id: string,
+    data: { description?: string; isActive?: boolean; isCard?: boolean; isTrend?: boolean; config?: Prisma.InputJsonObject },
+  ): Promise<Metric> {
     return this.prismaService.metric.update({ where: { id }, data });
   }
 }

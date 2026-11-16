@@ -148,6 +148,20 @@ const CONDITIONS = [
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
 ];
 
+/** Default Chart settings, applied to metrics never configured */
+const DEFAULT_CARD_METRIC_TYPES: string[] = [MetricType.P50, MetricType.P90, MetricType.P95];
+const DEFAULT_TREND_METRIC_TYPES: string[] = [
+  MetricType.P50,
+  MetricType.P90,
+  MetricType.P95,
+  MetricType.CONNECTIONS,
+  MetricType.WAITING_LOCKS,
+  MetricType.DEADLOCKS,
+  MetricType.ERROR_COUNT,
+  MetricType.CRITICAL_ERROR_COUNT,
+  MetricType.ERROR_GROUP_COUNT,
+];
+
 /** Replaced metric types, deleted with their results and conditions */
 const OBSOLETE_METRICS = [{ schema: AnalysisSchema.FRONTEND, type: 'PAGE_P95' }];
 
@@ -173,6 +187,11 @@ async function main() {
       if (existing) await prismaClient.metric.update({ where: { id: existing.id }, data: { unit: metric.unit } });
       else await prismaClient.metric.create({ data: metric });
     }
+
+    await prismaClient.metric.updateMany({ where: { isCard: null, type: { in: DEFAULT_CARD_METRIC_TYPES } }, data: { isCard: true } });
+    await prismaClient.metric.updateMany({ where: { isCard: null }, data: { isCard: false } });
+    await prismaClient.metric.updateMany({ where: { isTrend: null, type: { in: DEFAULT_TREND_METRIC_TYPES } }, data: { isTrend: true } });
+    await prismaClient.metric.updateMany({ where: { isTrend: null }, data: { isTrend: false } });
 
     for (const { schema, metricType, operator, threshold } of CONDITIONS) {
       const metric = await prismaClient.metric.findFirstOrThrow({ where: { schema, type: metricType }, select: { id: true } });

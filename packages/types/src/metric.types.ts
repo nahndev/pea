@@ -21,6 +21,10 @@ export interface MetricView {
   unit: MetricUnit;
   description: string;
   isActive: boolean;
+  /** Shown as a summary card on the analysis metrics */
+  isCard: boolean;
+  /** Default line of the trend chart */
+  isTrend: boolean;
   /** Subject uuids; empty means every subject */
   include: string[];
   /** Subject uuids that are never measured */
@@ -46,6 +50,7 @@ export interface MetricResultView {
 
 export interface MetricSummaryView {
   type: MetricType;
+  unit: MetricUnit;
   worstValue: number;
   gateStatus: MetricEvaluationStatus | null;
   limit: { operator: MetricConditionOperator; threshold: number } | null;

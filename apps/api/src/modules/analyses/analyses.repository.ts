@@ -4,7 +4,6 @@ import { Prisma, type Analysis } from '../../generated/client';
 import { type Ordering, orderByIds, toSqlOrderBy } from '../../common/sort/sort';
 import type { StoredFile } from '../files/storage.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DEFAULT_TREND_METRIC_TYPES } from './analyses.constants';
 import {
   ANALYSIS_DATA_INCLUDE,
   LATEST_RESULT_INCLUDE,
@@ -97,7 +96,7 @@ export class AnalysesRepository {
   ): Promise<AnalysisTrendRecord[]> {
     const where: Prisma.MetricResultWhereInput = picks.length
       ? { OR: picks }
-      : { subjectUuid: null, metric: { type: { in: [...DEFAULT_TREND_METRIC_TYPES] } } };
+      : { subjectUuid: null, metric: { isTrend: true } };
     return this.prismaService.analysis.findMany({
       where: { branchId, schema },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],

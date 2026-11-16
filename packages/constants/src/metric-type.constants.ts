@@ -34,3 +34,14 @@ export const MetricType = {
 } as const;
 
 export type MetricType = (typeof MetricType)[keyof typeof MetricType];
+
+/** Measured per subject (endpoint, page, table…), without an overall value to draw as a trend line */
+export const SUBJECT_METRIC_TYPES: readonly MetricType[] = [
+  MetricType.ENDPOINT_P95,
+  MetricType.TABLE_ROWS,
+  MetricType.TABLE_DEAD_TUPLES,
+  MetricType.QUERY_MEAN_DURATION,
+  MetricType.ERROR_OCCURRENCES,
+  MetricType.PAGE_FROM_ROUTE_P95,
+  MetricType.PAGE_RELOAD_P95,
+];

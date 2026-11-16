@@ -15,6 +15,14 @@ export class UpdateMetricDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isCard?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTrend?: boolean;
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(MAX_METRIC_SUBJECT_FILTERS)
   @ArrayUnique()

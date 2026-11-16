@@ -1,4 +1,4 @@
-import { AnalysisSchema, MetricType } from '@tomato/constants';
+import { AnalysisSchema } from '@tomato/constants';
 
 export const LogFileField = {
   API_METRIC: 'api_metric',
@@ -16,17 +16,4 @@ export const LOG_FILE_FIELD_BY_SCHEMA: Readonly<Record<Exclude<AnalysisSchema, t
 };
 export const MAX_LOG_FILE_SIZE = 50 * 1024 * 1024;
 export const MAX_BULK_ANALYSES = 20;
-
-/** Trend metrics shown when none is picked; each schema only finds its own */
-export const DEFAULT_TREND_METRIC_TYPES: readonly MetricType[] = [
-  MetricType.P50,
-  MetricType.P90,
-  MetricType.P95,
-  MetricType.CONNECTIONS,
-  MetricType.WAITING_LOCKS,
-  MetricType.DEADLOCKS,
-  MetricType.ERROR_COUNT,
-  MetricType.CRITICAL_ERROR_COUNT,
-  MetricType.ERROR_GROUP_COUNT,
-];
 export const MAX_TREND_PICKS = 10;

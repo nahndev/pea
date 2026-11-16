@@ -1,13 +1,15 @@
-import { MetricConditionAggregate, type MetricConditionOperator, MetricEvaluationStatus, type MetricType } from '@tomato/constants';
+import { MetricConditionAggregate, type MetricConditionOperator, MetricEvaluationStatus, type MetricType, type MetricUnit } from '@tomato/constants';
 import type { MetricSummaryView } from '@tomato/types';
 import type { MetricResultSummarySource } from './metric-results.repository';
 
-export function summarizeMetrics(types: readonly MetricType[], results: MetricResultSummarySource[]): MetricSummaryView[] {
-  return types.flatMap((type) => {
-    const ofType = results.filter(({ metric }) => metric.type === type);
-    if (ofType.length === 0) return [];
+/** One summary per metric, in the order of `results`, with the worst value of its subjects */
+export function summarizeMetrics(results: MetricResultSummarySource[]): MetricSummaryView[] {
+  const byMetric = new Map<string, MetricResultSummarySource[]>();
+  for (const result of results) byMetric.set(result.metric.id, [...(byMetric.get(result.metric.id) ?? []), result]);
 
-    const evaluations = ofType.flatMap(({ evaluations: items }) => items);
+  return [...byMetric.values()].map((ofMetric) => {
+    const { type, unit } = ofMetric[0].metric;
+    const evaluations = ofMetric.flatMap(({ evaluations: items }) => items);
     const gateStatus = evaluations.some(({ status }) => status === MetricEvaluationStatus.FAILED)
       ? MetricEvaluationStatus.FAILED
       : evaluations.length > 0
@@ -15,13 +17,12 @@ export function summarizeMetrics(types: readonly MetricType[], results: MetricRe
         : null;
     const first = evaluations.find(({ aggregate }) => aggregate === MetricConditionAggregate.NONE);
 
-    return [
-      {
-        type,
-        worstValue: Math.max(...ofType.map(({ value }) => value)),
-        gateStatus,
-        limit: first ? { operator: first.operator as MetricConditionOperator, threshold: first.threshold } : null,
-      },
-    ];
+    return {
+      type: type as MetricType,
+      unit: unit as MetricUnit,
+      worstValue: Math.max(...ofMetric.map(({ value }) => value)),
+      gateStatus,
+      limit: first ? { operator: first.operator as MetricConditionOperator, threshold: first.threshold } : null,
+    };
   });
 }

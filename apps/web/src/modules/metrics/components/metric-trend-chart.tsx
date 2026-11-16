@@ -24,12 +24,13 @@ export interface TrendChartProps {
 interface MetricTrendChartProps extends TrendChartProps {
   schema: AnalysisSchema;
   title: string;
-  defaultMetrics: string;
 }
+
+const DEFAULT_METRICS = 'The trend metrics set in Chart';
 
 const NO_PICKS: string[] = [];
 
-export function MetricTrendChart({ schema, title, defaultMetrics, branchId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
+export function MetricTrendChart({ schema, title, branchId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
   const { data, error, isPending } = useMetricTrend(branchId, schema, picks);
 
   const series = (data?.series ?? []).map((item, index) => ({
@@ -55,7 +56,7 @@ export function MetricTrendChart({ schema, title, defaultMetrics, branchId, pick
           <div className="flex flex-col gap-1">
             <CardTitle>{title}</CardTitle>
             <CardDescription>
-              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${defaultMetrics} (tick rows below to pick others)` : defaultMetrics}, averaged per analysis over this branch’s last {TREND_LIMIT} analyses.
+              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${DEFAULT_METRICS} (tick rows below to pick others)` : DEFAULT_METRICS}, averaged per analysis over this branch’s last {TREND_LIMIT} analyses.
               {hasLimits ? ' Dashed lines mark the condition limits.' : ''}
             </CardDescription>
           </div>

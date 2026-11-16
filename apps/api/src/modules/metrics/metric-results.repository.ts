@@ -24,7 +24,7 @@ export type MetricResultHistory = Prisma.MetricResultGetPayload<{ include: typeo
 
 const SUMMARY_SELECT = {
   value: true,
-  metric: { select: { type: true } },
+  metric: { select: { id: true, type: true, unit: true } },
   evaluations: { select: { status: true, aggregate: true, operator: true, threshold: true }, orderBy: { id: 'asc' } },
 } satisfies Prisma.MetricResultSelect;
 
@@ -137,9 +137,11 @@ export class MetricResultsRepository {
     return { items, total };
   }
 
-  findSummarySources(analysisResultId: string, types: readonly string[]): Promise<MetricResultSummarySource[]> {
+  /** Results of the metrics shown as cards, in metric order */
+  findCardSources(analysisResultId: string): Promise<MetricResultSummarySource[]> {
     return this.prismaService.metricResult.findMany({
-      where: { analysisResultId, metric: { type: { in: [...types] } } },
+      where: { analysisResultId, metric: { isCard: true } },
+      orderBy: { metric: { id: 'asc' } },
       select: SUMMARY_SELECT,
     });
   }

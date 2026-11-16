@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricHistorySortField, type MetricResultSortField, type MetricSortField, type MetricType, type MetricUnit } from '@tomato/constants';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { type AnalysisSchema, ErrorCode, type MetricConditionAggregate, type MetricConditionOperator, type MetricEvaluationStatus, type MetricHistorySortField, type MetricResultSortField, type MetricSortField, type MetricType, type MetricUnit, SUBJECT_METRIC_TYPES } from '@tomato/constants';
 import type { MetricEvaluationView, MetricHistoryItemView, MetricResultFilterOptions, MetricResultView, MetricSummaryView, MetricView, Paginated, SubjectView } from '@tomato/types';
 import type { Metric, MetricEvaluation, MetricResult } from '../../generated/client';
 import { type Ordering, sortItems } from '../../common/sort/sort';
@@ -10,7 +10,6 @@ import { filterBySubject, mergeMetricConfig, parseMetricConfig } from './metric-
 import { MetricResultsRepository, type MetricResultSource } from './metric-results.repository';
 import { type SubjectSource, toSubjectView } from '../subjects/subject';
 import { SubjectsService } from '../subjects/subjects.service';
-import { SUMMARY_METRIC_TYPES } from './metrics.constants';
 import { MetricsRepository } from './metrics.repository';
 import { summarizeMetrics } from './summarize-metrics';
 
@@ -61,14 +60,16 @@ export class MetricsService {
     return metric;
   }
 
-  async update(id: string, { description, isActive, include, exclude }: UpdateMetricDto): Promise<MetricView> {
+  async update(id: string, { description, isActive, isCard, isTrend, include, exclude }: UpdateMetricDto): Promise<MetricView> {
     const metric = await this.metricsRepository.findById(id);
     if (!metric) throw new NotFoundException({ code: ErrorCode.METRIC_NOT_FOUND });
-    if ([description, isActive, include, exclude].every((value) => value === undefined)) return this.toView(metric);
+    if ([description, isActive, isCard, isTrend, include, exclude].every((value) => value === undefined)) return this.toView(metric);
+    if (isTrend && SUBJECT_METRIC_TYPES.includes(metric.type as MetricType))
+      throw new BadRequestException({ code: ErrorCode.METRIC_TREND_UNSUPPORTED });
 
     const isConfigChanged = include !== undefined || exclude !== undefined;
     const config = isConfigChanged ? mergeMetricConfig(metric.config, { include, exclude }) : undefined;
-    return this.toView(await this.metricsRepository.update(id, { description, isActive, config }));
+    return this.toView(await this.metricsRepository.update(id, { description, isActive, isCard, isTrend, config }));
   }
 
   async findSubjects(metricId: string): Promise<SubjectView[]> {
@@ -120,8 +121,7 @@ export class MetricsService {
   }
 
   async findSummaries(analysisResultId: string): Promise<MetricSummaryView[]> {
-    const results = await this.metricResultsRepository.findSummarySources(analysisResultId, SUMMARY_METRIC_TYPES);
-    return summarizeMetrics(SUMMARY_METRIC_TYPES, results);
+    return summarizeMetrics(await this.metricResultsRepository.findCardSources(analysisResultId));
   }
 
   async findHistory(
@@ -155,8 +155,19 @@ export class MetricsService {
     };
   }
 
-  private toView({ id, schema, type, unit, description, isActive, config }: Metric): MetricView {
+  private toView({ id, schema, type, unit, description, isActive, isCard, isTrend, config }: Metric): MetricView {
     const { include, exclude } = parseMetricConfig(config);
-    return { id, schema: schema as AnalysisSchema, type: type as MetricType, unit: unit as MetricUnit, description, isActive, include, exclude };
+    return {
+      id,
+      schema: schema as AnalysisSchema,
+      type: type as MetricType,
+      unit: unit as MetricUnit,
+      description,
+      isActive,
+      isCard: isCard ?? false,
+      isTrend: isTrend ?? false,
+      include,
+      exclude,
+    };
   }
 }

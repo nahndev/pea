@@ -150,6 +150,8 @@ model Metric {
   unit        String            @default("MILLISECOND") @db.VarChar(20)
   description String
   isActive    Boolean           @default(true) @map("is_active")
+  isCard      Boolean?          @map("is_card")
+  isTrend     Boolean?          @map("is_trend")
   config      Json              @default("{}") @db.JsonB
   results     MetricResult[]
   conditions  MetricCondition[]
