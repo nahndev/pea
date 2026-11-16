@@ -25,14 +25,13 @@ const COLUMNS = `{
 /**
  * Reads a frontend_metric file (see docs/frontend_metric.md): one page load per row, lines without `duration` are ignored.
  * Durations are null for aborted loads so they don't skew percentiles.
- * The page is `[name][source] route - from previousRoute`, without the missing parts; null without route.
+ * The page is `[name][source] route`, without a missing source; null without route.
  */
 export const frontendPageLoads = (path: string): string => `(
   SELECT
     '[' || coalesce(nullif(trim(name), ''), '${PAGE_LOAD}') || ']'
       || coalesce('[' || nullif(trim(source), '') || ']', '')
-      || ' ' || nullif(trim(route), '')
-      || coalesce(' - from ' || nullif(trim("previousRoute"), ''), '') AS ${FRONTEND_PAGE_COLUMN},
+      || ' ' || nullif(trim(route), '') AS ${FRONTEND_PAGE_COLUMN},
     CASE WHEN aborted THEN NULL ELSE duration END AS ${FRONTEND_DURATION_COLUMN},
     CASE WHEN aborted THEN NULL ELSE "visibleDuration" END AS ${FRONTEND_VISIBLE_COLUMN},
     "longFrameDuration" AS ${FRONTEND_LONG_FRAME_COLUMN},

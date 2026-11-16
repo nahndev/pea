@@ -55,8 +55,8 @@ describe('PagePercentileHandler', () => {
     const measurements = await pagePercentileHandler.handle(metric(MetricType.PAGE_FROM_ROUTE_P95), context());
 
     expect(measurements.map(({ subject, value }) => [subject?.description, value])).toEqual([
-      [pageOf('/tableau/:id', '/groupe'), 4000],
-      [pageOf('/groupe', '/agenda'), expect.closeTo(1950)],
+      [pageOf('/tableau/:id'), 4000],
+      [pageOf('/groupe'), expect.closeTo(1950)],
     ]);
   });
 

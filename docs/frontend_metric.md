@@ -25,8 +25,8 @@ It is NDJSON: one JSON object per line, one line per page load measured in the b
 
 - A line needs `duration`; others are ignored. A line that is not valid JSON makes the whole file unreadable.
 - Aborted loads count as page loads but their `duration` and `visibleDuration` are ignored, so they don't lower percentiles.
-- A **page** (subject `PAGE`) is `[name][source] route - from previousRoute`, e.g. `[page-load][route] /agenda - from /gamme/:id`;
-  missing `source` or `previousRoute` are left out. A load without route only counts in the overall metrics.
+- A **page** (subject `PAGE`) is `[name][source] route`, e.g. `[page-load][route] /agenda`; a missing `source` is left out.
+  A load without route only counts in the overall metrics.
 - Do not put personal data in the file (user, session, urls with ids…): nothing reads it.
 
 ## What reads it

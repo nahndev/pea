@@ -26,7 +26,7 @@ describe('frontendPageLoads', () => {
         '{"name":"page-load","source":"route","route":"/groupe","previousRoute":"/synthese/:id?","status":"settled","duration":1012,"visibleDuration":66,"requestCount":2,"longFrameDuration":116}',
       ]),
     ).resolves.toEqual([
-      { page: '[page-load][route] /groupe - from /synthese/:id?', duration_ms: 1012, visible_ms: 66, long_frame_ms: 116, request_count: 2, is_aborted: false },
+      { page: '[page-load][route] /groupe', duration_ms: 1012, visible_ms: 66, long_frame_ms: 116, request_count: 2, is_aborted: false },
       { page: '[page-load][route] /synthese/:id?', duration_ms: 12183, visible_ms: 3729, long_frame_ms: 3554, request_count: 58, is_aborted: false },
     ]);
   });

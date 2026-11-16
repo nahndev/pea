@@ -31,5 +31,4 @@ export const pageLoadLine = ({
   });
 
 /** Page subject of a fixture load */
-export const pageOf = (route: string, previousRoute?: string): string =>
-  `[page-load][route] ${route}${previousRoute ? ` - from ${previousRoute}` : ''}`;
+export const pageOf = (route: string): string => `[page-load][route] ${route}`;
