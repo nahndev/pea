@@ -4,6 +4,7 @@ export const FRONTEND_VISIBLE_COLUMN = 'visible_ms';
 export const FRONTEND_LONG_FRAME_COLUMN = 'long_frame_ms';
 export const FRONTEND_REQUEST_COUNT_COLUMN = 'request_count';
 export const FRONTEND_IS_ABORTED_COLUMN = 'is_aborted';
+export const FRONTEND_IS_FROM_ROUTE_COLUMN = 'is_from_route';
 
 const PAGE_LOAD = 'page-load';
 const ABORTED = 'aborted';
@@ -36,7 +37,8 @@ export const frontendPageLoads = (path: string): string => `(
     CASE WHEN aborted THEN NULL ELSE "visibleDuration" END AS ${FRONTEND_VISIBLE_COLUMN},
     "longFrameDuration" AS ${FRONTEND_LONG_FRAME_COLUMN},
     "requestCount" AS ${FRONTEND_REQUEST_COUNT_COLUMN},
-    aborted AS ${FRONTEND_IS_ABORTED_COLUMN}
+    aborted AS ${FRONTEND_IS_ABORTED_COLUMN},
+    nullif(trim("previousRoute"), '') IS NOT NULL AS ${FRONTEND_IS_FROM_ROUTE_COLUMN}
   FROM (
     SELECT *, coalesce(lower(status) = '${ABORTED}', false) AS aborted
     FROM read_json('${path.replaceAll("'", "''")}', format = 'newline_delimited', columns = ${COLUMNS})

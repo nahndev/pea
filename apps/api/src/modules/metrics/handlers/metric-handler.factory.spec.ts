@@ -80,6 +80,9 @@ describe('MetricHandlerFactory', () => {
     [MetricType.REQUEST_COUNT_P95, pageLoadStatHandler],
     [MetricType.PAGE_LOAD_COUNT, pageLoadStatHandler],
     [MetricType.ABORTED_PAGE_LOAD_RATE, pageLoadStatHandler],
+    [MetricType.FROM_ROUTE_P50, pageLoadStatHandler],
+    [MetricType.FROM_ROUTE_P90, pageLoadStatHandler],
+    [MetricType.FROM_ROUTE_P95, pageLoadStatHandler],
   ])('returns the frontend handler of %s', (type, handler) => {
     expect(metricHandlerFactory.create(type)).toBe(handler);
   });

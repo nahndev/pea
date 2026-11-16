@@ -32,12 +32,13 @@ It is NDJSON: one JSON object per line, one line per page load measured in the b
 ## What reads it
 
 `frontendPageLoads` in `apps/api/src/modules/files/frontend-page-loads.ts` exposes `page` (see above), `duration_ms`, `visible_ms`,
-`long_frame_ms`, `request_count` and `is_aborted` to DuckDB.
+`long_frame_ms`, `request_count`, `is_aborted` and `is_from_route` (has a `previousRoute`) to DuckDB.
 
 | Consumer                                                              | Uses                     |
 | --------------------------------------------------------------------- | ------------------------ |
 | `P50`, `P90`, `P95` metrics, `P50_FAILURE`…`MAX_LATENCY` rules         | `duration_ms`            |
 | `PAGE_P95` metric                                                     | `page`, `duration_ms`    |
+| `FROM_ROUTE_P50`, `FROM_ROUTE_P90`, `FROM_ROUTE_P95` metrics (loads navigated from another route) | `duration_ms`, `is_from_route` |
 | `VISIBLE_P95`, `LONG_FRAME_P95`, `REQUEST_COUNT_P95`, `PAGE_LOAD_COUNT`, `ABORTED_PAGE_LOAD_RATE` metrics | one column each |
 | `SLOW_PAGE`, `SLOW_VISIBLE_PAGE`, `LONG_FRAME_PAGE`, `CHATTY_PAGE`, `ABORTED_PAGE` rules | `page` and one column each |
 

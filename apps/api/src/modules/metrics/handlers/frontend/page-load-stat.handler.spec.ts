@@ -44,6 +44,29 @@ describe('PageLoadStatHandler', () => {
     expect(measurement.value).toBeCloseTo(expected);
   });
 
+  it.each([
+    [MetricType.FROM_ROUTE_P50, 2000],
+    [MetricType.FROM_ROUTE_P90, 2800],
+    [MetricType.FROM_ROUTE_P95, 2900],
+  ])('measures %s on loads from another route only', async (type, expected) => {
+    await writeLog([
+      { durationMs: 9000 },
+      { durationMs: 1000, previousRoute: '/agenda' },
+      { durationMs: 2000, previousRoute: '/agenda' },
+      { durationMs: 3000, previousRoute: '/groupe' },
+      { durationMs: 90000, previousRoute: '/groupe', status: 'aborted' },
+    ]);
+
+    const [measurement] = await pageLoadStatHandler.handle(metric(type), context());
+    expect(measurement.value).toBeCloseTo(expected);
+  });
+
+  it('measures no percentile from another route when every load is a first load', async () => {
+    await writeLog([{ durationMs: 9000 }]);
+
+    await expect(pageLoadStatHandler.handle(metric(MetricType.FROM_ROUTE_P95), context())).resolves.toEqual([]);
+  });
+
   it('counts 0 page loads and measures nothing else for an empty log', async () => {
     await writeLog([]);
 
