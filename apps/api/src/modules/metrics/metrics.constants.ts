@@ -24,7 +24,14 @@ export const PERCENTILE_BY_METRIC_TYPE: ReadonlyMap<string, number> = new Map([
   [MetricType.P90, 0.9],
   [MetricType.P95, 0.95],
   [MetricType.ENDPOINT_P95, 0.95],
-  [MetricType.PAGE_P95, 0.95],
+  [MetricType.PAGE_FROM_ROUTE_P95, 0.95],
+  [MetricType.PAGE_RELOAD_P95, 0.95],
+]);
+
+/** Page loads measured by the per-page percentiles: from another route, or reloads and first loads */
+export const PAGE_LOAD_FILTER_BY_METRIC_TYPE: ReadonlyMap<string, string> = new Map([
+  [MetricType.PAGE_FROM_ROUTE_P95, FRONTEND_IS_FROM_ROUTE_COLUMN],
+  [MetricType.PAGE_RELOAD_P95, `NOT ${FRONTEND_IS_FROM_ROUTE_COLUMN}`],
 ]);
 
 export const SEVERITY_BY_METRIC_TYPE: ReadonlyMap<string, Severity> = new Map([

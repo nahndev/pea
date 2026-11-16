@@ -116,7 +116,8 @@ const METRICS = [
   { schema: AnalysisSchema.FRONTEND, type: MetricType.FROM_ROUTE_P50, unit: MetricUnit.MILLISECOND, description: 'P50 page load duration from another route' },
   { schema: AnalysisSchema.FRONTEND, type: MetricType.FROM_ROUTE_P90, unit: MetricUnit.MILLISECOND, description: 'P90 page load duration from another route' },
   { schema: AnalysisSchema.FRONTEND, type: MetricType.FROM_ROUTE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 page load duration from another route' },
-  { schema: AnalysisSchema.FRONTEND, type: MetricType.PAGE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 load duration per page' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.PAGE_FROM_ROUTE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 load duration per page from another route' },
+  { schema: AnalysisSchema.FRONTEND, type: MetricType.PAGE_RELOAD_P95, unit: MetricUnit.MILLISECOND, description: 'P95 load duration per page on reload' },
   { schema: AnalysisSchema.FRONTEND, type: MetricType.VISIBLE_P95, unit: MetricUnit.MILLISECOND, description: 'P95 time to visible' },
   { schema: AnalysisSchema.FRONTEND, type: MetricType.LONG_FRAME_P95, unit: MetricUnit.MILLISECOND, description: 'P95 long frame time' },
   { schema: AnalysisSchema.FRONTEND, type: MetricType.REQUEST_COUNT_P95, unit: MetricUnit.COUNT, description: 'P95 requests per page load' },
@@ -141,10 +142,14 @@ const CONDITIONS = [
   { schema: AnalysisSchema.BUG, metricType: MetricType.CRITICAL_ERROR_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.BUG, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.P95, operator: MetricConditionOperator.GT, threshold: 10000 },
-  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.PAGE_P95, operator: MetricConditionOperator.GT, threshold: 10000 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.PAGE_FROM_ROUTE_P95, operator: MetricConditionOperator.GT, threshold: 10000 },
+  { schema: AnalysisSchema.FRONTEND, metricType: MetricType.PAGE_RELOAD_P95, operator: MetricConditionOperator.GT, threshold: 10000 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.BLOCKER_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
   { schema: AnalysisSchema.FRONTEND, metricType: MetricType.HIGH_ISSUE_COUNT, operator: MetricConditionOperator.GT, threshold: 0 },
 ];
+
+/** Replaced metric types, deleted with their results and conditions */
+const OBSOLETE_METRICS = [{ schema: AnalysisSchema.FRONTEND, type: 'PAGE_P95' }];
 
 async function main() {
   const prismaClient = new PrismaClient({
@@ -160,6 +165,8 @@ async function main() {
       if (existing) await prismaClient.rule.update({ where: { id: existing.id }, data: { config } });
       else await prismaClient.rule.create({ data: rule });
     }
+
+    await prismaClient.metric.deleteMany({ where: { OR: OBSOLETE_METRICS } });
 
     for (const metric of METRICS) {
       const existing = await prismaClient.metric.findFirst({ where: { schema: metric.schema, type: metric.type }, select: { id: true } });

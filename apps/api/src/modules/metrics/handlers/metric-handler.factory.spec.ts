@@ -74,7 +74,8 @@ describe('MetricHandlerFactory', () => {
   });
 
   it.each([
-    [MetricType.PAGE_P95, pagePercentileHandler],
+    [MetricType.PAGE_FROM_ROUTE_P95, pagePercentileHandler],
+    [MetricType.PAGE_RELOAD_P95, pagePercentileHandler],
     [MetricType.VISIBLE_P95, pageLoadStatHandler],
     [MetricType.LONG_FRAME_P95, pageLoadStatHandler],
     [MetricType.REQUEST_COUNT_P95, pageLoadStatHandler],
