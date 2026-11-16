@@ -16,11 +16,11 @@ function run(exception: unknown) {
 describe('HttpExceptionFilter', () => {
   it('uses the domain code and details of the exception', () => {
     const { status, json } = run(
-      new BadRequestException({ code: ErrorCode.BAD_REQUEST, details: { branch: ['isString'] } }),
+      new BadRequestException({ code: ErrorCode.BAD_REQUEST, details: { repo: ['isString'] } }),
     );
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
-      error: { code: ErrorCode.BAD_REQUEST, details: { branch: ['isString'] } },
+      error: { code: ErrorCode.BAD_REQUEST, details: { repo: ['isString'] } },
     });
   });
 

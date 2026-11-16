@@ -1,0 +1,38 @@
+'use client';
+
+import { Button, Input } from '@tomato/ui';
+import { SearchIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react';
+import { buildHref } from '@/shared/lib/pagination';
+
+interface RepoSearchFormProps {
+  search?: string;
+  ordering: string | undefined;
+}
+
+export function RepoSearchForm({ search = '', ordering }: RepoSearchFormProps) {
+  const router = useRouter();
+  const [value, setValue] = useState(search);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    router.push(buildHref('/repos', { q: value.trim(), ordering }));
+  };
+
+  return (
+    <form onSubmit={submit} role="search" className="flex w-full max-w-sm gap-2">
+      <Input
+        type="search"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        placeholder="Search repos"
+        aria-label="Search repos"
+        maxLength={255}
+      />
+      <Button type="submit" variant="soft" size="icon" aria-label="Search">
+        <SearchIcon />
+      </Button>
+    </form>
+  );
+}

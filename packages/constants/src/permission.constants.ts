@@ -1,7 +1,7 @@
 export const Permission = {
-  BRANCH_VIEW: 'branch:view',
-  BRANCH_ANALYSIS: 'branch:analysis',
-  BRANCH_DELETE: 'branch:delete',
+  REPO_VIEW: 'repo:view',
+  REPO_ANALYSIS: 'repo:analysis',
+  REPO_DELETE: 'repo:delete',
   MANAGER_RULE: 'manager:rule',
   MANAGER_CONDITION: 'manager:condition',
   MANAGER_METRIC: 'manager:metric',

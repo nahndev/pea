@@ -17,7 +17,7 @@ export type MetricResultWithDetails = Prisma.MetricResultGetPayload<{
 const HISTORY_INCLUDE = {
   subject: true,
   evaluations: { orderBy: { id: 'asc' } },
-  analysisResult: { include: { analysis: { include: { branch: true } } } },
+  analysisResult: { include: { analysis: { include: { repo: true } } } },
 } satisfies Prisma.MetricResultInclude;
 
 export type MetricResultHistory = Prisma.MetricResultGetPayload<{ include: typeof HISTORY_INCLUDE }>;
@@ -41,7 +41,7 @@ const RESULT_ORDER_BY: Record<MetricResultSortField, (order: SortOrder) => Metri
 
 const HISTORY_ORDER_BY: Record<MetricHistorySortField, (order: SortOrder) => MetricResultOrderBy> = {
   analysis: (order) => ({ analysisResult: { analysis: { title: order } } }),
-  branch: (order) => ({ analysisResult: { analysis: { branch: { name: order } } } }),
+  repo: (order) => ({ analysisResult: { analysis: { repo: { name: order } } } }),
   subject: (order) => ({ subject: { description: order } }),
   value: (order) => ({ value: order }),
   createdAt: (order) => ({ createdAt: order }),

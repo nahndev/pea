@@ -7,7 +7,7 @@ import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, FRONTEND_METRIC_FILE_FIELD }
 const requiredText = (max = 255) => z.string('required').trim().min(1, 'required').max(max, 'too_long');
 
 const commonShape = {
-  branch: requiredText(),
+  repo: requiredText(),
   title: requiredText(),
 };
 

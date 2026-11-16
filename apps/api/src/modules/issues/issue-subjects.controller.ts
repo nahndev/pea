@@ -7,7 +7,7 @@ import { IssuesService } from './issues.service';
 
 @ApiTags('issue-subjects')
 @Controller('issue-subjects')
-@RequirePermission(Permission.BRANCH_ANALYSIS)
+@RequirePermission(Permission.REPO_ANALYSIS)
 export class IssueSubjectsController {
   constructor(private readonly issuesService: IssuesService) {}
 

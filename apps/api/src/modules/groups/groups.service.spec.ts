@@ -10,7 +10,7 @@ describe('GroupsService', () => {
   const record = (overrides: Partial<GroupWithUsers> = {}): GroupWithUsers => ({
     id: 'group-1',
     name: 'Analysts',
-    permissions: [Permission.BRANCH_VIEW],
+    permissions: [Permission.REPO_VIEW],
     createdAt,
     updatedAt: createdAt,
     users: [],

@@ -8,7 +8,7 @@ import { LOGIN_PATH } from '../lib/login';
 import { ThemeToggle } from './theme-toggle';
 
 const NAV_LINKS = [
-  { href: '/branches', label: 'Branches', permission: Permission.BRANCH_VIEW },
+  { href: '/repos', label: 'Repos', permission: Permission.REPO_VIEW },
   { href: '/rules', label: 'Rules', permission: Permission.MANAGER_RULE },
   { href: '/conditions', label: 'Conditions', permission: Permission.MANAGER_CONDITION },
   { href: '/metrics', label: 'Metrics', permission: Permission.MANAGER_METRIC },

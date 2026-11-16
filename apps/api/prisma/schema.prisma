@@ -9,27 +9,27 @@ datasource db {
   provider = "postgresql"
 }
 
-model Branch {
+model Repo {
   id       String     @id @default(uuid(7)) @db.Uuid
   name     String     @unique @db.VarChar(255)
   slug     String     @unique @db.VarChar(255)
   analyses Analysis[]
 
-  @@map("branches")
+  @@map("repos")
 }
 
 model Analysis {
   id           String                @id @default(uuid(7)) @db.Uuid
-  branchId     String                @map("branch_id") @db.Uuid
+  repoId     String                @map("repo_id") @db.Uuid
   schema       String                @db.VarChar(20)
   title        String                @db.VarChar(255)
   createdAt    DateTime              @default(now()) @map("created_at")
-  branch       Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  repo       Repo                @relation(fields: [repoId], references: [id], onDelete: Cascade)
   results      AnalysisResult[]
   apiData      ApiAnalysisData?
   databaseData DatabaseAnalysisData?
 
-  @@index([branchId, schema, createdAt(sort: Desc)])
+  @@index([repoId, schema, createdAt(sort: Desc)])
   @@map("analyses")
 }
 

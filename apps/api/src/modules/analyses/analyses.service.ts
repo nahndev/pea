@@ -27,7 +27,7 @@ import type {
 import type { Analysis } from "../../generated/client";
 import { EmitEvent } from "../../common/decorators/emit-event.decorator";
 import { AddOnsService } from "../add-ons/add-ons.service";
-import { BranchesService } from "../branches/branches.service";
+import { ReposService } from "../repos/repos.service";
 import { DatabasesService } from "../databases/databases.service";
 import { StorageService, type StoredFile } from "../files/storage.service";
 import { LOG_FILE_FIELD_BY_SCHEMA } from "./analyses.constants";
@@ -36,13 +36,13 @@ import type { AnalysisWithData, AnalysisWithLatestResult, MetricTrendPick, Uploa
 import { groupBulkLogFiles } from "./bulk-log-files";
 import { CreateAnalysesDto } from "./dto/create-analyses.dto";
 import { CreateAnalysisDto } from "./dto/create-analysis.dto";
-import { ListBranchAnalysesQueryDto } from "./dto/list-branch-analyses-query.dto";
+import { ListRepoAnalysesQueryDto } from "./dto/list-repo-analyses-query.dto";
 
 @Injectable()
 export class AnalysesService {
   constructor(
     private readonly analysesRepository: AnalysesRepository,
-    private readonly branchesService: BranchesService,
+    private readonly reposService: ReposService,
     private readonly storageService: StorageService,
     private readonly databasesService: DatabasesService,
     private readonly addOnsService: AddOnsService,
@@ -53,8 +53,8 @@ export class AnalysesService {
     const upload = await this.verify(dto, files);
     const file = upload && (await this.store(dto, upload));
     try {
-      const { id: branchId } = await this.branchesService.findOrCreateByName(dto.branch);
-      return await this.analysesRepository.create(this.toCreateData(dto, branchId, file));
+      const { id: repoId } = await this.reposService.findOrCreateByName(dto.repo);
+      return await this.analysesRepository.create(this.toCreateData(dto, repoId, file));
     } catch (error) {
       if (file) await this.storageService.remove([file]).catch(() => undefined);
       throw error;
@@ -68,11 +68,11 @@ export class AnalysesService {
     const verified = await Promise.all(analyses.map((dto, index) => this.atItem(index, () => this.verify(dto, files[index]))));
     const stored = await this.storeAll(analyses, verified);
     try {
-      const branchIds = new Map<string, string>();
-      for (const { branch } of analyses)
-        if (!branchIds.has(branch)) branchIds.set(branch, (await this.branchesService.findOrCreateByName(branch)).id);
+      const repoIds = new Map<string, string>();
+      for (const { repo } of analyses)
+        if (!repoIds.has(repo)) repoIds.set(repo, (await this.reposService.findOrCreateByName(repo)).id);
       return await this.analysesRepository.createMany(
-        analyses.map((dto, index) => this.toCreateData(dto, branchIds.get(dto.branch)!, stored[index])),
+        analyses.map((dto, index) => this.toCreateData(dto, repoIds.get(dto.repo)!, stored[index])),
       );
     } catch (error) {
       await this.storageService.remove(stored.filter((file) => file !== undefined)).catch(() => undefined);
@@ -91,37 +91,37 @@ export class AnalysesService {
     const analysis = await this.analysesRepository.findDetailById(id);
     if (!analysis)
       throw new NotFoundException({ code: ErrorCode.ANALYSIS_NOT_FOUND });
-    const { branch, apiData, databaseData } = analysis;
+    const { repo, apiData, databaseData } = analysis;
     return {
       ...this.toSummary(analysis),
-      branch: { id: branch.id, name: branch.name, slug: branch.slug },
+      repo: { id: repo.id, name: repo.name, slug: repo.slug },
       file: apiData?.file ?? null,
       database: databaseData ? this.databasesService.toSummary(databaseData.database) : null,
     };
   }
 
-  async findByBranch(
-    branchIdOrSlug: string,
-    { schema, limit, offset, ordering }: ListBranchAnalysesQueryDto,
+  async findByRepo(
+    repoIdOrSlug: string,
+    { schema, limit, offset, ordering }: ListRepoAnalysesQueryDto,
   ): Promise<Paginated<AnalysisSummary>> {
-    const { id: branchId } = await this.branchesService.findOne(branchIdOrSlug);
-    const { items, total } = await this.analysesRepository.findPageByBranch(branchId, schema, limit, offset, ordering);
+    const { id: repoId } = await this.reposService.findOne(repoIdOrSlug);
+    const { items, total } = await this.analysesRepository.findPageByRepo(repoId, schema, limit, offset, ordering);
     return { items: items.map((analysis) => this.toSummary(analysis)), total };
   }
 
-  async countByBranch(branchIdOrSlug: string): Promise<AnalysisCountBySchema> {
-    const { id: branchId } = await this.branchesService.findOne(branchIdOrSlug);
-    const groups = await this.analysesRepository.countBySchema(branchId);
+  async countByRepo(repoIdOrSlug: string): Promise<AnalysisCountBySchema> {
+    const { id: repoId } = await this.reposService.findOne(repoIdOrSlug);
+    const groups = await this.analysesRepository.countBySchema(repoId);
     const counts = Object.fromEntries(Object.values(AnalysisSchema).map((schema) => [schema, 0])) as AnalysisCountBySchema;
     for (const { schema, _count } of groups)
       if (schema in counts) counts[schema as AnalysisSchema] = _count._all;
     return counts;
   }
 
-  async getMetricTrend(branchIdOrSlug: string, schema: AnalysisSchema, limit: number, picks: string[] = []): Promise<MetricTrend> {
-    const { id: branchId } = await this.branchesService.findOne(branchIdOrSlug);
+  async getMetricTrend(repoIdOrSlug: string, schema: AnalysisSchema, limit: number, picks: string[] = []): Promise<MetricTrend> {
+    const { id: repoId } = await this.reposService.findOne(repoIdOrSlug);
     const pickList = picks.map((pick) => this.parsePick(pick));
-    const analyses = await this.analysesRepository.findRecentByBranch(branchId, schema, limit, pickList);
+    const analyses = await this.analysesRepository.findRecentByRepo(repoId, schema, limit, pickList);
 
     const seriesByKey = new Map<string, MetricTrendSeries>();
     const points = analyses.reverse().map(({ id, createdAt, title, results }) => {
@@ -192,10 +192,10 @@ export class AnalysesService {
 
   private toCreateData(
     { schema, title, databaseId }: CreateAnalysisDto,
-    branchId: string,
+    repoId: string,
     file: StoredFile | undefined,
   ): CreateAnalysisData {
-    return schema === AnalysisSchema.DATABASE ? { branchId, schema, title, databaseId } : { branchId, schema, title, file };
+    return schema === AnalysisSchema.DATABASE ? { repoId, schema, title, databaseId } : { repoId, schema, title, file };
   }
 
   private parsePick(pick: string): MetricTrendPick {

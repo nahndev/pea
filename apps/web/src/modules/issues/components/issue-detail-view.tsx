@@ -54,7 +54,7 @@ export function IssueDetailView({ analysisId, issueId }: IssueDetailViewProps) {
           </dd>
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <RequirePermission permission={Permission.BRANCH_ANALYSIS} fallback={<StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issueSubject.status]} />}>
+            <RequirePermission permission={Permission.REPO_ANALYSIS} fallback={<StatusBadge style={ISSUE_SUBJECT_STATUS_STYLE[issueSubject.status]} />}>
               <IssueSubjectStatusSelect issueSubject={issueSubject} />
             </RequirePermission>
           </dd>

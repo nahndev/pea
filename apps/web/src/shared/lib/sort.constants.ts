@@ -1,5 +1,5 @@
 export const SortTable = {
-  BRANCHES: 'branches',
+  REPOS: 'repos',
   ANALYSES: 'analyses',
   ISSUES: 'issues',
   METRICS: 'metrics',

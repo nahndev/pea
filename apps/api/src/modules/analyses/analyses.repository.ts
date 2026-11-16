@@ -23,7 +23,7 @@ const ORDER_BY: Record<AnalysisSortField, Prisma.Sql> = {
 };
 
 export interface CreateAnalysisData {
-  branchId: string;
+  repoId: string;
   schema: AnalysisSchema;
   title: string;
   file?: StoredFile;
@@ -52,12 +52,12 @@ export class AnalysesRepository {
   findDetailById(id: string): Promise<AnalysisDetailRecord | null> {
     return this.prismaService.analysis.findUnique({
       where: { id },
-      include: { ...LATEST_RESULT_INCLUDE, ...ANALYSIS_DATA_INCLUDE, branch: true },
+      include: { ...LATEST_RESULT_INCLUDE, ...ANALYSIS_DATA_INCLUDE, repo: true },
     });
   }
 
-  async findPageByBranch(
-    branchId: string,
+  async findPageByRepo(
+    repoId: string,
     schema: AnalysisSchema,
     limit: number,
     offset: number,
@@ -74,22 +74,22 @@ export class AnalysesRepository {
           ORDER BY created_at DESC, id DESC
           LIMIT 1
         ) r ON TRUE
-        WHERE a.branch_id = ${branchId}::uuid AND a.schema = ${schema}
+        WHERE a.repo_id = ${repoId}::uuid AND a.schema = ${schema}
         ORDER BY ${orderBy} a.created_at DESC, a.id DESC
         LIMIT ${limit} OFFSET ${offset}`,
-      this.prismaService.analysis.count({ where: { branchId, schema } }),
+      this.prismaService.analysis.count({ where: { repoId, schema } }),
     ]);
     const ids = rows.map(({ id }) => id);
     const items = await this.prismaService.analysis.findMany({ where: { id: { in: ids } }, include: LATEST_RESULT_INCLUDE });
     return { items: orderByIds(ids, items), total };
   }
 
-  countBySchema(branchId: string) {
-    return this.prismaService.analysis.groupBy({ by: ['schema'], where: { branchId }, _count: { _all: true } });
+  countBySchema(repoId: string) {
+    return this.prismaService.analysis.groupBy({ by: ['schema'], where: { repoId }, _count: { _all: true } });
   }
 
-  findRecentByBranch(
-    branchId: string,
+  findRecentByRepo(
+    repoId: string,
     schema: AnalysisSchema,
     limit: number,
     picks: MetricTrendPick[],
@@ -98,7 +98,7 @@ export class AnalysesRepository {
       ? { OR: picks }
       : { subjectUuid: null, metric: { isTrend: true } };
     return this.prismaService.analysis.findMany({
-      where: { branchId, schema },
+      where: { repoId, schema },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: limit,
       select: {
@@ -123,9 +123,9 @@ export class AnalysesRepository {
     });
   }
 
-  private toCreateInput({ branchId, schema, title, file, databaseId }: CreateAnalysisData): Prisma.AnalysisUncheckedCreateInput {
+  private toCreateInput({ repoId, schema, title, file, databaseId }: CreateAnalysisData): Prisma.AnalysisUncheckedCreateInput {
     return {
-      branchId,
+      repoId,
       schema,
       title,
       apiData: file ? { create: file } : undefined,

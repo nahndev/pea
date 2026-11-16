@@ -70,7 +70,7 @@ export function MetricsView({ analysisId, params }: MetricsViewProps) {
       {analysis ? (
         <TrendChartBySchema
           schema={analysis.schema}
-          branchId={analysis.branch.id}
+          repoId={analysis.repo.id}
           picks={picked.map(({ key }) => key)}
           limits={limits}
           onClear={() => setPicked([])}

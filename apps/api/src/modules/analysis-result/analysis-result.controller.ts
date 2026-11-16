@@ -8,12 +8,12 @@ import { AnalysisResultService } from './analysis-result.service';
 
 @ApiTags('analyses')
 @Controller('analyses/:analysisId')
-@RequirePermission(Permission.BRANCH_VIEW)
+@RequirePermission(Permission.REPO_VIEW)
 export class AnalysisResultController {
   constructor(private readonly analysisResultService: AnalysisResultService) {}
 
   @Post('results')
-  @RequirePermission(Permission.BRANCH_ANALYSIS)
+  @RequirePermission(Permission.REPO_ANALYSIS)
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiAcceptedResponse()
   @ApiNotFoundResponse()

@@ -6,7 +6,7 @@ import { AddOnsService } from './add-ons.service';
 
 @ApiTags('add-ons')
 @Controller('add-ons')
-@RequirePermission(Permission.BRANCH_ANALYSIS)
+@RequirePermission(Permission.REPO_ANALYSIS)
 export class AddOnsController {
   constructor(private readonly addOnsService: AddOnsService) {}
 

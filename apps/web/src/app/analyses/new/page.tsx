@@ -6,7 +6,7 @@ import { analysisSchemaValues } from '@/shared/lib/analysis-schema.constants';
 export const metadata: Metadata = { title: 'New analysis' };
 
 const searchParamsSchema = z.object({
-  branch: z.string().trim().max(255).optional().catch(undefined),
+  repo: z.string().trim().max(255).optional().catch(undefined),
   schema: z.enum(analysisSchemaValues).optional().catch(undefined),
 });
 
@@ -15,7 +15,7 @@ interface NewAnalysisPageProps {
 }
 
 export default async function NewAnalysisPage({ searchParams }: NewAnalysisPageProps) {
-  const { branch, schema } = searchParamsSchema.parse(await searchParams);
+  const { repo, schema } = searchParamsSchema.parse(await searchParams);
 
-  return <NewAnalysisForm branch={branch} schema={schema} />;
+  return <NewAnalysisForm repo={repo} schema={schema} />;
 }

@@ -1,10 +1,10 @@
-export const BranchSortField = {
+export const RepoSortField = {
   NAME: 'name',
   ANALYSIS_COUNT: 'analysisCount',
   LATEST_ANALYSIS_AT: 'latestAnalysisAt',
 } as const;
 
-export type BranchSortField = (typeof BranchSortField)[keyof typeof BranchSortField];
+export type RepoSortField = (typeof RepoSortField)[keyof typeof RepoSortField];
 
 export const AnalysisSortField = {
   TITLE: 'title',
@@ -37,7 +37,7 @@ export type MetricResultSortField = (typeof MetricResultSortField)[keyof typeof 
 
 export const MetricHistorySortField = {
   ANALYSIS: 'analysis',
-  BRANCH: 'branch',
+  REPO: 'repo',
   SUBJECT: 'subject',
   VALUE: 'value',
   CREATED_AT: 'createdAt',

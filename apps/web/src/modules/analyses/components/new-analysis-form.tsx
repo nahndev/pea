@@ -18,7 +18,7 @@ import { useCreateAnalysis } from '../hooks/use-analyses';
 import { LogFileInput } from './log-file-input';
 
 interface NewAnalysisFormProps {
-  branch?: string;
+  repo?: string;
   schema?: AnalysisSchema;
 }
 
@@ -30,7 +30,7 @@ const FIELD_ERRORS: Record<string, string> = {
   file_required: 'Attach the log file.',
 };
 
-export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_ANALYSIS_SCHEMA }: NewAnalysisFormProps) {
+export function NewAnalysisForm({ repo = '', schema: initialSchema = DEFAULT_ANALYSIS_SCHEMA }: NewAnalysisFormProps) {
   const router = useRouter();
   const { mutate, isPending, error: requestError } = useCreateAnalysis();
   const [schema, setSchema] = useState<AnalysisSchema>(initialSchema);
@@ -67,14 +67,14 @@ export function NewAnalysisForm({ branch = '', schema: initialSchema = DEFAULT_A
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
-      <PageHeader title="New analysis" description="Upload a log file or pick a database to analyse a branch. Results appear once processing finishes.">
-        <Breadcrumbs entries={[{ label: 'Branches', href: '/branches' }, { label: 'New analysis' }]} />
+      <PageHeader title="New analysis" description="Upload a log file or pick a database to analyse a repo. Results appear once processing finishes.">
+        <Breadcrumbs entries={[{ label: 'Repos', href: '/repos' }, { label: 'New analysis' }]} />
       </PageHeader>
       <form onSubmit={submit} noValidate className="flex flex-col gap-5 rounded-lg border bg-card p-6 shadow-card">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="branch">Branch</Label>
-          <Input id="branch" name="branch" defaultValue={branch} placeholder="feat/my-branch" maxLength={255} aria-invalid={Boolean(fieldErrors.branch)} aria-describedby="branch-error" required />
-          <FieldError id="branch-error" message={fieldErrors.branch} />
+          <Label htmlFor="repo">Repo</Label>
+          <Input id="repo" name="repo" defaultValue={repo} placeholder="acme/shop-api" maxLength={255} aria-invalid={Boolean(fieldErrors.repo)} aria-describedby="repo-error" required />
+          <FieldError id="repo-error" message={fieldErrors.repo} />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="schema">Schema</Label>

@@ -8,8 +8,8 @@ const axiosError = (status: number, data?: unknown) =>
 
 describe('getApiError', () => {
   it('reads the error body returned by the api', () => {
-    expect(getApiError(axiosError(404, { error: { code: ErrorCode.BRANCH_NOT_FOUND } }))).toEqual({
-      code: ErrorCode.BRANCH_NOT_FOUND,
+    expect(getApiError(axiosError(404, { error: { code: ErrorCode.REPO_NOT_FOUND } }))).toEqual({
+      code: ErrorCode.REPO_NOT_FOUND,
     });
   });
 

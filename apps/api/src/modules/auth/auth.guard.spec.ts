@@ -14,11 +14,11 @@ class TestController {
 
   signedIn() {}
 
-  @RequirePermission(Permission.BRANCH_VIEW, Permission.BRANCH_ANALYSIS)
+  @RequirePermission(Permission.REPO_VIEW, Permission.REPO_ANALYSIS)
   either() {}
 }
 
-const viewer: CurrentUser = { id: 'user-1', name: 'Ada', username: 'ada', group: { id: 'group-1', name: 'Viewers' }, permissions: [Permission.BRANCH_VIEW] };
+const viewer: CurrentUser = { id: 'user-1', name: 'Ada', username: 'ada', group: { id: 'group-1', name: 'Viewers' }, permissions: [Permission.REPO_VIEW] };
 
 describe('AuthGuard', () => {
   let authService: { authenticate: jest.Mock; cookieOptions: object };

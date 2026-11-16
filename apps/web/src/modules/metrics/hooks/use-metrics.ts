@@ -34,11 +34,11 @@ export const useMetricSummaries = (analysisId: string) => {
   });
 };
 
-export const useMetricTrend = (branchId: string | undefined, schema: AnalysisSchema, picks: string[]) =>
+export const useMetricTrend = (repoId: string | undefined, schema: AnalysisSchema, picks: string[]) =>
   useQuery({
-    queryKey: ['metrics', 'trend', branchId, schema, picks],
-    queryFn: () => metricsService.getTrend(branchId as string, schema, picks),
-    enabled: Boolean(branchId),
+    queryKey: ['metrics', 'trend', repoId, schema, picks],
+    queryFn: () => metricsService.getTrend(repoId as string, schema, picks),
+    enabled: Boolean(repoId),
     placeholderData: keepPreviousData,
   });
 

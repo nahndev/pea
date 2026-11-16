@@ -51,8 +51,8 @@ export const metricsService = {
     return data;
   },
 
-  async getTrend(branchId: string, schema: AnalysisSchema, picks: string[]) {
-    const { data } = await apiClient.get<MetricTrend>(`/branches/${branchId}/metrics/trend`, {
+  async getTrend(repoId: string, schema: AnalysisSchema, picks: string[]) {
+    const { data } = await apiClient.get<MetricTrend>(`/repos/${repoId}/metrics/trend`, {
       params: { schema, limit: TREND_LIMIT, pick: picks },
       paramsSerializer: { indexes: null },
     });

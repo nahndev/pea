@@ -1,5 +1,5 @@
 import type { AnalysisResultStatus, AnalysisSchema, MetricEvaluationStatus } from '@tomato/constants';
-import type { Branch } from './branch.types';
+import type { Repo } from './repo.types';
 import type { DatabaseSummary } from './database.types';
 
 export interface AnalysisResultSummary {
@@ -18,7 +18,7 @@ export interface AnalysisSummary {
 }
 
 export interface AnalysisDetail extends AnalysisSummary {
-  branch: Branch;
+  repo: Repo;
   file: string | null;
   database: DatabaseSummary | null;
 }

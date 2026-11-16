@@ -9,9 +9,9 @@ what the user can do.
 
 | Permission          | Grants                                                                              |
 | ------------------- | ----------------------------------------------------------------------------------- |
-| `branch:view`       | Branches, analyses, issues, metric results and trends                               |
-| `branch:analysis`   | Create branches, run and re-run analyses, change issue status; list databases, add-ons |
-| `branch:delete`     | Delete branches                                                                     |
+| `repo:view`         | Repos, analyses, issues, metric results and trends                                  |
+| `repo:analysis`     | Create repos, run and re-run analyses, change issue status; list databases, add-ons |
+| `repo:delete`       | Delete repos                                                                        |
 | `manager:rule`      | Rules menu                                                                          |
 | `manager:condition` | Conditions menu (also lists metrics)                                                |
 | `manager:metric`    | Metrics and Chart menus                                                             |
@@ -56,15 +56,15 @@ next request.
   `fallback` (nothing by default). `useHasPermission` does the same check in code.
 
   ```tsx
-  <RequirePermission permission={Permission.BRANCH_DELETE}>
-    <DeleteBranchDialog branch={branch} />
+  <RequirePermission permission={Permission.REPO_DELETE}>
+    <DeleteRepoDialog repo={repo} />
   </RequirePermission>
   ```
 
 - Each section has a `layout.tsx` with `RequirePermission` and `<ForbiddenState />` as fallback, so opening a URL
-  without the permission shows "No access". `branches/new` and `analyses/new` need `branch:analysis`.
-- Header menus, create / new analysis / re-analyse (`branch:analysis`), delete branch (`branch:delete`) and the issue
-  status select (a badge without `branch:analysis`) are gated. Links to rules, metrics and databases from branch pages
+  without the permission shows "No access". `repos/new` and `analyses/new` need `repo:analysis`.
+- Header menus, create / new analysis / re-analyse (`repo:analysis`), delete repo (`repo:delete`) and the issue
+  status select (a badge without `repo:analysis`) are gated. Links to rules, metrics and databases from repo pages
   are plain text without the matching `manager:*` permission.
 
 ## First user

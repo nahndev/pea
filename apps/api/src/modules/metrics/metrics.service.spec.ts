@@ -411,7 +411,7 @@ describe("MetricsService", () => {
   });
 
   describe("findHistory", () => {
-    it("returns a page of results with their analysis and branch", async () => {
+    it("returns a page of results with their analysis and repo", async () => {
       metricsRepository.findById.mockResolvedValue({
         id: "m-1",
         type: "P90",
@@ -437,7 +437,7 @@ describe("MetricsService", () => {
               analysis: {
                 id: "a-1",
                 title: "Run 1",
-                branch: { id: "b-1", name: "main" },
+                repo: { id: "b-1", name: "main" },
               },
             },
           },
@@ -455,7 +455,7 @@ describe("MetricsService", () => {
             analysis: {
               id: "a-1",
               title: "Run 1",
-              branch: { id: "b-1", name: "main" },
+              repo: { id: "b-1", name: "main" },
             },
             evaluations: [
               {

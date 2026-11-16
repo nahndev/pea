@@ -25,8 +25,8 @@ export function MetricHistoryTable({ metric, items, ordering, sortHref }: Metric
             <SortableTableHead field={MetricHistorySortField.ANALYSIS} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref} className="w-[28%]">
               Analysis
             </SortableTableHead>
-            <SortableTableHead field={MetricHistorySortField.BRANCH} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref} className="w-[14%]">
-              Branch
+            <SortableTableHead field={MetricHistorySortField.REPO} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref} className="w-[14%]">
+              Repo
             </SortableTableHead>
             <SortableTableHead field={MetricHistorySortField.SUBJECT} cacheKey={SortTable.METRIC_HISTORY} ordering={ordering} href={sortHref}>
               Subject
@@ -54,11 +54,11 @@ export function MetricHistoryTable({ metric, items, ordering, sortHref }: Metric
               </TableCell>
               <TableCell>
                 <Link
-                  href={`/branches/${analysis.branch.slug}`}
-                  title={analysis.branch.name}
+                  href={`/repos/${analysis.repo.slug}`}
+                  title={analysis.repo.name}
                   className="block truncate text-muted-foreground hover:underline focus-ring rounded-sm"
                 >
-                  {analysis.branch.name}
+                  {analysis.repo.name}
                 </Link>
               </TableCell>
               <TableCell className="truncate font-mono text-xs" title={subject?.description}>

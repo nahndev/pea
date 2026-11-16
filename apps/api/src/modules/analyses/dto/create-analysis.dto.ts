@@ -11,7 +11,7 @@ export class CreateAnalysisDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  branch: string;
+  repo: string;
 
   @IsIn(Object.values(AnalysisSchema))
   schema: AnalysisSchema;

@@ -25,7 +25,7 @@ export type AnalysisWithData = Prisma.AnalysisGetPayload<{ include: typeof ANALY
 export type AnalysisWithLatestResult = Prisma.AnalysisGetPayload<{ include: typeof LATEST_RESULT_INCLUDE }>;
 
 export type AnalysisDetailRecord = Prisma.AnalysisGetPayload<{
-  include: typeof LATEST_RESULT_INCLUDE & typeof ANALYSIS_DATA_INCLUDE & { branch: true };
+  include: typeof LATEST_RESULT_INCLUDE & typeof ANALYSIS_DATA_INCLUDE & { repo: true };
 }>;
 
 export type AnalysisTrendRecord = Prisma.AnalysisGetPayload<{

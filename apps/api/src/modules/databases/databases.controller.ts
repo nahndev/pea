@@ -24,7 +24,7 @@ export class DatabasesController {
   constructor(private readonly databasesService: DatabasesService) {}
 
   @Get()
-  @RequirePermission(Permission.MANAGER_DATABASE, Permission.BRANCH_ANALYSIS)
+  @RequirePermission(Permission.MANAGER_DATABASE, Permission.REPO_ANALYSIS)
   @ApiOkResponse()
   findAll(@Query() { ordering }: ListDatabasesQueryDto) {
     return this.databasesService.findAll(ordering);

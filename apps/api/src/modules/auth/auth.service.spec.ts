@@ -23,7 +23,7 @@ describe('AuthService', () => {
       groupId: 'group-1',
       createdAt,
       updatedAt: createdAt,
-      group: { id: 'group-1', name: 'Analysts', permissions: [Permission.BRANCH_VIEW, 'branch:removed'] },
+      group: { id: 'group-1', name: 'Analysts', permissions: [Permission.REPO_VIEW, 'repo:removed'] },
     };
   });
 
@@ -49,7 +49,7 @@ describe('AuthService', () => {
     expect(id).not.toContain(token);
     expect(userId).toBe('user-1');
     expect(expiresAt.getTime()).toBeGreaterThan(Date.now());
-    expect(currentUser).toEqual({ id: 'user-1', name: 'Ada', username: 'ada', group: { id: 'group-1', name: 'Analysts' }, permissions: [Permission.BRANCH_VIEW] });
+    expect(currentUser).toEqual({ id: 'user-1', name: 'Ada', username: 'ada', group: { id: 'group-1', name: 'Analysts' }, permissions: [Permission.REPO_VIEW] });
   });
 
   it.each([

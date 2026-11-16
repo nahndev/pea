@@ -8,11 +8,11 @@ export const GROUP_FIELD_ERRORS: Record<string, string> = {
 
 export const PERMISSION_SECTIONS: { title: string; permissions: { value: Permission; description: string }[] }[] = [
   {
-    title: 'Branches',
+    title: 'Repos',
     permissions: [
-      { value: Permission.BRANCH_VIEW, description: 'See branches, analyses, issues and metric results.' },
-      { value: Permission.BRANCH_ANALYSIS, description: 'Create branches, run analyses and change the status of issues.' },
-      { value: Permission.BRANCH_DELETE, description: 'Delete branches with all their analyses.' },
+      { value: Permission.REPO_VIEW, description: 'See repos, analyses, issues and metric results.' },
+      { value: Permission.REPO_ANALYSIS, description: 'Create repos, run analyses and change the status of issues.' },
+      { value: Permission.REPO_DELETE, description: 'Delete repos with all their analyses.' },
     ],
   },
   {

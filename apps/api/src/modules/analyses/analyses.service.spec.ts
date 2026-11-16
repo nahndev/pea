@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { EventEmitter2 } from "@nestjs/event-emitter";
 import { AnalysisEvent, AnalysisSchema, ErrorCode } from "@tomato/constants";
 import { AddOnsService } from "../add-ons/add-ons.service";
-import { BranchesService } from "../branches/branches.service";
+import { ReposService } from "../repos/repos.service";
 import { DatabasesService } from "../databases/databases.service";
 import type { StoredFile } from "../files/storage.service";
 import { StorageService } from "../files/storage.service";
@@ -19,7 +19,7 @@ describe("AnalysesService", () => {
   let analysesRepository: jest.Mocked<
     Pick<AnalysesRepository, "create" | "createMany" | "findById">
   >;
-  let branchesService: jest.Mocked<Pick<BranchesService, "findOrCreateByName">>;
+  let reposService: jest.Mocked<Pick<ReposService, "findOrCreateByName">>;
   let storageService: jest.Mocked<Pick<StorageService, "save" | "remove">>;
   let databasesService: jest.Mocked<Pick<DatabasesService, "verify">>;
   let addOnsService: jest.Mocked<Pick<AddOnsService, "convert" | "verify">>;
@@ -28,7 +28,7 @@ describe("AnalysesService", () => {
 
   beforeEach(() => {
     analysesRepository = { create: jest.fn(), createMany: jest.fn(), findById: jest.fn() };
-    branchesService = {
+    reposService = {
       findOrCreateByName: jest
         .fn()
         .mockResolvedValue({ id: "br-1", name: "feat/x" }),
@@ -42,7 +42,7 @@ describe("AnalysesService", () => {
     eventEmitter2 = { emit: jest.fn() };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
-      branchesService as unknown as BranchesService,
+      reposService as unknown as ReposService,
       storageService as unknown as StorageService,
       databasesService as unknown as DatabasesService,
       addOnsService as unknown as AddOnsService,
@@ -55,19 +55,19 @@ describe("AnalysesService", () => {
     return (error as BadRequestException).getResponse();
   };
 
-  it("creates the branch and the analysis from the uploaded files", async () => {
-    const analysis = { id: "an-1", branchId: "br-1", ...STORED_FILE };
+  it("creates the repo and the analysis from the uploaded files", async () => {
+    const analysis = { id: "an-1", repoId: "br-1", ...STORED_FILE };
     analysesRepository.create.mockResolvedValue(analysis as never);
 
     const result = await analysesService.create(
-      { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
+      { repo: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
       { api_metric: [UPLOAD] },
     );
 
     expect(storageService.save).toHaveBeenCalledWith(UPLOAD);
-    expect(branchesService.findOrCreateByName).toHaveBeenCalledWith("feat/x");
+    expect(reposService.findOrCreateByName).toHaveBeenCalledWith("feat/x");
     expect(analysesRepository.create).toHaveBeenCalledWith({
-      branchId: "br-1",
+      repoId: "br-1",
       schema: AnalysisSchema.API,
       title: "Release 1",
       file: STORED_FILE,
@@ -86,7 +86,7 @@ describe("AnalysesService", () => {
     analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
 
     await analysesService.create(
-      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1", addOn: "leaneo" },
+      { repo: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1", addOn: "leaneo" },
       { bug_log: [UPLOAD] },
     );
 
@@ -98,7 +98,7 @@ describe("AnalysesService", () => {
   it("saves the upload as is without an add-on", async () => {
     analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
 
-    await analysesService.create({ branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" }, { api_metric: [UPLOAD] });
+    await analysesService.create({ repo: "feat/x", schema: AnalysisSchema.API, title: "Release 1" }, { api_metric: [UPLOAD] });
 
     expect(addOnsService.convert).not.toHaveBeenCalled();
   });
@@ -107,7 +107,7 @@ describe("AnalysesService", () => {
     await expect(
       codeOf(
         analysesService.create({
-          branch: "feat/x",
+          repo: "feat/x",
           schema: AnalysisSchema.API,
           title: "Release 1",
         }),
@@ -115,7 +115,7 @@ describe("AnalysesService", () => {
     ).resolves.toEqual({
       code: ErrorCode.LOG_FILE_REQUIRED,
     });
-    expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
+    expect(reposService.findOrCreateByName).not.toHaveBeenCalled();
     expect(storageService.save).not.toHaveBeenCalled();
     expect(eventEmitter2.emit).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe("AnalysesService", () => {
     analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
 
     await analysesService.create(
-      { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
+      { repo: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
       { api_metric: [UPLOAD], bug_log: [bugLog] },
     );
 
@@ -137,7 +137,7 @@ describe("AnalysesService", () => {
     analysesRepository.create.mockResolvedValue({ id: "an-1" } as never);
 
     await analysesService.create(
-      { branch: "feat/x", schema: AnalysisSchema.FRONTEND, title: "Nightly" },
+      { repo: "feat/x", schema: AnalysisSchema.FRONTEND, title: "Nightly" },
       { api_metric: [UPLOAD], frontend_metric: [frontendMetric] },
     );
 
@@ -148,7 +148,7 @@ describe("AnalysesService", () => {
     await expect(
       codeOf(
         analysesService.create(
-          { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
+          { repo: "feat/x", schema: AnalysisSchema.BUG, title: "Nightly" },
           { api_metric: [UPLOAD] },
         ),
       ),
@@ -161,7 +161,7 @@ describe("AnalysesService", () => {
 
     await expect(
       analysesService.create(
-        { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
+        { repo: "feat/x", schema: AnalysisSchema.API, title: "Release 1" },
         { api_metric: [UPLOAD] },
       ),
     ).rejects.toThrow("db down");
@@ -171,21 +171,21 @@ describe("AnalysesService", () => {
 
   describe("database analysis", () => {
     const dto = {
-      branch: "feat/x",
+      repo: "feat/x",
       schema: AnalysisSchema.DATABASE,
       title: "Nightly",
       databaseId: "db-1",
     };
 
     it("verifies the database and links it without a file", async () => {
-      const analysis = { id: "an-1", branchId: "br-1" };
+      const analysis = { id: "an-1", repoId: "br-1" };
       analysesRepository.create.mockResolvedValue(analysis as never);
 
       await expect(analysesService.create(dto)).resolves.toBe(analysis);
 
       expect(databasesService.verify).toHaveBeenCalledWith("db-1");
       expect(analysesRepository.create).toHaveBeenCalledWith({
-        branchId: "br-1",
+        repoId: "br-1",
         schema: AnalysisSchema.DATABASE,
         title: "Nightly",
         databaseId: "db-1",
@@ -201,16 +201,16 @@ describe("AnalysesService", () => {
       databasesService.verify.mockRejectedValue(new Error("unreachable"));
 
       await expect(analysesService.create(dto)).rejects.toThrow("unreachable");
-      expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
+      expect(reposService.findOrCreateByName).not.toHaveBeenCalled();
       expect(analysesRepository.create).not.toHaveBeenCalled();
     });
   });
 
   describe("createMany", () => {
     const upload = (fieldname: string) => ({ fieldname, originalname: "a.log" }) as Express.Multer.File;
-    const api = { branch: "feat/x", schema: AnalysisSchema.API, title: "Release 1" };
-    const bug = { branch: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1" };
-    const database = { branch: "main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" };
+    const api = { repo: "feat/x", schema: AnalysisSchema.API, title: "Release 1" };
+    const bug = { repo: "feat/x", schema: AnalysisSchema.BUG, title: "Release 1" };
+    const database = { repo: "main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" };
 
     beforeEach(() => {
       analysesRepository.createMany.mockImplementation(async (items) => items.map((item, index) => ({ id: `an-${index}`, ...item }) as never));
@@ -221,15 +221,15 @@ describe("AnalysesService", () => {
       const bugLog = upload("analyses[1][bug_log]");
       const bugStored: StoredFile = { file: "b.log", path: "p-2" };
       storageService.save.mockResolvedValueOnce(STORED_FILE).mockResolvedValueOnce(bugStored);
-      branchesService.findOrCreateByName.mockImplementation(async (name) => ({ id: `br-${name}`, name, slug: name }));
+      reposService.findOrCreateByName.mockImplementation(async (name) => ({ id: `br-${name}`, name, slug: name }));
 
       const result = await analysesService.createMany({ analyses: [api, bug, database] }, [bugLog, apiLog]);
 
-      expect(branchesService.findOrCreateByName.mock.calls).toEqual([["feat/x"], ["main"]]);
+      expect(reposService.findOrCreateByName.mock.calls).toEqual([["feat/x"], ["main"]]);
       expect(analysesRepository.createMany).toHaveBeenCalledWith([
-        { branchId: "br-feat/x", schema: AnalysisSchema.API, title: "Release 1", file: STORED_FILE },
-        { branchId: "br-feat/x", schema: AnalysisSchema.BUG, title: "Release 1", file: bugStored },
-        { branchId: "br-main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" },
+        { repoId: "br-feat/x", schema: AnalysisSchema.API, title: "Release 1", file: STORED_FILE },
+        { repoId: "br-feat/x", schema: AnalysisSchema.BUG, title: "Release 1", file: bugStored },
+        { repoId: "br-main", schema: AnalysisSchema.DATABASE, title: "Nightly", databaseId: "db-1" },
       ]);
       expect(storageService.save.mock.calls).toEqual([[apiLog], [bugLog]]);
       expect(eventEmitter2.emit.mock.calls).toEqual(result.map((analysis) => [AnalysisEvent.CREATED, analysis]));
@@ -240,7 +240,7 @@ describe("AnalysesService", () => {
 
       expect(error).toEqual({ code: ErrorCode.LOG_FILE_REQUIRED, details: { "analyses.1": [ErrorCode.LOG_FILE_REQUIRED] } });
       expect(storageService.save).not.toHaveBeenCalled();
-      expect(branchesService.findOrCreateByName).not.toHaveBeenCalled();
+      expect(reposService.findOrCreateByName).not.toHaveBeenCalled();
       expect(eventEmitter2.emit).not.toHaveBeenCalled();
     });
 
@@ -295,12 +295,12 @@ describe("AnalysesService reads", () => {
     Pick<
       AnalysesRepository,
       | "findDetailById"
-      | "findPageByBranch"
-      | "findRecentByBranch"
+      | "findPageByRepo"
+      | "findRecentByRepo"
       | "countBySchema"
     >
   >;
-  let branchesService: jest.Mocked<Pick<BranchesService, "findOne">>;
+  let reposService: jest.Mocked<Pick<ReposService, "findOne">>;
   let analysesService: AnalysesService;
 
   const createdAt = new Date("2026-10-01T00:00:00.000Z");
@@ -320,16 +320,16 @@ describe("AnalysesService reads", () => {
   beforeEach(() => {
     analysesRepository = {
       findDetailById: jest.fn(),
-      findPageByBranch: jest.fn(),
-      findRecentByBranch: jest.fn(),
+      findPageByRepo: jest.fn(),
+      findRecentByRepo: jest.fn(),
       countBySchema: jest.fn(),
     };
-    branchesService = {
+    reposService = {
       findOne: jest.fn().mockResolvedValue({ id: "br-1", name: "feat/x" }),
     };
     analysesService = new AnalysesService(
       analysesRepository as unknown as AnalysesRepository,
-      branchesService as unknown as BranchesService,
+      reposService as unknown as ReposService,
       {} as StorageService,
       {} as DatabasesService,
       {} as AddOnsService,
@@ -380,7 +380,7 @@ describe("AnalysesService reads", () => {
       title: "Release 1",
       createdAt,
       results: [],
-      branch: { id: "br-1", name: "feat/x" },
+      repo: { id: "br-1", name: "feat/x" },
       ...data,
     } as never);
 
@@ -396,7 +396,7 @@ describe("AnalysesService reads", () => {
   ])(
     "derives the gate status from evaluations %j as %s",
     async (evaluationStatuses, expected) => {
-      analysesRepository.findPageByBranch.mockResolvedValue({
+      analysesRepository.findPageByRepo.mockResolvedValue({
         items: [
           {
             id: "an-1",
@@ -409,7 +409,7 @@ describe("AnalysesService reads", () => {
         total: 1,
       });
 
-      const page = await analysesService.findByBranch("br-1", {
+      const page = await analysesService.findByRepo("br-1", {
         schema: AnalysisSchema.API,
         limit: 20,
         offset: 0,
@@ -432,7 +432,7 @@ describe("AnalysesService reads", () => {
   );
 
   it("returns a null latest result when the analysis has not been evaluated", async () => {
-    analysesRepository.findPageByBranch.mockResolvedValue({
+    analysesRepository.findPageByRepo.mockResolvedValue({
       items: [
         {
           id: "an-1",
@@ -445,7 +445,7 @@ describe("AnalysesService reads", () => {
       total: 1,
     });
 
-    const page = await analysesService.findByBranch("br-1", {
+    const page = await analysesService.findByRepo("br-1", {
       schema: AnalysisSchema.API,
       limit: 20,
       offset: 0,
@@ -454,29 +454,29 @@ describe("AnalysesService reads", () => {
     expect(page.items[0].latestResult).toBeNull();
   });
 
-  it("rejects listing analyses of an unknown branch", async () => {
-    branchesService.findOne.mockRejectedValue(
-      new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND }),
+  it("rejects listing analyses of an unknown repo", async () => {
+    reposService.findOne.mockRejectedValue(
+      new NotFoundException({ code: ErrorCode.REPO_NOT_FOUND }),
     );
 
     await expect(
-      analysesService.findByBranch("missing", {
+      analysesService.findByRepo("missing", {
         schema: AnalysisSchema.API,
         limit: 20,
         offset: 0,
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
-    expect(analysesRepository.findPageByBranch).not.toHaveBeenCalled();
+    expect(analysesRepository.findPageByRepo).not.toHaveBeenCalled();
   });
 
-  describe("countByBranch", () => {
+  describe("countByRepo", () => {
     it("counts analyses per schema and fills missing schemas with zero", async () => {
       analysesRepository.countBySchema.mockResolvedValue([
         { schema: "API", _count: { _all: 3 } },
         { schema: "DATABASE", _count: { _all: 1 } },
       ] as never);
 
-      await expect(analysesService.countByBranch("br-1")).resolves.toEqual({
+      await expect(analysesService.countByRepo("br-1")).resolves.toEqual({
         API: 3,
         QUERY: 0,
         BUG: 0,
@@ -486,13 +486,13 @@ describe("AnalysesService reads", () => {
       expect(analysesRepository.countBySchema).toHaveBeenCalledWith("br-1");
     });
 
-    it("rejects counting analyses of an unknown branch", async () => {
-      branchesService.findOne.mockRejectedValue(
-        new NotFoundException({ code: ErrorCode.BRANCH_NOT_FOUND }),
+    it("rejects counting analyses of an unknown repo", async () => {
+      reposService.findOne.mockRejectedValue(
+        new NotFoundException({ code: ErrorCode.REPO_NOT_FOUND }),
       );
 
       await expect(
-        analysesService.countByBranch("missing"),
+        analysesService.countByRepo("missing"),
       ).rejects.toBeInstanceOf(NotFoundException);
       expect(analysesRepository.countBySchema).not.toHaveBeenCalled();
     });
@@ -521,7 +521,7 @@ describe("AnalysesService reads", () => {
     });
 
     it("keys values by metric and subject and orders the trend oldest first", async () => {
-      analysesRepository.findRecentByBranch.mockResolvedValue([
+      analysesRepository.findRecentByRepo.mockResolvedValue([
         {
           id: "an-2",
           createdAt,
@@ -547,7 +547,7 @@ describe("AnalysesService reads", () => {
         20,
       );
 
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith(
+      expect(analysesRepository.findRecentByRepo).toHaveBeenCalledWith(
         "br-1",
         AnalysisSchema.API,
         20,
@@ -579,7 +579,7 @@ describe("AnalysesService reads", () => {
         "bbbbbbbb-bbbb-5bbb-8bbb-bbbbbbbbbbbb",
         "GET /api/orders",
       );
-      analysesRepository.findRecentByBranch.mockResolvedValue([
+      analysesRepository.findRecentByRepo.mockResolvedValue([
         {
           id: "an-1",
           createdAt,
@@ -602,7 +602,7 @@ describe("AnalysesService reads", () => {
         picks,
       );
 
-      expect(analysesRepository.findRecentByBranch).toHaveBeenCalledWith(
+      expect(analysesRepository.findRecentByRepo).toHaveBeenCalledWith(
         "br-1",
         AnalysisSchema.API,
         20,

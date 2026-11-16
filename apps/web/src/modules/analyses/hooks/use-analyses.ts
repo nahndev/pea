@@ -10,10 +10,10 @@ const isRunning = (analysis: AnalysisDetail | undefined) =>
   (!analysis.latestResult || analysis.latestResult.status === AnalysisResultStatus.RUNNING) &&
   Date.now() - new Date(analysis.createdAt).getTime() < POLL_TIMEOUT_MS;
 
-export const useBranchAnalyses = (branchId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) =>
+export const useRepoAnalyses = (repoId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) =>
   useQuery({
-    queryKey: ['analyses', 'branch', branchId, { schema, page, ordering }],
-    queryFn: () => analysesService.listByBranch(branchId, schema, page, ordering),
+    queryKey: ['analyses', 'repo', repoId, { schema, page, ordering }],
+    queryFn: () => analysesService.listByRepo(repoId, schema, page, ordering),
   });
 
 export const useAnalysis = (analysisId: string) =>
@@ -37,7 +37,7 @@ export const useCreateAnalysis = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateAnalysisInput) => analysesService.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['branches'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['repos'] }),
   });
 };
 

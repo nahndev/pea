@@ -139,7 +139,7 @@ export class MetricsService {
         value,
         createdAt: createdAt.toISOString(),
         subject: subject && toSubjectView(subject),
-        analysis: { id: analysis.id, title: analysis.title, branch: { id: analysis.branch.id, name: analysis.branch.name, slug: analysis.branch.slug } },
+        analysis: { id: analysis.id, title: analysis.title, repo: { id: analysis.repo.id, name: analysis.repo.name, slug: analysis.repo.slug } },
         evaluations: evaluations.map((evaluation) => this.toEvaluationView(evaluation)),
       })),
     };

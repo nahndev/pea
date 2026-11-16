@@ -85,6 +85,6 @@ export interface MetricHistoryItemView {
   value: number;
   createdAt: string;
   subject: SubjectView | null;
-  analysis: { id: string; title: string; branch: { id: string; name: string; slug: string } };
+  analysis: { id: string; title: string; repo: { id: string; name: string; slug: string } };
   evaluations: MetricEvaluationView[];
 }

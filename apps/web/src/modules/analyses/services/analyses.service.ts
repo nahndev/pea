@@ -7,8 +7,8 @@ import { API_METRIC_FILE_FIELD, BUG_LOG_FILE_FIELD, FRONTEND_METRIC_FILE_FIELD }
 import type { CreateAnalysisInput } from '../analyses.schemas';
 
 export const analysesService = {
-  async listByBranch(branchId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) {
-    const { data } = await apiClient.get<Paginated<AnalysisSummary>>(`/branches/${branchId}/analyses`, {
+  async listByRepo(repoId: string, schema: AnalysisSchema, page: number, ordering: string | undefined) {
+    const { data } = await apiClient.get<Paginated<AnalysisSummary>>(`/repos/${repoId}/analyses`, {
       params: { schema, limit: PAGE_SIZE, offset: toOffset(page), ordering },
     });
     return data;
@@ -21,7 +21,7 @@ export const analysesService = {
 
   async create(input: CreateAnalysisInput) {
     const body = new FormData();
-    body.set('branch', input.branch);
+    body.set('repo', input.repo);
     body.set('schema', input.schema);
     body.set('title', input.title);
     if (input.schema === AnalysisSchema.DATABASE) {

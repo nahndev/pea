@@ -7,21 +7,21 @@ const messages = (input: unknown) => {
   const result = createAnalysisSchema.safeParse(input);
   return result.success ? [] : result.error.issues.map(({ path, message }) => `${path.join('.')}:${message}`);
 };
-const base = { branch: 'a', title: 'Release 1' };
+const base = { repo: 'a', title: 'Release 1' };
 
 describe('createAnalysisSchema', () => {
-  it('accepts a branch with a file and trims the branch and the title', () => {
-    const parsed = createAnalysisSchema.parse({ branch: '  feat/x ', title: ' Release 1 ', schema: 'API', api_metric: file() });
+  it('accepts a repo with a file and trims the repo and the title', () => {
+    const parsed = createAnalysisSchema.parse({ repo: '  feat/x ', title: ' Release 1 ', schema: 'API', api_metric: file() });
 
-    expect(parsed.branch).toBe('feat/x');
+    expect(parsed.repo).toBe('feat/x');
     expect(parsed.title).toBe('Release 1');
   });
 
-  it('requires a branch and a title', () => {
-    const errors = messages({ branch: '   ', title: '', schema: 'API', api_metric: file() });
-    expect(errors).toContain('branch:required');
+  it('requires a repo and a title', () => {
+    const errors = messages({ repo: '   ', title: '', schema: 'API', api_metric: file() });
+    expect(errors).toContain('repo:required');
     expect(errors).toContain('title:required');
-    expect(messages({ branch: 'a', schema: 'API', api_metric: file() })).toContain('title:required');
+    expect(messages({ repo: 'a', schema: 'API', api_metric: file() })).toContain('title:required');
   });
 
   it('requires a known schema', () => {

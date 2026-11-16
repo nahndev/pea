@@ -9,7 +9,7 @@ const messages = (input: unknown) => {
 
 describe('groupSchema', () => {
   it('trims the name and keeps the permissions', () => {
-    expect(groupSchema.parse({ name: ' Analysts ', permissions: [Permission.BRANCH_VIEW] })).toEqual({ name: 'Analysts', permissions: [Permission.BRANCH_VIEW] });
+    expect(groupSchema.parse({ name: ' Analysts ', permissions: [Permission.REPO_VIEW] })).toEqual({ name: 'Analysts', permissions: [Permission.REPO_VIEW] });
   });
 
   it('accepts a group without permissions', () => {

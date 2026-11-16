@@ -34,14 +34,14 @@ export class AnalysesController {
   constructor(private readonly analysesService: AnalysesService) {}
 
   @Post()
-  @RequirePermission(Permission.BRANCH_ANALYSIS)
+  @RequirePermission(Permission.REPO_ANALYSIS)
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
       type: "object",
-      required: ["branch", "schema", "title"],
+      required: ["repo", "schema", "title"],
       properties: {
-        branch: { type: "string", minLength: 1, maxLength: 255 },
+        repo: { type: "string", minLength: 1, maxLength: 255 },
         schema: { type: "string", enum: Object.values(AnalysisSchema) },
         title: { type: "string", minLength: 1, maxLength: 255 },
         [LogFileField.API_METRIC]: { type: "string", format: "binary", description: "Required when schema is API or QUERY" },
@@ -69,7 +69,7 @@ export class AnalysesController {
   }
 
   @Get(":id")
-  @RequirePermission(Permission.BRANCH_VIEW)
+  @RequirePermission(Permission.REPO_VIEW)
   @ApiOkResponse()
   @ApiNotFoundResponse()
   findOne(@Param("id", ParseUUIDPipe) id: string) {

@@ -18,6 +18,6 @@ describe('withCachedOrdering', () => {
   });
 
   it('leaves params unchanged when nothing is saved', async () => {
-    await expect(withCachedOrdering(SortTable.BRANCHES, { page: '2' })).resolves.toEqual({ page: '2' });
+    await expect(withCachedOrdering(SortTable.REPOS, { page: '2' })).resolves.toEqual({ page: '2' });
   });
 });

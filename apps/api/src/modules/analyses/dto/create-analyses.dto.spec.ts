@@ -9,11 +9,11 @@ const item = (fields: Record<string, string>) => Object.assign(Object.create(nul
 describe('CreateAnalysesDto', () => {
   const pipe = createValidationPipe();
   const validate = (body: unknown) => pipe.transform(body, { type: 'body', metatype: CreateAnalysesDto });
-  const api = { branch: ' feat/x ', schema: AnalysisSchema.API, title: 'Release 1' };
+  const api = { repo: ' feat/x ', schema: AnalysisSchema.API, title: 'Release 1' };
 
   it('validates and trims each item', async () => {
     await expect(validate({ analyses: [item(api)] })).resolves.toEqual({
-      analyses: [{ branch: 'feat/x', schema: AnalysisSchema.API, title: 'Release 1' }],
+      analyses: [{ repo: 'feat/x', schema: AnalysisSchema.API, title: 'Release 1' }],
     });
   });
 

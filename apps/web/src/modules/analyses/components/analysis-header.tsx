@@ -31,7 +31,7 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
   if (error) return <ErrorState error={error} />;
   if (!data) return <Skeleton className="h-24 w-full max-w-md" />;
 
-  const { branch, schema, title, latestResult, createdAt, file, database } = data;
+  const { repo, schema, title, latestResult, createdAt, file, database } = data;
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,13 +39,13 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
         <PageHeader title={title} description={`Analysed on ${formatDateTime(createdAt)}`}>
           <Breadcrumbs
             entries={[
-              { label: 'Branches', href: '/branches' },
-              { label: branch.name, href: `/branches/${branch.slug}/${schema.toLowerCase()}` },
+              { label: 'Repos', href: '/repos' },
+              { label: repo.name, href: `/repos/${repo.slug}/${schema.toLowerCase()}` },
               { label: title },
             ]}
           />
         </PageHeader>
-        <RequirePermission permission={Permission.BRANCH_ANALYSIS}>
+        <RequirePermission permission={Permission.REPO_ANALYSIS}>
           <Button variant="outlined" size="sm" onClick={() => rerun()} disabled={isRerunning || isRunning}>
             {isRerunning || isRunning ? 'Analysing…' : 'Re-analyse'}
           </Button>
@@ -54,8 +54,8 @@ export function AnalysisHeader({ analysisId }: AnalysisHeaderProps) {
       {rerunError ? <ErrorState error={rerunError} title="Unable to re-analyse" /> : null}
       <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <div className="flex items-center gap-2">
-          <dt className="text-muted-foreground">Branch</dt>
-          <dd className="break-all font-medium">{branch.name}</dd>
+          <dt className="text-muted-foreground">Repo</dt>
+          <dd className="break-all font-medium">{repo.name}</dd>
         </div>
         <div className="flex items-center gap-2">
           <dt className="text-muted-foreground">Result</dt>

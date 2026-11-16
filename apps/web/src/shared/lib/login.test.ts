@@ -3,7 +3,7 @@ import { loginHref, safeNextPath } from './login';
 
 describe('loginHref', () => {
   it('keeps the requested page with its query', () => {
-    expect(loginHref('/branches?ordering=-name')).toBe('/login?next=%2Fbranches%3Fordering%3D-name');
+    expect(loginHref('/repos?ordering=-name')).toBe('/login?next=%2Frepos%3Fordering%3D-name');
   });
 });
 

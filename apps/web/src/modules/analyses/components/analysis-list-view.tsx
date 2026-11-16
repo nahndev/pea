@@ -12,20 +12,20 @@ import { formatDateTime } from '@/shared/lib/format';
 import { ANALYSIS_SCHEMA_LABEL } from '@/shared/lib/analysis-schema.constants';
 import { buildHref } from '@/shared/lib/pagination';
 import { SortTable } from '@/shared/lib/sort.constants';
-import { useBranchAnalyses } from '../hooks/use-analyses';
+import { useRepoAnalyses } from '../hooks/use-analyses';
 import { GateStatusBadge, ResultStatusBadge } from './analysis-status-badges';
 
 interface AnalysisListViewProps {
-  branchId: string;
+  repoId: string;
   schema: AnalysisSchema;
   params: { page: number; ordering?: string };
 }
 
 const linkClass = 'text-sm underline-offset-4 hover:underline focus-ring rounded-sm';
 
-export function AnalysisListView({ branchId, schema, params: { page, ordering } }: AnalysisListViewProps) {
-  const { data, error, isPending } = useBranchAnalyses(branchId, schema, page, ordering);
-  const pathname = `/branches/${branchId}/${schema.toLowerCase()}`;
+export function AnalysisListView({ repoId, schema, params: { page, ordering } }: AnalysisListViewProps) {
+  const { data, error, isPending } = useRepoAnalyses(repoId, schema, page, ordering);
+  const pathname = `/repos/${repoId}/${schema.toLowerCase()}`;
   const sortHref = (next: string | undefined) => buildHref(pathname, { ordering: next });
 
   return (
@@ -35,7 +35,7 @@ export function AnalysisListView({ branchId, schema, params: { page, ordering } 
       </h2>
       {isPending ? <TableSkeleton /> : null}
       {error ? <ErrorState error={error} /> : null}
-      {data && data.items.length === 0 ? <EmptyState title="No analysis for this branch yet" /> : null}
+      {data && data.items.length === 0 ? <EmptyState title="No analysis for this repo yet" /> : null}
       {data && data.items.length > 0 ? (
         <>
           <div className="rounded-lg border bg-card shadow-card">

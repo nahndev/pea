@@ -4,7 +4,7 @@ import { ForbiddenState, RequirePermission } from '@/modules/auth';
 
 export default function NewAnalysisLayout({ children }: { children: ReactNode }) {
   return (
-    <RequirePermission permission={Permission.BRANCH_ANALYSIS} fallback={<ForbiddenState />}>
+    <RequirePermission permission={Permission.REPO_ANALYSIS} fallback={<ForbiddenState />}>
       {children}
     </RequirePermission>
   );

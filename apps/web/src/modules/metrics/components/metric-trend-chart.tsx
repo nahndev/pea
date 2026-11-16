@@ -15,7 +15,7 @@ const SHORT_DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'sh
 const SERIES_COLORS = ['var(--info)', 'var(--primary)', 'var(--warning)', 'var(--success)', 'var(--danger)', 'var(--accent)'];
 
 export interface TrendChartProps {
-  branchId: string | undefined;
+  repoId: string | undefined;
   picks?: string[];
   limits?: Record<string, number>;
   onClear?: () => void;
@@ -30,8 +30,8 @@ const DEFAULT_METRICS = 'The trend metrics set in Chart';
 
 const NO_PICKS: string[] = [];
 
-export function MetricTrendChart({ schema, title, branchId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
-  const { data, error, isPending } = useMetricTrend(branchId, schema, picks);
+export function MetricTrendChart({ schema, title, repoId, picks = NO_PICKS, limits = {}, onClear }: MetricTrendChartProps) {
+  const { data, error, isPending } = useMetricTrend(repoId, schema, picks);
 
   const series = (data?.series ?? []).map((item, index) => ({
     ...item,
@@ -56,7 +56,7 @@ export function MetricTrendChart({ schema, title, branchId, picks = NO_PICKS, li
           <div className="flex flex-col gap-1">
             <CardTitle>{title}</CardTitle>
             <CardDescription>
-              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${DEFAULT_METRICS} (tick rows below to pick others)` : DEFAULT_METRICS}, averaged per analysis over this branch’s last {TREND_LIMIT} analyses.
+              {picks.length > 0 ? 'The metrics you picked in the table below' : onClear ? `${DEFAULT_METRICS} (tick rows below to pick others)` : DEFAULT_METRICS}, averaged per analysis over this repo’s last {TREND_LIMIT} analyses.
               {hasLimits ? ' Dashed lines mark the condition limits.' : ''}
             </CardDescription>
           </div>
@@ -69,7 +69,7 @@ export function MetricTrendChart({ schema, title, branchId, picks = NO_PICKS, li
       </CardHeader>
       <CardContent>
         {error ? <ErrorState error={error} /> : null}
-        {isPending && branchId !== undefined ? <Skeleton className="h-64 w-full" /> : null}
+        {isPending && repoId !== undefined ? <Skeleton className="h-64 w-full" /> : null}
         {data && series.length === 0 ? <EmptyState title="No metrics recorded yet" /> : null}
         {data && series.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-64 w-full">

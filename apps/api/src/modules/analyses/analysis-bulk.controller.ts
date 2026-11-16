@@ -12,14 +12,14 @@ import { CreateAnalysesDto } from './dto/create-analyses.dto';
 
 @ApiTags('analyses')
 @Controller('analysis-bulk')
-@RequirePermission(Permission.BRANCH_ANALYSIS)
+@RequirePermission(Permission.REPO_ANALYSIS)
 export class AnalysisBulkController {
   constructor(private readonly analysesService: AnalysesService) {}
 
   @Post()
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: `Up to ${MAX_BULK_ANALYSES} items, each with the fields of POST /analyses indexed as \`analyses[i][<field>]\`, e.g. \`analyses[0][branch]\`, \`analyses[0][api_metric]\` (file). All are created or none.`,
+    description: `Up to ${MAX_BULK_ANALYSES} items, each with the fields of POST /analyses indexed as \`analyses[i][<field>]\`, e.g. \`analyses[0][repo]\`, \`analyses[0][api_metric]\` (file). All are created or none.`,
     schema: { type: 'object', additionalProperties: true },
   })
   @ApiCreatedResponse()

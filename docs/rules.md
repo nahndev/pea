@@ -9,8 +9,8 @@ An analysis has one log file, the NDJSON request log described in [api_metric.md
 
 Every analysis, rule and metric has a `schema` (`API`, `QUERY`, `BUG`, `DATABASE` or `FRONTEND`, constant `AnalysisSchema`). A condition has no column of its own: its schema is the schema of its metric.
 An analysis only runs the rules, measures the metrics and evaluates the conditions of its own schema, so an analysis of a schema with no rules or metrics completes with no issue.
-`POST /analyses` takes a `schema` field next to `branch` and the log file; the list and trend endpoints of a branch (`GET /branches/:id/analyses`, `GET /branches/:id/metrics/trend`) take a `schema` query (default `API`),
-and `GET /rules` and `GET /metrics` accept it as a filter. A branch has many analyses; its page shows one tab per schema, each with its own trend chart.
+`POST /analyses` takes a `schema` field next to `repo` and the log file; the list and trend endpoints of a repo (`GET /repos/:id/analyses`, `GET /repos/:id/metrics/trend`) take a `schema` query (default `API`),
+and `GET /rules` and `GET /metrics` accept it as a filter. A repo has many analyses; its page shows one tab per schema, each with its own trend chart.
 
 Configs can be edited from the `Rules` menu of the web app (`PATCH /rules/:id`). Only the fields a rule already has can be changed; changes apply to analyses run afterwards.
 
@@ -72,7 +72,7 @@ to a metric. It is created active, and a metric has at most one condition (uniqu
 
 ### Trend chart
 
-`GET /branches/:branchId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:
+`GET /repos/:repoId/metrics/trend?limit=20&pick=<metricId>:<subject>` (repeat `pick`, up to 10) returns `{ series, points }`:
 one series per picked `metric id + subject`, and per analysis (latest result) the value of that series.
 `schema` is required in practice (default `API`) and limits the analyses to that schema. Without `pick` it returns the whole-file P50, P90 and P95 of that schema. On the Metrics tab, tick rows of "Results" to pick series. Metrics with different units cannot be mixed in one chart,
 so rows of another unit are disabled; `Reset` goes back to P50/P90/P95.
