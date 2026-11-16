@@ -41,6 +41,16 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "seed": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "passThroughEnv": [
+        "ADMIN_PASSWORD",
+        "DATABASE_URL"
+      ]
     }
   }
 }

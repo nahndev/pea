@@ -14,7 +14,7 @@
     "test": "turbo run test",
     "generate": "pnpm --filter @tomato/api generate",
     "migrate": "pnpm --filter @tomato/api migrate",
-    "seed": "pnpm --filter @tomato/api seed"
+    "seed": "turbo run seed"
   },
   "devDependencies": {
     "turbo": "2.11.10",
